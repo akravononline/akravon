@@ -62,7 +62,7 @@ namespace
 				AlignedFree(rPublic.Sections[i]);
 		}
 
-		AlignedFree(rPublic.Header);
+		AlignedFree(rPublic.SourceMagicValue);	// Cynex: Header magic'in ardindaki ic gosterici; ayrilan blogun basi SourceMagicValue
 		AlignedFree(rPublic.Sections);
 		AlignedFree(rPublic.Marshalled);
 		AlignedFree(rPublic.IsUserMemory);
