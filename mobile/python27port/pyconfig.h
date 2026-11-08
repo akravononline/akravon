@@ -149,7 +149,9 @@
 #define HAVE_MEMMOVE 1
 #define HAVE_DEVICE_MACROS 1
 /* Cynex: major/minor/makedev icin */
+#ifndef __APPLE__
 #define HAVE_SYS_SYSMACROS_H 1
+#endif
 #define HAVE_MAKEDEV 1
 #define HAVE_MKNOD 1
 #define HAVE_DIRFD 1

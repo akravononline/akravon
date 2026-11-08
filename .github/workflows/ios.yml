@@ -20,8 +20,13 @@ jobs:
 
       - name: Derle
         run: |
-          cmake --build build --config Release -- CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO 2>&1 | tee derleme.log
+          set -o pipefail
+          cmake --build build --config Release -- -quiet CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO 2>&1 | tee derleme.log
           test -d build/Release-iphoneos/cynexmobil.app
+
+      - name: Hatalar (ozet)
+        if: failure()
+        run: grep -E 'error:|fatal error' derleme.log | sort -u | head -60 || true
 
       - name: IPA paketle (imzasiz)
         run: |
