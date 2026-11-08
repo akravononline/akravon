@@ -15,6 +15,7 @@
 #include <unordered_map>
 
 #include <android/log.h>
+#include <android/native_window.h>	// ANativeWindow global olarak (cd3d icinde yeniden bildirilmesin)
 
 #define CD3D_TAG "CynexD3D8"
 #define CD3D_LOGI(...) __android_log_print(ANDROID_LOG_INFO, CD3D_TAG, __VA_ARGS__)
