@@ -133,7 +133,7 @@ void CPythonMiniMap::Update(float fCenterX, float fCenterY)
 		pkInstEach->NEW_GetPixelPosition(&kInstancePosition);
 		float fDistanceFromCenterX = (kInstancePosition.x - m_fCenterX) * fooCellScale * m_fScale;
 		float fDistanceFromCenterY = (kInstancePosition.y - m_fCenterY) * fooCellScale * m_fScale;
-		if (fabs(fDistanceFromCenterX) >= m_fMiniMapRadius || fabs(fDistanceFromCenterY) >= m_fMiniMapRadius)
+		if (fDistanceFromCenterX * fDistanceFromCenterX + fDistanceFromCenterY * fDistanceFromCenterY >= m_fMiniMapRadius * m_fMiniMapRadius)	// AKRAVON: yuvarlak harita - halka disindaki noktalar cizilmez
 			continue;
 
 		float fDistanceFromCenter = sqrtf(fDistanceFromCenterX * fDistanceFromCenterX + fDistanceFromCenterY * fDistanceFromCenterY );
@@ -218,7 +218,7 @@ void CPythonMiniMap::Update(float fCenterX, float fCenterY)
 
 		float fDistanceFromCenterX = (pos.x - m_fCenterX) * fooCellScale * m_fScale;
 		float fDistanceFromCenterY = (pos.y - m_fCenterY) * fooCellScale * m_fScale;
-		if (fabs(fDistanceFromCenterX) >= m_fMiniMapRadius || fabs(fDistanceFromCenterY) >= m_fMiniMapRadius)
+		if (fDistanceFromCenterX * fDistanceFromCenterX + fDistanceFromCenterY * fDistanceFromCenterY >= m_fMiniMapRadius * m_fMiniMapRadius)	// AKRAVON: yuvarlak harita - halka disindaki noktalar cizilmez
 			continue;
 
 		float fDistanceFromCenter = sqrtf(fDistanceFromCenterX * fDistanceFromCenterX + fDistanceFromCenterY * fDistanceFromCenterY);
@@ -252,7 +252,7 @@ void CPythonMiniMap::Update(float fCenterX, float fCenterY)
 
 			float fDistanceFromCenterX = (kInstancePosition.x - m_fCenterX) * fooCellScale * m_fScale;
 			float fDistanceFromCenterY = (kInstancePosition.y - m_fCenterY) * fooCellScale * m_fScale;
-			if (fabs(fDistanceFromCenterX) >= m_fMiniMapRadius || fabs(fDistanceFromCenterY) >= m_fMiniMapRadius)
+			if (fDistanceFromCenterX * fDistanceFromCenterX + fDistanceFromCenterY * fDistanceFromCenterY >= m_fMiniMapRadius * m_fMiniMapRadius)	// AKRAVON: yuvarlak harita - halka disindaki noktalar cizilmez
 				continue;
 
 			float fDistanceFromCenter = sqrtf(fDistanceFromCenterX * fDistanceFromCenterX + fDistanceFromCenterY * fDistanceFromCenterY );
