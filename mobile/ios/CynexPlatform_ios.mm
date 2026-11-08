@@ -16,6 +16,9 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <windows.h>
+#ifdef interface
+#undef interface	// objbase.h: interface=struct; Objective-C @interface'i bozar
+#endif
 
 extern "C" void CynexMss_Suspend(void);
 extern "C" void CynexMss_Resume(void);

@@ -7,6 +7,9 @@
 
 #include "cd3d_common.h"
 #include <pthread.h>
+#ifdef interface
+#undef interface	// objbase.h: interface=struct; Objective-C @interface'i bozar
+#endif
 
 @interface CynexView : UIView
 @property (nonatomic, readonly) int pixelWidth;
