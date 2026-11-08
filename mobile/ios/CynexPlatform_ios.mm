@@ -59,6 +59,7 @@ namespace
 	std::string g_dataPath, g_deviceId, g_clipboard;
 	int g_safeInsets[4] = { 0, 0, 0, 0 };
 	float g_scale = 1.0f;
+	std::atomic<int> g_kbShown{-1};	// ekran klavyesi durumu (oyun istegi + dokunarak kapatma)
 
 	void Post(uint32_t msg, uintptr_t w, intptr_t l, bool waitCursor = false)
 	{
@@ -180,6 +181,12 @@ namespace
 
 - (void)touchesBegan:(NSSet<UITouch*>*)touches withEvent:(UIEvent*)event
 {
+	// ekranda bir yere dokununca klavye kapanir; yazi kutusuna dokunulursa oyun yeniden acar
+	if (self.isFirstResponder)
+	{
+		[self resignFirstResponder];
+		g_kbShown = 0;
+	}
 	for (UITouch* t in touches)
 	{
 		const int id = [self idFor:t create:YES];
@@ -420,10 +427,9 @@ void CynexPlatform_Vibrate(int milliseconds)
 
 void CynexPlatform_ShowKeyboard(int show)
 {
-	static int s_shown = -1;
 	show = show ? 1 : 0;
-	if (show == s_shown) return;
-	s_shown = show;
+	if (show == g_kbShown.load()) return;
+	g_kbShown = show;
 	dispatch_async(dispatch_get_main_queue(), ^{
 		if (!g_view) return;
 		if (show) [g_view becomeFirstResponder]; else [g_view resignFirstResponder];
