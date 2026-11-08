@@ -1029,20 +1029,38 @@ bool CPythonApplication::CreateDevice(int width, int height, int Windowed, int b
 
 void CPythonApplication::Loop()
 {
+#ifdef __APPLE__
+	fprintf(stderr, "[T] Loop basladi\n"); fflush(stderr);
+	unsigned int cynexIter = 0;
+#endif
 	while (1)
 	{
 		if (IsMessage())
 		{
 			if (!MessageProcess())
+			{
+#ifdef __APPLE__
+				fprintf(stderr, "[T] Loop cikis: MessageProcess false (tur=%u)\n", cynexIter); fflush(stderr);
+#endif
 				break;
+			}
 		}
 		else
 		{
 			if (!Process())
+			{
+#ifdef __APPLE__
+				fprintf(stderr, "[T] Loop cikis: Process false (tur=%u)\n", cynexIter); fflush(stderr);
+#endif
 				break;
+			}
 
 			m_dwLastIdleTime=ELTimer_GetMSec();
 		}
+#ifdef __APPLE__
+		if (++cynexIter == 1 || cynexIter == 120)
+			{ fprintf(stderr, "[T] Loop tur %u\n", cynexIter); fflush(stderr); }
+#endif
 	}
 }
 
