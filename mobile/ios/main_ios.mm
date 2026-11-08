@@ -40,14 +40,14 @@ extern "C" int CynexIos_GameMain(void)
 	setvbuf(stdout, nullptr, _IOLBF, 0);
 	setvbuf(stderr, nullptr, _IONBF, 0);
 	signal(SIGPIPE, SIG_IGN);
-	fprintf(stderr, "[I] CynexMobil: Cynex Mobil (iOS) basliyor (%s)\n", __DATE__);
+	fprintf(stderr, "[I] AKRAVON: AKRAVON ONLINE (iOS) basliyor (%s)\n", __DATE__);
 
 	// oyun klasoru = belgeler klasoru: Dosyalar uygulamasi / Finder ile "mobile", "lib", "fonts" vb. buraya konur
 	const std::string dataPath = CynexPlatform_GetDataPath();
 	if (chdir(dataPath.c_str()) != 0)
-		fprintf(stderr, "[E] CynexMobil: oyun klasorune gecilemedi: %s\n", dataPath.c_str());
+		fprintf(stderr, "[E] AKRAVON: oyun klasorune gecilemedi: %s\n", dataPath.c_str());
 	CynexGdi_SetFontDirectory((dataPath + "/fonts").c_str());
-	fprintf(stderr, "[I] CynexMobil: oyun klasoru: %s\n", dataPath.c_str());
+	fprintf(stderr, "[I] AKRAVON: oyun klasoru: %s\n", dataPath.c_str());
 
 	Py_NoSiteFlag = 1;
 	Py_IgnoreEnvironmentFlag = 1;

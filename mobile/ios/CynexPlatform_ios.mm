@@ -24,7 +24,7 @@ extern "C" void CynexMss_Suspend(void);
 extern "C" void CynexMss_Resume(void);
 extern "C" int CynexIos_GameMain(void);	// native/main_ios.mm
 
-#define LOGI(...) do { fprintf(stderr, "[I] CynexMobil: " __VA_ARGS__); fputc('\n', stderr); } while (0)
+#define LOGI(...) do { fprintf(stderr, "[I] AKRAVON: " __VA_ARGS__); fputc('\n', stderr); } while (0)
 
 @class CynexView;
 
@@ -287,7 +287,7 @@ static void* GameThread(void*)
 		for (int i = 0; i < 500 && !g_wantWindow.load(); ++i)
 			usleep(10000);
 		const int ret = CynexIos_GameMain();
-		LOGI("Cynex Mobil kapandi (%d)", ret);
+		LOGI("AKRAVON kapandi (%d)", ret);
 	}
 	exit(0);
 	return nullptr;
