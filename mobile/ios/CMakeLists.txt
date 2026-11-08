@@ -10,6 +10,15 @@ set(MOBILE ${CMAKE_CURRENT_LIST_DIR}/..)
 # android/log.h, GLES3/gl3.h, EGL/egl.h yonlendirmeleri
 include_directories(${CMAKE_CURRENT_LIST_DIR}/shim)
 add_compile_definitions(CRYPTOPP_DISABLE_ASM)
+# Xcode libc++: C++17'de kaldirilan eski STL parcalari (istemci kullaniyor) tek tek acilmali
+add_compile_definitions(
+	_LIBCPP_ENABLE_CXX17_REMOVED_FEATURES
+	_LIBCPP_ENABLE_CXX17_REMOVED_UNARY_BINARY_FUNCTION
+	_LIBCPP_ENABLE_CXX17_REMOVED_BINDERS
+	_LIBCPP_ENABLE_CXX17_REMOVED_AUTO_PTR
+	_LIBCPP_ENABLE_CXX17_REMOVED_RANDOM_SHUFFLE
+	_LIBCPP_ENABLE_CXX20_REMOVED_TEMPORARY_BUFFER
+	_LIBCPP_DISABLE_DEPRECATION_WARNINGS)
 
 add_subdirectory(${MOBILE}/python27port python27)
 add_subdirectory(${MOBILE}/client client)
