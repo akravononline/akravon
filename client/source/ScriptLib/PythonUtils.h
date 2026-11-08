@@ -11,9 +11,17 @@ bool PyTuple_GetByte(PyObject* poArgs, int pos, unsigned char* ret);
 bool PyTuple_GetUnsignedInteger(PyObject* poArgs, int pos, unsigned int* ret);
 bool PyTuple_GetLong(PyObject* poArgs, int pos, LONG* ret);
 #ifdef CYNEX_MOBILE
+// Cynex: "long long" disindaki 64 bit tip: android int64_t (=long), apple long (int64_t orada long long)
+#ifdef __APPLE__
+#define CYNEX_LONG64 long
+#define CYNEX_ULONG64 unsigned long
+#else
+#define CYNEX_LONG64 int64_t
+#define CYNEX_ULONG64 uint64_t
+#endif
 // Cynex: android'de int64_t = long, long long ayri tip
-bool PyTuple_GetLongLong(PyObject* poArgs, int pos, int64_t* ret);
-bool PyTuple_GetUnsignedLongLong(PyObject* poArgs, int pos, uint64_t* ret);
+bool PyTuple_GetLongLong(PyObject* poArgs, int pos, CYNEX_LONG64* ret);
+bool PyTuple_GetUnsignedLongLong(PyObject* poArgs, int pos, CYNEX_ULONG64* ret);
 #endif
 bool PyTuple_GetUnsignedLong(PyObject* poArgs, int pos, DWORD* ret);
 bool PyTuple_GetUnsignedLongLong(PyObject* poArgs, int pos, unsigned long long* ret);

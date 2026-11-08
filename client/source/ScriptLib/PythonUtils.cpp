@@ -87,7 +87,7 @@ bool PyTuple_GetLongLong(PyObject* poArgs, int pos, long long* ret)
 }
 
 #ifdef CYNEX_MOBILE
-bool PyTuple_GetLongLong(PyObject* poArgs, int pos, int64_t* ret)
+bool PyTuple_GetLongLong(PyObject* poArgs, int pos, CYNEX_LONG64* ret)
 {
 	long long v = 0;
 	if (!PyTuple_GetLongLong(poArgs, pos, &v))
@@ -96,7 +96,7 @@ bool PyTuple_GetLongLong(PyObject* poArgs, int pos, int64_t* ret)
 	return true;
 }
 
-bool PyTuple_GetUnsignedLongLong(PyObject* poArgs, int pos, uint64_t* ret)
+bool PyTuple_GetUnsignedLongLong(PyObject* poArgs, int pos, CYNEX_ULONG64* ret)
 {
 	unsigned long long v = 0;
 	if (!PyTuple_GetUnsignedLongLong(poArgs, pos, &v))
