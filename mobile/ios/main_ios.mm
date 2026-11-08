@@ -50,6 +50,7 @@ extern "C" int CynexIos_GameMain(void)
 	// hata kaydi: Dosyalar > AKRAVON > akravon_log.txt
 	{
 		const std::string logPath = std::string(CynexPlatform_GetDataPath()) + "/akravon_log.txt";
+		rename(logPath.c_str(), (std::string(CynexPlatform_GetDataPath()) + "/akravon_log_onceki.txt").c_str());	// onceki oturum silinmesin
 		freopen(logPath.c_str(), "w", stderr);
 		freopen(logPath.c_str(), "a", stdout);
 	}
