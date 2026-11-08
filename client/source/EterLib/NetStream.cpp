@@ -410,6 +410,9 @@ bool CNetworkStream::Connect(const CNetworkAddress& c_rkNetAddr, int limitSec)
 	m_addr = c_rkNetAddr;
 
 	m_sock = socket(AF_INET, SOCK_STREAM, 0);
+#ifdef __APPLE__
+	fprintf(stderr, "[T] Connect: soket olustu fd=%d\n", (int)m_sock); fflush(stderr);
+#endif
 
 	if (m_sock == INVALID_SOCKET)
 	{
@@ -424,6 +427,9 @@ bool CNetworkStream::Connect(const CNetworkAddress& c_rkNetAddr, int limitSec)
 	if (connect(m_sock, (PSOCKADDR)&m_addr, m_addr.GetSize()) == SOCKET_ERROR)
 	{
 		int error = WSAGetLastError();
+#ifdef __APPLE__
+		fprintf(stderr, "[T] Connect: connect() hata=%d (errno=%d)\n", error, errno); fflush(stderr);
+#endif
 
 		if (error != WSAEWOULDBLOCK)
 		{
@@ -434,6 +440,9 @@ bool CNetworkStream::Connect(const CNetworkAddress& c_rkNetAddr, int limitSec)
 		}
 	}
 
+#ifdef __APPLE__
+	fprintf(stderr, "[T] Connect: baslatildi (limit %d sn)\n", limitSec); fflush(stderr);
+#endif
 	m_connectLimitTime = time(NULL) + limitSec;
 	return true;
 }

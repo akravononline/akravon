@@ -471,6 +471,9 @@ bool CAccountConnector::__AuthState_RecvAuthSuccess()
 	if (!Recv(sizeof(kAuthSuccessPacket), &kAuthSuccessPacket))
 		return false;
 
+#ifdef __APPLE__
+	fprintf(stderr, "[T] Auth sonucu bResult=%d key=%u kanal=%s:%d\n", (int)kAuthSuccessPacket.bResult, (unsigned)kAuthSuccessPacket.dwLoginKey, m_strAddr.c_str(), m_iPort); fflush(stderr);
+#endif
 	if (!kAuthSuccessPacket.bResult)
 	{
 		if (m_poHandler)
@@ -617,6 +620,9 @@ void CAccountConnector::__AuthState_Set()
 
 void CAccountConnector::OnConnectFailure()
 {
+#ifdef __APPLE__
+	fprintf(stderr, "[T] AccountConnector::OnConnectFailure durum=%d\n", (int)m_eState); fflush(stderr);
+#endif
 	if (m_poHandler)
 		PyCallClassMemberFunc(m_poHandler, "OnConnectFailure", Py_BuildValue("()"));
 
@@ -630,6 +636,9 @@ void CAccountConnector::OnConnectSuccess()
 
 void CAccountConnector::OnRemoteDisconnect()
 {
+#ifdef __APPLE__
+	fprintf(stderr, "[T] AccountConnector::OnRemoteDisconnect durum=%d\n", (int)m_eState); fflush(stderr);
+#endif
 	if (m_isWaitKey)
 	{
 		if (m_poHandler)
@@ -644,6 +653,9 @@ void CAccountConnector::OnRemoteDisconnect()
 
 void CAccountConnector::OnDisconnect()
 {
+#ifdef __APPLE__
+	fprintf(stderr, "[T] AccountConnector::OnDisconnect durum=%d\n", (int)m_eState); fflush(stderr);
+#endif
 	__OfflineState_Set();
 }
 
