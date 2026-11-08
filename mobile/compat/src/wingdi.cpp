@@ -195,6 +195,24 @@ namespace
 		std::string p = FindInFontDir("default.ttf");
 		if (!p.empty())
 			return p;
+#ifdef __APPLE__
+		// Cynex iOS: /system/fonts yok - oyunla gelen yazi tiplerine dus
+		if (bold)
+		{
+			p = FindInFontDir("liberationsans-bold.ttf");
+			if (!p.empty())
+			{
+				boldFound = true;
+				return p;
+			}
+		}
+		for (const char* f : { "liberationsans-regular.ttf", "tahoma.ttf" })
+		{
+			p = FindInFontDir(f);
+			if (!p.empty())
+				return p;
+		}
+#endif
 
 		static const char* s_system[] = {
 			"/system/fonts/Roboto-Regular.ttf",
