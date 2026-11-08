@@ -62,7 +62,11 @@ typedef uint16_t WORD;
 typedef uint32_t DWORD;
 typedef int32_t LONG;
 typedef uint32_t ULONG;
+#if defined(__APPLE__) && defined(__OBJC__)
+#include <objc/objc.h>	// Objective-C: BOOL zaten tanimli (arm64'te bool)
+#else
 typedef int BOOL;
+#endif
 typedef BYTE BOOLEAN;
 typedef char CHAR;
 typedef unsigned char UCHAR;
