@@ -765,6 +765,12 @@ bool RunMainScript(CPythonLauncher& pyLauncher, const char* lpCmdLine)
 	return true;
 }
 
+#ifdef __APPLE__
+#define BREAD(m) do { fprintf(stderr, "[T] %s\n", m); fflush(stderr); } while (0)
+#else
+#define BREAD(m) ((void)0)
+#endif
+
 bool Main(HINSTANCE hInstance, LPSTR lpCmdLine)
 {
 #ifdef LOCALE_SERVICE_YMIR
@@ -775,6 +781,7 @@ bool Main(HINSTANCE hInstance, LPSTR lpCmdLine)
 	DWORD dwRandSeed=time(NULL)+DWORD(GetCurrentProcess());
 	srandom(dwRandSeed);
 	srand(random());
+	BREAD("Main basladi");
 
 	SetLogLevel(1);
 
@@ -800,6 +807,7 @@ bool Main(HINSTANCE hInstance, LPSTR lpCmdLine)
 
 	if (!Setup(lpCmdLine))
 		return false;
+	BREAD("Setup tamam");
 
 #ifdef _DEBUG
 	OpenConsoleWindow();
@@ -810,6 +818,7 @@ bool Main(HINSTANCE hInstance, LPSTR lpCmdLine)
 
 	static CLZO				lzo;
 	static CEterPackManager	EterPackManager;
+	BREAD("PackInitialize oncesi");
 
 	if (!PackInitialize("pack"))
 	{
@@ -817,6 +826,7 @@ bool Main(HINSTANCE hInstance, LPSTR lpCmdLine)
 		return false;
 	}
 
+	BREAD("PackInitialize tamam");
 	if(LocaleService_LoadGlobal(hInstance))
 		SetDefaultCodePage(LocaleService_GetCodePage());
 
@@ -831,6 +841,7 @@ bool Main(HINSTANCE hInstance, LPSTR lpCmdLine)
 	#endif
 
 	CPythonApplication * app = new CPythonApplication;
+	BREAD("CPythonApplication olusturuldu");
 
 #ifdef ENABLE_RASCAL_ANTICHEAT
 	initialiseRascal(NULL);
@@ -876,6 +887,7 @@ bool Main(HINSTANCE hInstance, LPSTR lpCmdLine)
 #endif
 
 	app->Initialize(hInstance);
+	BREAD("app->Initialize tamam");
 
 	bool ret=false;
 	{
@@ -883,8 +895,10 @@ bool Main(HINSTANCE hInstance, LPSTR lpCmdLine)
 		CPythonExceptionSender pyExceptionSender;
 		SetExceptionSender(&pyExceptionSender);
 
+		BREAD("pyLauncher.Create oncesi");
 		if (pyLauncher.Create())
 		{
+			BREAD("RunMainScript basliyor");
 			ret=RunMainScript(pyLauncher, lpCmdLine);
 		}
 
@@ -898,6 +912,7 @@ bool Main(HINSTANCE hInstance, LPSTR lpCmdLine)
 
 	app->Destroy();
 	delete app;
+	BREAD(ret ? "Main bitti: basarili" : "Main bitti: BASARISIZ");
 
 	return ret;
 }
@@ -967,6 +982,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	//_CrtSetBreakAlloc( 110247 );
 #endif
 
+	BREAD("WinMain basladi");
 	ApplicationStringTable_Initialize(hInstance);
 
 	LocaleService_LoadConfig("config/locale.cfg");
@@ -1066,6 +1082,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	}
 	#endif
 
+	BREAD("Main cagriliyor");
 	Main(hInstance, lpCmdLine);
 
 	#ifdef CEF_BROWSER
