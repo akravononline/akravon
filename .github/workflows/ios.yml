@@ -26,7 +26,9 @@ jobs:
 
       - name: Hatalar (ozet)
         if: failure()
-        run: grep -E 'error:|fatal error' derleme.log | sort -u | head -60 || true
+        run: |
+          grep -E 'error:|fatal error|ld: |Undefined symbols' derleme.log | sed 's#/Users/runner/work/akravon/akravon/##' | sort -u | head -45 | while IFS= read -r line; do echo "::error::${line}"; done
+          true
 
       - name: IPA paketle (imzasiz)
         run: |
