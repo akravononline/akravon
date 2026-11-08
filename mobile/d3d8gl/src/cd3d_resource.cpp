@@ -231,6 +231,7 @@ bool Texture::EnsureGL()
 	glGenTextures(1, &m_gl);
 	m_dev->BindTextureUnit(0, m_gl);
 	m_glLevels = m_isRT ? 1 : (int)m_levels;
+	while (glGetError() != GL_NO_ERROR) {}	// Cynex: onceki cagridan kalan hata bayragi bu dokuya yazilmasin
 	glTexStorage2D(GL_TEXTURE_2D, m_glLevels, m_up.internalFmt, m_w, m_h);
 	GLenum err = glGetError();
 	if (err != GL_NO_ERROR)

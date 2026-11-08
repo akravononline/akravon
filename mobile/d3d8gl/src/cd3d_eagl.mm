@@ -71,7 +71,7 @@ void QueryGLCaps()
 	g_glcaps.maxTexUnits = v < 8 ? v : 8;
 
 	g_glcaps.bufStorage = false;	// apple gles'te GL_EXT_buffer_storage yok
-	g_glcaps.useMapRange = false;	// glBufferSubData yolu (android'de de boyleydi)
+	g_glcaps.useMapRange = true;	// apple: subData kullanimdaki tamponda bekletir (~0.3 ms/cizim); senkronsuz map hizli
 
 	CD3D_LOGI("GL: %s / %s s3tc=%d map=%d aniso=%d(%.0f) maxtex=%d units=%d", g_glcaps.vendor, g_glcaps.renderer,
 		g_glcaps.s3tc, g_glcaps.useMapRange, g_glcaps.aniso, g_glcaps.maxAniso, g_glcaps.maxTexSize, g_glcaps.maxTexUnits);

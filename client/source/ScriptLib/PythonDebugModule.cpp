@@ -24,9 +24,6 @@ PyObject* dbgLogBox(PyObject* poSelf, PyObject* poArgs)
 
 PyObject* dbgTrace(PyObject* poSelf, PyObject* poArgs)
 {
-#ifdef __APPLE__
-	{ PyObject* cynexA = (PyTuple_Size(poArgs) > 0) ? PyTuple_GetItem(poArgs, 0) : NULL; if (cynexA && PyString_Check(cynexA)) { fprintf(stderr, "[PY Trace] %s", PyString_AsString(cynexA)); fflush(stderr); } }
-#endif
 	char* szMsg;
 	if (!PyTuple_GetString(poArgs, 0, &szMsg))
 		return Py_BuildException();
@@ -37,9 +34,6 @@ PyObject* dbgTrace(PyObject* poSelf, PyObject* poArgs)
 
 PyObject* dbgTracen(PyObject* poSelf, PyObject* poArgs)
 {
-#ifdef __APPLE__
-	{ PyObject* cynexA = (PyTuple_Size(poArgs) > 0) ? PyTuple_GetItem(poArgs, 0) : NULL; if (cynexA && PyString_Check(cynexA)) { fprintf(stderr, "[PY Tracen] %s\n", PyString_AsString(cynexA)); fflush(stderr); } }
-#endif
 	char* szMsg;
 	if (!PyTuple_GetString(poArgs, 0, &szMsg))
 		return Py_BuildException();
