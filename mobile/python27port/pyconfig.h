@@ -113,7 +113,9 @@
 #define HAVE_DUP2 1
 #define HAVE_FCHDIR 1
 #define HAVE_FCHMOD 1
+#ifndef __APPLE__
 #define HAVE_FDATASYNC 1
+#endif
 #define HAVE_FSYNC 1
 #ifndef __APPLE__
 #define HAVE_FORK 1
@@ -155,7 +157,11 @@
 #define HAVE_MAKEDEV 1
 #define HAVE_MKNOD 1
 #define HAVE_DIRFD 1
+#ifdef __APPLE__
+#define HAVE_STAT_TV_NSEC2 1
+#else
 #define HAVE_STAT_TV_NSEC 1
+#endif
 #define HAVE_SYS_TIMES_H 1
 /* #undef HAVE_BROKEN_PTHREAD_SIGMASK */
 

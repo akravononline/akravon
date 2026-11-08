@@ -25,6 +25,9 @@
 
 #define PY_SSIZE_T_CLEAN
 
+#ifdef __APPLE__
+#include <TargetConditionals.h>
+#endif
 #include "Python.h"
 #include "structseq.h"
 #ifndef MS_WINDOWS
@@ -2847,7 +2850,11 @@ posix_system(PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "s:system", &command))
         return NULL;
     Py_BEGIN_ALLOW_THREADS
+#if defined(__APPLE__) && TARGET_OS_IPHONE
+    sts = -1; /* iOS: system() yok */
+#else
     sts = system(command);
+#endif
     Py_END_ALLOW_THREADS
     return PyInt_FromLong(sts);
 }
