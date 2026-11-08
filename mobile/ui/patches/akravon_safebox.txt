@@ -1,0 +1,58 @@
+# AKRAVON: depo / nesne marketi / sifre pencereleri (skin/build_akravon_safebox.py, uiakravonsafebox.py)
+@@ uisafebox.py
+<<<
+		self.GetChild("TitleBar").SetCloseEvent(ui.__mem_func__(self.Close))
+		self.GetChild("ChangePasswordButton").SetEvent(ui.__mem_func__(self.OnChangePassword))
+===
+		self.GetChild("CloseButton").SetEvent(ui.__mem_func__(self.Close))
+		self.GetChild("ChangePasswordButton").SetEvent(ui.__mem_func__(self.OnChangePassword))
+>>>
+
+@@ uisafebox.py
+<<<
+		self.dlgChangePassword = dlgChangePassword
+		self.wndBoard = self.GetChild("board")
+===
+		self.dlgChangePassword = dlgChangePassword
+		self.wndBoard = self.GetChild("board")
+		import uiAkravonSafebox
+		uiAkravonSafebox.ApplyBox(self, "Depo", True)
+>>>
+
+@@ uisafebox.py
+<<<
+		self.GetChild("TitleBar").SetCloseEvent(ui.__mem_func__(self.Close))
+		self.GetChild("ExitButton").SetEvent(ui.__mem_func__(self.Close))
+
+		self.wndItem = wndItem
+		self.wndBoard = self.GetChild("board")
+===
+		self.GetChild("CloseButton").SetEvent(ui.__mem_func__(self.Close))
+		self.GetChild("ExitButton").SetEvent(ui.__mem_func__(self.Close))
+
+		self.wndItem = wndItem
+		self.wndBoard = self.GetChild("board")
+		import uiAkravonSafebox
+		uiAkravonSafebox.ApplyBox(self, "Nesne Marketi", False)
+>>>
+
+@@ uisafebox.py
+<<<
+			self.GetChild("titlebar").SetCloseEvent(ui.__mem_func__(self.CloseDialog))
+		except:
+===
+			self.GetChild("titlebar").SetEvent(ui.__mem_func__(self.CloseDialog))
+			import uiAkravonSafebox
+			uiAkravonSafebox.ApplyDialog(self, ("accept_button", "cancel_button", "normal_button", "nesne_button"))
+		except:
+>>>
+
+@@ uisafebox.py
+<<<
+			self.GetChild("titlebar").SetCloseEvent(ui.__mem_func__(self.OnCancel))
+===
+			self.GetChild("titlebar").SetEvent(ui.__mem_func__(self.OnCancel))
+			import uiAkravonSafebox
+			uiAkravonSafebox.ApplyDialog(self, ("accept_button", "cancel_button"))
+>>>
+

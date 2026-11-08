@@ -1,0 +1,5 @@
+@@ UserInterface/Locale_inc.h
+<<<
+	#undef ENABLE_DISCORD_STUFF
+===
+>>>

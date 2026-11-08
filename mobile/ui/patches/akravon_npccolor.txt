@@ -1,0 +1,21 @@
+# AKRAVON: NPC ismi saf yesil (#00FF00)
+@@ colorinfo.py
+<<<
+CHR_NAME_RGB_NPC = (122, 231, 93)
+===
+CHR_NAME_RGB_NPC = (0, 255, 0)
+>>>
+
+@@ colorinfo.py
+<<<
+CHR_NAME_RGB_EMPIRE_NPC = (122, 231, 93)
+===
+CHR_NAME_RGB_EMPIRE_NPC = (0, 255, 0)
+>>>
+
+@@ colorinfo.py
+<<<
+CHR_NAME_RGB_PC = (255, 215, 76)
+===
+CHR_NAME_RGB_PC = (255, 255, 0)
+>>>

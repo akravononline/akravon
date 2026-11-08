@@ -1,0 +1,211 @@
+# Cynex: dokunmatik arayuz - python fonksiyonlari, parmak katmani, yuva ikon olcegi
+@@ UserInterface/UserInterface.cpp
+<<<
+bool RunMainScript(CPythonLauncher& pyLauncher, const char* lpCmdLine)
+{
+===
+#ifdef CYNEX_MOBILE
+void CynexMobile_InitPythonModules();
+#endif
+
+bool RunMainScript(CPythonLauncher& pyLauncher, const char* lpCmdLine)
+{
+>>>
+
+@@ UserInterface/UserInterface.cpp
+<<<
+	initServerStateChecker();
+===
+	initServerStateChecker();
+#ifdef CYNEX_MOBILE
+	// Cynex: dokunma, joystick, mobil ayar fonksiyonlari
+	CynexMobile_InitPythonModules();
+#endif
+>>>
+
+@@ UserInterface/PythonApplicationEvent.cpp
+<<<
+void CPythonApplication::OnUIUpdate()
+{
+	UI::CWindowManager& rkUIMgr=UI::CWindowManager::Instance();
+	rkUIMgr.Update();
+}
+===
+#ifdef CYNEX_MOBILE
+void CynexTouch_Update();
+bool CynexTouch_FilterMouseButton(int iEvent, int x, int y);
+#endif
+
+void CPythonApplication::OnUIUpdate()
+{
+#ifdef CYNEX_MOBILE
+	CynexTouch_Update();	// Cynex: parmaklar pencerelerden once
+#endif
+	UI::CWindowManager& rkUIMgr=UI::CWindowManager::Instance();
+	rkUIMgr.Update();
+}
+>>>
+
+@@ UserInterface/PythonApplicationEvent.cpp
+<<<
+void CPythonApplication::OnMouseLeftButtonDown(int x, int y)
+{
+	UI::CWindowManager& rkWndMgr=UI::CWindowManager::Instance();
+===
+void CPythonApplication::OnMouseLeftButtonDown(int x, int y)
+{
+#ifdef CYNEX_MOBILE
+	// Cynex: dokunmayi sahiplenen pencerede fare olayi yok
+	if (CynexTouch_FilterMouseButton(0, x, y))
+		return;
+#endif
+	UI::CWindowManager& rkWndMgr=UI::CWindowManager::Instance();
+>>>
+
+@@ UserInterface/PythonApplicationEvent.cpp
+<<<
+void CPythonApplication::OnMouseLeftButtonUp(int x, int y)
+{
+	UI::CWindowManager& rkWndMgr=UI::CWindowManager::Instance();
+===
+void CPythonApplication::OnMouseLeftButtonUp(int x, int y)
+{
+#ifdef CYNEX_MOBILE
+	if (CynexTouch_FilterMouseButton(1, x, y))
+		return;
+#endif
+	UI::CWindowManager& rkWndMgr=UI::CWindowManager::Instance();
+>>>
+
+@@ UserInterface/PythonApplicationEvent.cpp
+<<<
+void CPythonApplication::OnMouseLeftButtonDoubleClick(int x, int y)
+{
+	UI::CWindowManager& rkWndMgr=UI::CWindowManager::Instance();
+===
+void CPythonApplication::OnMouseLeftButtonDoubleClick(int x, int y)
+{
+#ifdef CYNEX_MOBILE
+	if (CynexTouch_FilterMouseButton(2, x, y))
+		return;
+#endif
+	UI::CWindowManager& rkWndMgr=UI::CWindowManager::Instance();
+>>>
+
+@@ EterPythonLib/PythonWindowManager.h
+<<<
+			void		RunPressExitKey();
+
+		private:
+			void		SetMousePosition(LONG x, LONG y);
+===
+			void		RunPressExitKey();
+
+#ifdef CYNEX_MOBILE
+			CWindow *	CynexPickWindow(LONG x, LONG y) { return __PickWindow(x, y); }	// Cynex: parmagin altindaki pencere
+#endif
+
+		private:
+			void		SetMousePosition(LONG x, LONG y);
+>>>
+
+@@ EterPythonLib/PythonSlotWindow.cpp
+<<<
+#include "PythonSlotWindow.h"
+
+//#define __RENDER_SLOT_AREA__
+===
+#include "PythonSlotWindow.h"
+
+#ifdef CYNEX_MOBILE
+// Cynex: wndMgr.SetSlotScale / SetSlotUnitSize ikon olcegi
+void CynexSlot_BeforeIcon(UI::CSlotWindow* pWnd, DWORD dwSlotNumber, CGraphicImageInstance* pInstance);
+void CynexSlot_BeforeBase(UI::CSlotWindow* pWnd, CGraphicImageInstance* pInstance);
+float CynexSlot_CoolHalf(UI::CSlotWindow* pWnd, DWORD dwSlotNumber);
+void CynexSlot_Forget(UI::CSlotWindow* pWnd);
+#endif
+
+//#define __RENDER_SLOT_AREA__
+>>>
+
+@@ EterPythonLib/PythonSlotWindow.cpp
+<<<
+			rSlot.pInstance->SetPosition(m_rect.left + rSlot.ixPosition, m_rect.top + rSlot.iyPosition);
+			rSlot.pInstance->Render();
+===
+			rSlot.pInstance->SetPosition(m_rect.left + rSlot.ixPosition, m_rect.top + rSlot.iyPosition);
+#ifdef CYNEX_MOBILE
+			CynexSlot_BeforeIcon(this, rSlot.dwSlotNumber, rSlot.pInstance);
+#endif
+			rSlot.pInstance->Render();
+>>>
+
+@@ EterPythonLib/PythonSlotWindow.cpp
+<<<
+			CPythonGraphic::Instance().RenderCoolTimeBox(m_rect.left + rSlot.ixPosition + 16.0f, m_rect.top + rSlot.iyPosition + 16.0f, 16.0f, fPercentage);
+===
+#ifdef CYNEX_MOBILE
+			const float fCynexHalf = CynexSlot_CoolHalf(this, rSlot.dwSlotNumber);
+			CPythonGraphic::Instance().RenderCoolTimeBox(m_rect.left + rSlot.ixPosition + fCynexHalf, m_rect.top + rSlot.iyPosition + fCynexHalf, fCynexHalf, fPercentage);
+#else
+			CPythonGraphic::Instance().RenderCoolTimeBox(m_rect.left + rSlot.ixPosition + 16.0f, m_rect.top + rSlot.iyPosition + 16.0f, 16.0f, fPercentage);
+#endif
+>>>
+
+@@ EterPythonLib/PythonSlotWindow.cpp
+<<<
+		m_pBaseImageInstance->SetPosition(m_rect.left + rSlot.ixPosition, m_rect.top + rSlot.iyPosition);
+		m_pBaseImageInstance->Render();
+===
+		m_pBaseImageInstance->SetPosition(m_rect.left + rSlot.ixPosition, m_rect.top + rSlot.iyPosition);
+#ifdef CYNEX_MOBILE
+		CynexSlot_BeforeBase(this, m_pBaseImageInstance);
+#endif
+		m_pBaseImageInstance->Render();
+>>>
+
+@@ EterPythonLib/PythonSlotWindow.cpp
+<<<
+	m_SlotList.clear();
+
+	__DestroyToggleSlotImage();
+===
+	m_SlotList.clear();
+#ifdef CYNEX_MOBILE
+	CynexSlot_Forget(this);
+#endif
+
+	__DestroyToggleSlotImage();
+>>>
+
+@@ UserInterface/PythonPlayer.h
+<<<
+		bool	NEW_MoveToDirection(float fDirRot);
+===
+		bool	NEW_MoveToDirection(float fDirRot);
+#ifdef CYNEX_MOBILE
+		bool	CynexMoveToDirection(float fDirRot);	// Cynex: dokunmatik joystick, serbest aci
+#endif
+>>>
+
+@@ EterPack/EterPackManager.cpp
+<<<
+bool CEterPackManager::isExist(const char * c_szFileName)
+{
+	return isExistInPack(c_szFileName);
+}
+===
+#ifdef CYNEX_MOBILE
+bool CynexAssetOverride_Exist(const char* c_szFileName);
+#endif
+
+bool CEterPackManager::isExist(const char * c_szFileName)
+{
+#ifdef CYNEX_MOBILE
+	// Cynex: pack'te olmayan mobil arayuz dosyalari (uimobile*.py, mobil/*.png)
+	if (CynexAssetOverride_Exist(c_szFileName))
+		return true;
+#endif
+	return isExistInPack(c_szFileName);
+}
+>>>

@@ -1,0 +1,16 @@
+# AKRAVON: yukleme ekrani mobil gorunumde (hata olursa orijinal pencere)
+@@ networkmodule.py
+<<<
+			import introLoading
+			self.SetPhaseWindow(introLoading.LoadingWindow(self, isWarp))
+===
+			import introLoading
+			try:
+				import uiMobileLoading
+				self.SetPhaseWindow(uiMobileLoading.MobileLoadingWindow(self, isWarp))
+			except Exception:
+				import dbg
+				import traceback
+				dbg.TraceError("uiMobileLoading: %s" % traceback.format_exc())
+				self.SetPhaseWindow(introLoading.LoadingWindow(self, isWarp))
+>>>

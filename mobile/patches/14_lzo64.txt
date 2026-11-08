@@ -1,0 +1,14 @@
+@@ EterBase/lzo.cpp
+<<<
+    UINT	iOutLen;
+===
+    lzo_uint	iOutLen;	// Cynex: lzo 64bit'te 8 bayt yaziyor
+>>>
+@@ EterBase/lzo.cpp
+<<<
+    UINT uiSize;
+    int r;
+===
+    lzo_uint uiSize;	// Cynex: lzo 64bit'te 8 bayt yaziyor
+    int r;
+>>>

@@ -1,0 +1,123 @@
+@@ UserInterface/Locale_inc.h
+<<<
+	#undef ENABLE_TURKLOKASYON_FIREWALL
+===
+>>>
+@@ EterPack/md5.h
+<<<
+typedef DWORD UINT4;
+===
+#include <stdint.h>
+typedef uint32_t UINT4;	// Cynex: md5 32bit kelime ister, 64bit'te unsigned long 8 bayt
+>>>
+@@ ScriptLib/PythonUtils.cpp 2
+<<<
+	*ret = unsigned char(val);
+===
+	*ret = (unsigned char)(val);
+>>>
+@@ UserInterface/PythonIME.cpp
+<<<
+	unsigned char c = unsigned char(wParam & 0xff);
+===
+	unsigned char c = (unsigned char)(wParam & 0xff);
+>>>
+@@ ScriptLib/PythonLauncher.cpp
+<<<
+	LONG magic;
+	LONG PyImport_GetMagicNumber(void);
+===
+	long magic;
+	long PyImport_GetMagicNumber(void);
+>>>
+@@ ScriptLib/PythonLauncher.cpp
+<<<
+			int len;
+			const char * exc_str;
+			PyObject_AsCharBuffer(exc_type, &exc_str, &len);
+===
+			Py_ssize_t len;
+			const char * exc_str;
+			PyObject_AsCharBuffer(exc_type, &exc_str, &len);
+>>>
+@@ EterLib/MSWindow.cpp
+<<<
+	CMSWindow * pWnd = (CMSWindow *) GetWindowLong(hWnd, GWL_USERDATA);
+===
+	CMSWindow * pWnd = (CMSWindow *) GetWindowLongPtr(hWnd, GWL_USERDATA);	// Cynex: 64bit isaretci
+>>>
+@@ EterLib/MSWindow.cpp
+<<<
+	SetWindowLong(m_hWnd, GWL_USERDATA, (DWORD) this);
+===
+	SetWindowLongPtr(m_hWnd, GWL_USERDATA, (LONG_PTR) this);
+>>>
+@@ UserInterface/PythonPlayerModule.cpp
+<<<
+			int pos = 0;
+			PyObject* key, *value;
+===
+			Py_ssize_t pos = 0;
+			PyObject* key, *value;
+>>>
+@@ UserInterface/PythonSwitchbot.cpp
+<<<
+		auto& it2 = it->second.find(table.apply_num);
+===
+		auto it2 = it->second.find(table.apply_num);
+>>>
+@@ UserInterface/PythonNetworkStreamPhaseGame.cpp
+<<<
+	if (rPacket.fPercents[0] == (-5.0f))
+	{
+		PyCallClassMemberFunc(m_apoPhaseWnd[PHASE_WINDOW_GAME], "BR_CloseWindow", Py_BuildValue("()"));
+		goto End;
+	}
+
+	bool isRefresh = false;
+===
+	bool isRefresh = false;
+	if (rPacket.fPercents[0] == (-5.0f))
+	{
+		PyCallClassMemberFunc(m_apoPhaseWnd[PHASE_WINDOW_GAME], "BR_CloseWindow", Py_BuildValue("()"));
+		goto End;
+	}
+
+>>>
+@@ ScriptLib/PythonUtils.h
+<<<
+bool PyTuple_GetLong(PyObject* poArgs, int pos, LONG* ret);
+===
+bool PyTuple_GetLong(PyObject* poArgs, int pos, LONG* ret);
+#ifdef CYNEX_MOBILE
+// Cynex: android'de int64_t = long, long long ayri tip
+bool PyTuple_GetLongLong(PyObject* poArgs, int pos, int64_t* ret);
+bool PyTuple_GetUnsignedLongLong(PyObject* poArgs, int pos, uint64_t* ret);
+#endif
+>>>
+@@ ScriptLib/PythonUtils.cpp
+<<<
+bool PyTuple_GetDouble(PyObject* poArgs, int pos, double* ret)
+===
+#ifdef CYNEX_MOBILE
+bool PyTuple_GetLongLong(PyObject* poArgs, int pos, int64_t* ret)
+{
+	long long v = 0;
+	if (!PyTuple_GetLongLong(poArgs, pos, &v))
+		return false;
+	*ret = v;
+	return true;
+}
+
+bool PyTuple_GetUnsignedLongLong(PyObject* poArgs, int pos, uint64_t* ret)
+{
+	unsigned long long v = 0;
+	if (!PyTuple_GetUnsignedLongLong(poArgs, pos, &v))
+		return false;
+	*ret = v;
+	return true;
+}
+#endif
+
+bool PyTuple_GetDouble(PyObject* poArgs, int pos, double* ret)
+>>>

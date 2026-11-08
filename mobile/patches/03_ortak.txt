@@ -1,0 +1,35 @@
+@@ EterBase/Random.h
+<<<
+extern LONG				random();
+===
+extern long				random();	// Cynex: bionic ile ayni imza
+>>>
+@@ EterBase/Random.cpp
+<<<
+LONG random()
+===
+long random()
+>>>
+@@ GameLib/FlyTarget.h
+<<<
+#pragma once
+
+
+class IFlyTargetableObject
+===
+#pragma once
+
+class CFlyTarget;
+
+class IFlyTargetableObject
+>>>
+@@ EterLib/IME.h
+<<<
+#include "DIMM.h"
+===
+#ifdef CYNEX_MOBILE
+#include <imm.h>
+#else
+#include "DIMM.h"
+#endif
+>>>

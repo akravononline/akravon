@@ -1,0 +1,38 @@
+# Cynex: sptverify - cynex_speedtree / SpeedTreeRT.dll karsilastirma araci (Windows)
+# Cynex: x86: dll ile canli karsilastirma + dokum; x64: dokumle karsilastirma (64bit duzen)
+cmake_minimum_required(VERSION 3.22)
+project(sptverify CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(SPTVERIFY_CLIENT_DIR "C:/CynexMobil/client" CACHE PATH "istemci kok dizini (Extern/include, Extern/lib)")
+set(SPT_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/..)
+
+# Cynex: dll ile ayni sembol olmasin diye test derlemesinde sinif adi degisir
+add_library(cynex_speedtree_test STATIC ${SPT_ROOT}/src/SpeedTreeRT.cpp ${SPT_ROOT}/src/CynexSptModel.cpp ${CMAKE_CURRENT_SOURCE_DIR}/SptCynexSide.cpp)
+target_include_directories(cynex_speedtree_test PRIVATE ${SPT_ROOT}/include ${SPT_ROOT}/src)
+target_compile_definitions(cynex_speedtree_test PRIVATE CSpeedTreeRT=CCynexSpeedTreeRT _CRT_SECURE_NO_WARNINGS)
+target_compile_options(cynex_speedtree_test PRIVATE /W4 /utf-8)
+
+option(SPTVERIFY_ASAN "AddressSanitizer ile derle" OFF)
+if(SPTVERIFY_ASAN)
+	target_compile_options(cynex_speedtree_test PRIVATE /fsanitize=address /Zi)
+endif()
+
+add_executable(sptverify SptVerify.cpp)
+if(SPTVERIFY_ASAN)
+	target_compile_options(sptverify PRIVATE /fsanitize=address /Zi)
+	target_link_options(sptverify PRIVATE /INCREMENTAL:NO /DEBUG)
+endif()
+target_link_libraries(sptverify PRIVATE cynex_speedtree_test)
+target_compile_definitions(sptverify PRIVATE _CRT_SECURE_NO_WARNINGS)
+target_compile_options(sptverify PRIVATE /W4 /utf-8)
+
+if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+	add_library(spt_oracle_side STATIC SptOracleSide.cpp)
+	target_include_directories(spt_oracle_side PRIVATE ${SPTVERIFY_CLIENT_DIR}/Extern/include)
+	target_compile_definitions(spt_oracle_side PRIVATE _CRT_SECURE_NO_WARNINGS WIN32_LEAN_AND_MEAN NOMINMAX)
+	target_compile_options(spt_oracle_side PRIVATE /W3 /utf-8 /EHsc)
+	target_link_libraries(sptverify PRIVATE spt_oracle_side ${SPTVERIFY_CLIENT_DIR}/Extern/lib/SpeedTreeRT.lib)
+	target_compile_definitions(sptverify PRIVATE SPTVERIFY_WITH_ORACLE)
+endif()

@@ -1,0 +1,152 @@
+# AKRAVON: Arkadaslar penceresi - karakter penceresi dili, sabit mobil boyut (skin/build_akravon_messenger.py)
+@@ uimessenger.py
+<<<
+	IMAGE_FILE_NAME = {	"ONLINE" : "d:/ymir work/ui/game/windows/messenger_list_online.sub",
+						"OFFLINE" : "d:/ymir work/ui/game/windows/messenger_list_offline.sub", }
+===
+	IMAGE_FILE_NAME = {	"ONLINE" : "d:/ymir work/ui/akravon_legacy/msg_on.png",
+						"OFFLINE" : "d:/ymir work/ui/akravon_legacy/msg_off.png", }
+>>>
+
+@@ uimessenger.py
+<<<
+	IMAGE_FILE_NAME = {	"OPEN" : "d:/ymir work/ui/game/windows/messenger_list_open.sub",
+						"CLOSE" : "d:/ymir work/ui/game/windows/messenger_list_close.sub", }
+===
+	IMAGE_FILE_NAME = {	"OPEN" : "d:/ymir work/ui/akravon_legacy/msg_open.png",
+						"CLOSE" : "d:/ymir work/ui/akravon_legacy/msg_close.png", }
+>>>
+
+@@ uimessenger.py
+<<<
+	START_POSITION = 40
+===
+	START_POSITION = 70
+>>>
+
+@@ uimessenger.py
+<<<
+			yPos += 20
+===
+			yPos += 28
+>>>
+
+@@ uimessenger.py
+<<<
+		self.resizeButton.SetPosition(0, 300)
+===
+		self.resizeButton.SetPosition(0, 300)
+		self.__AkravonStyle()
+>>>
+
+@@ uimessenger.py
+<<<
+	def OnResizeDialog(self):
+===
+	def __AkravonStyle(self):
+		# eski cerceve / baslik gizlenir; sabit 300x460, ust cubuk + yuvarlak X + etiketli 5 dugme
+		import uiMobileStyle, uiScriptLocale
+		(W, H) = (300, 460)
+		IMG = "d:/ymir work/ui/akravon_legacy/"
+		board = self.board
+		board.AddFlag("attach")	# panoya dokunup surukleyince pencere tasinir
+		for part in list(getattr(board, "Corners", [])) + list(getattr(board, "Lines", [])) + [getattr(board, "Base", None), getattr(board, "titleBar", None)]:
+			if part:
+				part.Hide()
+		self.akrKeep = []
+		def image(parent, name, x, y):
+			im = ui.ExpandedImageBox()
+			im.SetParent(parent)
+			im.AddFlag("not_pick")
+			im.LoadImage(IMG + name)
+			im.SetPosition(x, y)
+			im.Show()
+			self.akrKeep.append(im)
+			return im
+		image(board, "msg_board.png", 0, 0)
+		image(board, "msg_list.png", 16, 60)
+		gold = uiMobileStyle.Color(222, 184, 110)
+		self.akrKeep.append(uiMobileStyle.CreateText(board, uiScriptLocale.MESSENGER_TITLE, W // 2, 13, gold, "Marcellus:22", "center"))
+		self.akrKeep.append(uiMobileStyle.CreateBar(board, uiMobileStyle.Color(96, 74, 42), 16, 50, W - 32, 1))
+		close = ui.Button()
+		close.SetParent(self)
+		close.SetUpVisual(IMG + "close_1.png")
+		close.SetOverVisual(IMG + "close_2.png")
+		close.SetDownVisual(IMG + "close_3.png")
+		close.SetPosition(W - 40, 10)
+		close.SAFE_SetEvent(self.Close)
+		close.Show()
+		self.akrKeep.append(close)
+		buttons = [("add", self.addFriendButton, "Ekle"), ("whisper", self.whisperButton, "Mesaj"), ("remove", self.removeButton, "Sil")]
+		if getattr(self, "addBlockButton", None):
+			buttons.append(("block", self.addBlockButton, "Engelle"))
+		buttons.append(("guild", self.guildButton, "Lonca"))
+		step = (W - 32 - 50) // max(1, len(buttons) - 1)
+		for (i, (name, btn, label)) in enumerate(buttons):
+			btn.SetUpVisual(IMG + "msg_%s_1.png" % name)
+			btn.SetOverVisual(IMG + "msg_%s_2.png" % name)
+			btn.SetDownVisual(IMG + "msg_%s_3.png" % name)
+			btn.SetDisableVisual(IMG + "msg_%s_4.png" % name)
+			btn.SetWindowHorizontalAlignLeft()
+			btn.SetWindowVerticalAlignTop()
+			btn.SetPosition(16 + i * step, H - 82)
+			btn.SetToolTipText("")
+			self.akrKeep.append(uiMobileStyle.CreateText(board, label, 16 + i * step + 25, H - 34, uiMobileStyle.Color(200, 190, 160), "Lato:14", "center"))
+		self.scrollBar.SetPosition(28, 62)
+		self.resizeButton.Hide()
+		ui.ScriptWindow.SetSize(self, W, H)
+		board.SetSize(W, H)
+		self.showingPageSize = H - 52 - 96 - 20
+		self.scrollBar.SetScrollBarSize(self.showingPageSize)
+		import wndMgr
+		self.SetPosition(wndMgr.GetScreenWidth() - W - 110, 70)	# ekrandan tasmasin
+
+	def OnResizeDialog(self):
+		if getattr(self, "akrKeep", None):
+			return
+>>>
+
+@@ uimessenger.py
+<<<
+		heightLimit = self.GetHeight() - (self.START_POSITION + 13)
+===
+		heightLimit = self.GetHeight() - (self.START_POSITION + 13) - (100 if getattr(self, "akrKeep", None) else 0)
+>>>
+
+@@ uimessenger.py
+<<<
+	def OnPressAddFriendButton(self):
+		friendNameBoard = uiCommon.InputDialog()
+===
+	def __AkravonCloseInputs(self):
+		# AKRAVON: ayni anda tek giris kutusu (Ekle / Engelle ust uste acilmasin)
+		for name in ("friendNameBoard", "blockNameBoard"):
+			board = getattr(self, name, None)
+			if board:
+				try:
+					board.Close()
+				except Exception:
+					pass
+				setattr(self, name, None)
+
+	def OnPressAddFriendButton(self):
+		self.__AkravonCloseInputs()
+		friendNameBoard = uiCommon.InputDialog()
+>>>
+
+@@ uimessenger.py
+<<<
+		def OnPressAddBlockButton(self):
+			blockNameBoard = uiCommon.InputDialog()
+===
+		def OnPressAddBlockButton(self):
+			self.__AkravonCloseInputs()
+			blockNameBoard = uiCommon.InputDialog()
+>>>
+
+@@ uimessenger.py
+<<<
+			blockNameBoard.SetTitle(localeInfo.MESSENGER_ADD_BLOCK_FRIEND)
+===
+			blockNameBoard.SetTitle("Oyuncu engelle")	# AKRAVON: locale metni yalniz "Ekle"
+>>>

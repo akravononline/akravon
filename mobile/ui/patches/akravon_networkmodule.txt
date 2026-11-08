@@ -1,0 +1,25 @@
+# AKRAVON: ortak uyari penceresi (PopupDialog) klasik AKRAVON gorunumunde - davranis degismez
+@@ networkmodule.py
+<<<
+		PythonScriptLoader.LoadScriptFile(self, "UIScript/PopupDialog.py")
+===
+		PythonScriptLoader.LoadScriptFile(self, "UIScript/PopupDialog.py")
+		try:
+			import uiAkravon
+			uiAkravon.RestylePopupDialog(self)
+		except Exception:
+			import dbg
+			import traceback
+			dbg.TraceError("PopupDialog AKRAVON: %s" % traceback.format_exc())
+>>>
+
+@@ networkmodule.py
+<<<
+		self.GetChild("message").SetText(Message)
+		self.Show()
+===
+		self.GetChild("message").SetText(Message)
+		if getattr(self, "akravonPopup", None):
+			self.akravonPopup.SetContent(Message, ButtonName)
+		self.Show()
+>>>

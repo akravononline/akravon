@@ -1,0 +1,13 @@
+# AKRAVON: native map uses emplace, so choose the HD icon at first registration.
+@@ emotion.py
+<<<
+def RegisterEmotionIcons():
+	for key, val in ICON_DICT.items():
+		player.RegisterEmotionIcon(key, val)
+===
+def RegisterEmotionIcons():
+	import uiAkravonActionIcon
+	for key, val in ICON_DICT.items():
+		icon = uiAkravonActionIcon.GetEmotionIcon(key, 32)
+		player.RegisterEmotionIcon(key, icon if icon else val)
+>>>

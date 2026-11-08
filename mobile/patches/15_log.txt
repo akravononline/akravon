@@ -1,0 +1,23 @@
+@@ EterBase/Debug.cpp
+<<<
+#ifndef _DISTRIBUTE
+	freopen("data/syserr.txt", "w", stderr);
+===
+#ifndef _DISTRIBUTE
+#ifndef CYNEX_MOBILE
+	freopen("data/syserr.txt", "w", stderr);	// Cynex: mobilde stderr logcat'e gidiyor
+#endif
+>>>
+@@ EterBase/Debug.cpp
+<<<
+void OpenConsoleWindow()
+{
+	AllocConsole();
+===
+void OpenConsoleWindow()
+{
+#ifdef CYNEX_MOBILE
+	return;	// Cynex: konsol yok, stdout logcat'te
+#endif
+	AllocConsole();
+>>>

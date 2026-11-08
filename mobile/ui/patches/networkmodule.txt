@@ -1,0 +1,63 @@
+# Cynex: telefonda dokunmatik giris / imparatorluk / secim / olusturma pencereleri, masaustunde eskisi
+@@ networkmodule.py
+<<<
+	def SetLogoPhase(self):
+===
+	# Cynex: mobil pencere kurulamazsa masaustu penceresiyle devam
+	def __IsMobileLayout(self):
+		try:
+			import uiMobileHud
+			return uiMobileHud.Refresh()
+		except Exception:
+			import dbg
+			dbg.TraceError("networkModule: uiMobileHud yuklenemedi")
+			return False
+
+	def __CreatePhaseWindow(self, moduleName, className, desktopClass):
+		if self.__IsMobileLayout():
+			try:
+				module = __import__(moduleName)
+				return getattr(module, className)(self)
+			except Exception:
+				import dbg
+				import traceback
+				dbg.TraceError("networkModule: %s.%s\n%s" % (moduleName, className, traceback.format_exc()))
+		return desktopClass(self)
+
+	def SetLogoPhase(self):
+>>>
+
+@@ networkmodule.py
+<<<
+self.SetPhaseWindow(introLogin.LoginWindow(self))
+===
+self.SetPhaseWindow(self.__CreatePhaseWindow("uiMobileLogin", "MobileLoginWindow", introLogin.LoginWindow))
+>>>
+
+@@ networkmodule.py
+<<<
+self.SetPhaseWindow(introEmpire.SelectEmpireWindow(self))
+===
+self.SetPhaseWindow(self.__CreatePhaseWindow("uiMobileEmpire", "MobileSelectEmpireWindow", introEmpire.SelectEmpireWindow))
+>>>
+
+@@ networkmodule.py
+<<<
+self.SetPhaseWindow(introEmpire.ReselectEmpireWindow(self))
+===
+self.SetPhaseWindow(self.__CreatePhaseWindow("uiMobileEmpire", "MobileReselectEmpireWindow", introEmpire.ReselectEmpireWindow))
+>>>
+
+@@ networkmodule.py
+<<<
+self.SetPhaseWindow(introSelect.SelectCharacterWindow(self))
+===
+self.SetPhaseWindow(self.__CreatePhaseWindow("uiMobileSelect", "MobileSelectCharacterWindow", introSelect.SelectCharacterWindow))
+>>>
+
+@@ networkmodule.py
+<<<
+self.SetPhaseWindow(introCreate.CreateCharacterWindow(self))
+===
+self.SetPhaseWindow(self.__CreatePhaseWindow("uiMobileCreate", "MobileCreateCharacterWindow", introCreate.CreateCharacterWindow))
+>>>

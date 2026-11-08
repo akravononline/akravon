@@ -1,0 +1,46 @@
+# AKRAVON: Siralama - karakter penceresi dili (skin/build_akravon_rank.py)
+@@ uirank.py
+<<<
+			self.GetChild("EventBoardTitleBar").SetCloseEvent(ui.__mem_func__(self.Close))
+===
+			self.GetChild("EventBoardTitleBar").SetCloseEvent(ui.__mem_func__(self.Close))
+			# AKRAVON: eski kose/baslik gizlenir; ortada Marcellus baslik + yuvarlak X
+			import uiMobileStyle
+			akrBoard = self.GetChild("EventBoard")
+			for part in list(getattr(akrBoard, "Corners", [])) + list(getattr(akrBoard, "Lines", [])) + [getattr(akrBoard, "Base", None)]:
+				if part:
+					part.Hide()
+			self.GetChild("EventBoardTitleBar").Hide()
+			gold = uiMobileStyle.Color(222, 184, 110)
+			self.akrKeep = [uiMobileStyle.CreateText(akrBoard, "Sýralama", 788 // 2, 12, gold, "Marcellus:22", "center")]
+			akrClose = ui.Button()
+			akrClose.SetParent(akrBoard)
+			akrClose.SetUpVisual("d:/ymir work/ui/akravon_legacy/close_1.png")
+			akrClose.SetOverVisual("d:/ymir work/ui/akravon_legacy/close_2.png")
+			akrClose.SetDownVisual("d:/ymir work/ui/akravon_legacy/close_3.png")
+			akrClose.SetPosition(788 - 42, 10)
+			akrClose.SAFE_SetEvent(self.Close)
+			akrClose.Show()
+			self.akrKeep.append(akrClose)
+>>>
+
+@@ uirank.py
+<<<
+(3, 400-3)
+===
+(20, 8)
+>>>
+
+@@ uirank.py
+<<<
+		name = ui.TextLine()
+		name.SetParent(self)
+		name.SetPosition(25, 5)
+		name.Show()
+===
+		name = ui.TextLine()
+		name.SetParent(self)
+		name.SetPosition(14 if isSubItem else 25, 5)
+		name.SetFontName("Lato:14")	# AKRAVON: uzun adlar (Tamamlanmis Zindan) satira sigsin
+		name.Show()
+>>>

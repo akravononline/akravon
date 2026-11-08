@@ -1,0 +1,396 @@
+# AKRAVON: pazar pencereleri sifirdan (uiakravonpazar.py): Marketim, Market Deposu, fiyat penceresi; 6x6, en fazla 20 urun
+@@ uiikashop.py
+<<<
+class IkarusShopWindow(ui.Window):
+===
+AKR_COLS = 6
+AKR_ROWS = 6
+AKR_MAX_ITEMS = 20
+AKR_CELL = 56
+
+
+def AkrCellToSlot(cell):
+	row = cell // ikashop.SHOP_GRID_WIDTH
+	col = cell % ikashop.SHOP_GRID_WIDTH
+	if row < AKR_ROWS and col < AKR_COLS:
+		return row * AKR_COLS + col
+	return None
+
+
+def AkrSlotToCell(slot):
+	return (slot // AKR_COLS) * ikashop.SHOP_GRID_WIDTH + slot % AKR_COLS
+
+
+def AkrConvertItems(items):
+	# sunucu hucresi (10 sutun) -> pencere yuvasi (6 sutun); disarida kalan eski kayitlar gizlenir
+	result = {}
+	for it in items:
+		slot = AkrCellToSlot(it['cell'])
+		if slot is None:
+			continue
+		it['cell'] = slot
+		result[slot] = it
+	return result
+
+
+class IkarusShopWindow(ui.Window):
+>>>
+
+@@ uiikashop.py
+<<<
+	GRID_COLUMNS = ikashop.SHOP_GRID_WIDTH
+	GRID_ROWS = ikashop.SHOP_GRID_HEIGHT
+	PAGE_SIZE = GRID_COLUMNS * GRID_ROWS
+===
+	GRID_COLUMNS = 6
+	GRID_ROWS = 6
+	PAGE_SIZE = GRID_COLUMNS * GRID_ROWS
+>>>
+
+@@ uiikashop.py
+<<<
+		self.SetSize(343, 404+30+62)
+===
+		self.SetSize(372, 556)
+>>>
+
+@@ uiikashop.py
+<<<
+		#------------------------------------------------------------------------------------------------------------------#
+		PATH_ROOT_BUILD = "ikashop/lite/shopbuilder/"
+		self.NameSlotBar = self.CreateWidget(ui.ImageBox, pos = (12, 35))
+		self.NameSlotBar.LoadImage(PATH_ROOT_BUILD+"field_name.png")
+
+		self.NameEdit = ui.EditLine()
+		self.NameEdit.SetParent(self.NameSlotBar)
+		self.NameEdit.SetMax(40)
+		self.NameEdit.SetSize(self.NameSlotBar.GetWidth(), 15)
+		self.NameEdit.SetPosition(8, 7)
+		self.NameEdit.SetLimitWidth(self.NameEdit.GetWidth())
+		self.NameEdit.SetEscapeEvent(ui.__mem_func__(self.OnPressNameEscapeKey))
+		self.NameEdit.SetInfoMessage(locale.IKASHOP_BUSINESS_SHOP_TITLE)
+		self.NameEdit.SetStatus(True)
+		self.NameEdit.SetOutline()
+		self.NameEdit.Show()
+		#------------------------------------------------------------------------------------------------------------------#
+
+		# background image
+		self.bgImage = self.CreateWidget(ui.ImageBox, pos = (7, 94))
+		self.bgImage.LoadImage("ikashop/lite/business/bg_img.png")
+
+		# making slot box
+		self.slotBox = self.CreateWidget(ui.ImageBox, pos = (5, 94+63))
+		self.slotBox.LoadImage("ikashop/lite/business/slot_box.png")
+
+		self.slotWindow = self.CreateWidget(ui.GridSlotWindow, parent = self.slotBox, pos = (6,6))
+		self.slotWindow.ArrangeSlot(0, self.GRID_COLUMNS, self.GRID_ROWS, SLOT_SIZE, SLOT_SIZE, 0, 0)
+		# self.slotWindow.SetSlotBaseImage("ikashop/lite/common/slot/default.png", 1.0, 1.0, 1.0, 1.0)
+		self.slotWindow.SetSlotBaseImage("d:/ymir work/ui/public/Slot_Base.sub", 1.0, 1.0, 1.0, 1.0)
+		self.slotWindow.SetSelectEmptySlotEvent(self._OnClickEmptySlot)
+		self.slotWindow.SetSelectItemSlotEvent(self._OnClickItemSlot)
+		self.slotWindow.SetOverInItemEvent(self._ShowToolTipOnItemSlot)
+		self.slotWindow.SetOverOutItemEvent(self._HideToolTipOnItemSlot)
+		self.slotWindow.SetUnselectItemSlotEvent(self._OnRightClickItemSlot)
+
+		# making duration box
+		self.durationBox = self.CreateWidget(ui.ImageBox, pos = (12, 35+30))
+		self.durationBox.LoadImage("ikashop/lite/business/duration_box.png")
+
+		self.durationText = self.CreateWidget(ui.TextLine, parent = self.durationBox, pos = (30, 4))
+		self.durationText.SetPackedFontColor(0xFFFFFFFF)
+		self.durationText.SetText("11d 22h 18m")
+
+		self.durationExpiredIcon = self.CreateWidget(ui.ImageBox, pos = (189 - 49, 3), parent = self.durationBox)
+		self.durationExpiredIcon.LoadImage("ikashop/lite/business/expired_icon.png")
+
+		self.durationIncreaseButton = self.CreateWidget(ui.Button, pos = (277, 45+20))
+		self.durationIncreaseButton.SetUpVisual("ikashop/lite/shopbuilder/pazar_n.png")
+		self.durationIncreaseButton.SetOverVisual("ikashop/lite/shopbuilder/pazar_h.png")
+		self.durationIncreaseButton.SetDownVisual("ikashop/lite/shopbuilder/pazar_d.png")
+		self.durationIncreaseButton.SetToolTipText(locale.IKASHOP_BUSINESS_DURATION_INCREASE_BUTTON_TEXT)
+		self.durationIncreaseButton.SetEvent(self._OnClickDurationIncreaseButton)
+		self.durationIncreaseButton.ToolTipText.SetOutline(1)
+		self.durationIncreaseButton.Hide()
+
+		# making bottom bar buttons
+		self.cancelShopButton = self.CreateWidget(ui.Button, pos = (277, 45+20))
+		self.cancelShopButton.SetUpVisual("ikashop/lite/shopbuilder/kapat_n.png")
+		self.cancelShopButton.SetOverVisual("ikashop/lite/shopbuilder/kapat_h.png")
+		self.cancelShopButton.SetDownVisual("ikashop/lite/shopbuilder/kapat_d.png")
+		self.cancelShopButton.SetToolTipText(locale.IKASHOP_BUSINESS_CANCEL_SHOP_BUTTON_TEXT)
+		self.cancelShopButton.SAFE_SetEvent(self._OnClickCancelShopButton)
+		self.cancelShopButton.ToolTipText.SetOutline(1)
+		self.cancelShopButton.Hide()
+
+		# making sidebar buttons
+		self.safeboxOpenButton = self.CreateWidget(ui.Button, pos = (212, 45+20))
+		self.safeboxOpenButton.SetUpVisual("ikashop/lite/shopbuilder/depo_n.png")
+		self.safeboxOpenButton.SetOverVisual("ikashop/lite/shopbuilder/depo_h.png")
+		self.safeboxOpenButton.SetDownVisual("ikashop/lite/shopbuilder/depo_d.png")
+		self.safeboxOpenButton.SAFE_SetEvent(self.safeboxBoard.Toggle)
+		self.safeboxOpenButton.SetToolTipText(locale.IKASHOP_BUSINESS_SAFEBOX_OPEN_BUTTON_TEXT)
+		self.safeboxOpenButton.ToolTipText.SetOutline(1)
+
+		self.privateOfferOpenButton = self.CreateWidget(ui.Button, pos = (7, 37 + 33))
+		self.privateOfferOpenButton.SetUpVisual("ikashop/lite/business/buttons/offer/default.png")
+		self.privateOfferOpenButton.SetDownVisual("ikashop/lite/business/buttons/offer/default.png")
+		self.privateOfferOpenButton.SetOverVisual("ikashop/lite/business/buttons/offer/hover.png")
+		self.privateOfferOpenButton.SAFE_SetEvent(self.offersBoard.Toggle)
+		self.privateOfferOpenButton.SetToolTipText(locale.IKASHOP_BUSINESS_PRIVATE_OFFER_OPEN_BUTTON_TEXT)
+		self.privateOfferOpenButton.ToolTipText.SetOutline(1)
+		self.privateOfferOpenButton.Hide()
+
+		self.auctionOpenButton = self.CreateWidget(ui.Button, pos = (7, 37 + 33*2))
+		self.auctionOpenButton.SetUpVisual("ikashop/lite/business/buttons/auction/default.png")
+		self.auctionOpenButton.SetDownVisual("ikashop/lite/business/buttons/auction/default.png")
+		self.auctionOpenButton.SetOverVisual("ikashop/lite/business/buttons/auction/hover.png")
+		self.auctionOpenButton.SAFE_SetEvent(self.auctionBoard.Toggle)
+		self.auctionOpenButton.SetToolTipText(locale.IKASHOP_BUSINESS_AUCTION_OPEN_BUTTON_TEXT)
+		self.auctionOpenButton.ToolTipText.SetOutline(1)
+		self.auctionOpenButton.Hide()
+
+		self.safeboxItemCounter = self.CreateWidget(IkarusShopCounter, pos = (25, 0), parent = self.safeboxOpenButton)
+		self.privateOfferCounter = self.CreateWidget(IkarusShopCounter, pos = (25, 0), parent = self.privateOfferOpenButton)
+		self.auctionOfferCounter = self.CreateWidget(IkarusShopCounter, pos = (25, 0), parent = self.auctionOpenButton)
+===
+		import uiAkravonPazar
+		uiAkravonPazar.BuildMarket(self)
+>>>
+
+@@ uiikashop.py
+<<<
+	GRID_COLUMNS = ikashop.SHOP_GRID_WIDTH
+	GRID_ROWS = ikashop.SHOP_GRID_HEIGHT
+===
+	GRID_COLUMNS = 6
+	GRID_ROWS = 6
+>>>
+
+@@ uiikashop.py
+<<<
+		self.SetSize(343, 404+29)
+===
+		self.SetSize(372, 470)
+>>>
+
+@@ uiikashop.py
+<<<
+		self.bgImage = self.CreateWidget(ui.ImageBox, pos = (7, 30))
+===
+		self.bgImage = self.CreateWidget(ui.ImageBox, pos = (12, 30))
+>>>
+
+@@ uiikashop.py
+<<<
+		self.slotBox = self.CreateWidget(ui.ImageBox, pos = (5, 35+27+32))
+===
+		self.slotBox = self.CreateWidget(ui.ImageBox, pos = (12, 104))
+>>>
+
+@@ uiikashop.py
+<<<
+		# making bottom bar buttons
+		self.closeGmButton = self.CreateWidget(ui.Button, pos = (265, 50))
+===
+		self.slotWindow.ArrangeSlot(0, AKR_COLS, AKR_ROWS, AKR_CELL, AKR_CELL, 0, 0)
+		self.slotWindow.SetSlotBaseImage("ikashop/lite/common/slot/cell56.png", 1.0, 1.0, 1.0, 1.0)
+		wndMgr.SetSlotUnitSize(self.slotWindow.hWnd, 56, 56, 4)
+
+		# making bottom bar buttons
+		self.closeGmButton = self.CreateWidget(ui.Button, pos = (265, 50))
+>>>
+
+@@ uiikashop.py
+<<<
+		self.durationBox = self.CreateWidget(ui.ImageBox, pos = (12, 50))
+		self.durationBox.LoadImage("ikashop/lite/business/duration_box.png")
+
+		self.durationText = self.CreateWidget(ui.TextLine, parent = self.durationBox, pos = (30, 4))
+		self.durationText.SetPackedFontColor(0xFFFFFFFF)
+		self.durationText.SetText("11d 22h 18m")
+===
+		self.durationBox = self.CreateWidget(ui.ImageBox, pos = (12, 48))
+		self.durationBox.LoadImage("ikashop/lite/business/duration_box.png")
+
+		self.durationText = self.CreateWidget(ui.TextLine, parent = self.durationBox, pos = (30, 11))
+		self.durationText.SetPackedFontColor(0xFFFFFFFF)
+		self.durationText.SetText("11d 22h 18m")
+>>>
+
+@@ uiikashop.py
+<<<
+		self.closeGmButton = self.CreateWidget(ui.Button, pos = (265, 50))
+===
+		self.closeGmButton = self.CreateWidget(ui.Button, pos = (276, 48))
+>>>
+
+@@ uiikashop.py
+<<<
+			self.cancelShopButton.Hide()
+
+		# ordering items by cell and storing info
+		data['items'] = { item['cell'] : item for item in data['items'] }
+===
+			self.cancelShopButton.Hide()
+
+		# ordering items by cell and storing info
+		data['items'] = AkrConvertItems(data['items'])
+>>>
+
+@@ uiikashop.py
+<<<
+		self.SetTitleName(locale.IKASHOP_SHOP_NAME_FORMAT.format(splitText[0]))
+
+		# ordering items by cell and storing info
+		data['items'] = { item['cell'] : item for item in data['items'] }
+===
+		self.SetTitleName(locale.IKASHOP_SHOP_NAME_FORMAT.format(splitText[0]))
+
+		# ordering items by cell and storing info
+		data['items'] = AkrConvertItems(data['items'])
+>>>
+
+@@ uiikashop.py
+<<<
+			items = [(sitem['vnum'], sitem['cell']) for sitem in self.shopInfo['items'].values()]
+			if slot == None:
+				slot = ikashop.GetFirstEmptyCell(item.GetItemSize()[1], items)
+
+				# checking for busy space
+				if slot == None:
+					self.OpenPopupDialog(locale.IKASHOP_BUSINESS_CANNOT_SELL_ITEM_NO_SPACE)
+
+			# checking shop space
+			else:
+				if not ikashop.CheckShopSpace(items, itemIndex, slot):
+					return
+===
+			if len(self.shopInfo['items']) >= AKR_MAX_ITEMS:
+				self.OpenPopupDialog("Pazara en fazla 20 \xfcr\xfcn koyabilirsin.")
+				return
+
+			occupied = set()
+			for sitem in self.shopInfo['items'].values():
+				item.SelectItem(sitem['vnum'])
+				for r in xrange(item.GetItemSize()[1]):
+					occupied.add(sitem['cell'] + r * AKR_COLS)
+			item.SelectItem(itemIndex)
+			size = item.GetItemSize()[1]
+
+			def fits(s):
+				for r in xrange(size):
+					if s // AKR_COLS + r >= AKR_ROWS or (s + r * AKR_COLS) in occupied:
+						return False
+				return True
+
+			if slot == None:
+				for s in xrange(AKR_COLS * AKR_ROWS):
+					if fits(s):
+						slot = s
+						break
+				if slot == None:
+					self.OpenPopupDialog(locale.IKASHOP_BUSINESS_CANNOT_SELL_ITEM_NO_SPACE)
+					return
+			elif not fits(slot):
+				return
+			slot = AkrSlotToCell(slot)
+>>>
+
+@@ uiikashop.py
+<<<
+	GRID_COLUMNS = ikashop.SAFEBOX_GRID_WIDTH
+	GRID_ROWS = ikashop.SAFEBOX_GRID_HEIGHT
+	PAGE_COUNT = ikashop.SAFEBOX_PAGE_COUNT
+===
+	GRID_COLUMNS = 6
+	GRID_ROWS = 6
+	PAGE_COUNT = 5
+>>>
+
+@@ uiikashop.py
+<<<
+		self.SetSize(324, 438)
+===
+		self.SetSize(372, 536)
+>>>
+
+@@ uiikashop.py
+<<<
+		# making slot box
+		self.slotBox = self.CreateWidget(ui.ImageBox, pos = (11, 35))
+		self.slotBox.LoadImage("ikashop/lite/safebox/slot_box.png")
+
+		self.slotWindow = self.CreateWidget(ui.GridSlotWindow, parent = self.slotBox, pos = (6,6))
+		self.slotWindow.ArrangeSlot(0, self.GRID_COLUMNS, self.GRID_ROWS, SLOT_SIZE, SLOT_SIZE, 0, 0)
+		# self.slotWindow.SetSlotBaseImage("ikashop/lite/common/slot/default.png", 1.0, 1.0, 1.0, 1.0)
+		self.slotWindow.SetSlotBaseImage("d:/ymir work/ui/public/Slot_Base.sub", 1.0, 1.0, 1.0, 1.0)
+		self.slotWindow.SetOverInItemEvent(self._ShowToolTipOnItemSlot)
+		self.slotWindow.SetOverOutItemEvent(self._HideToolTipOnItemSlot)
+		self.slotWindow.SetSelectItemSlotEvent(self._OnClickItemSlot)
+
+		# making money box
+		self.moneyBox = self.CreateWidget(ui.ImageBox, pos = (11, 404))
+		self.moneyBox.LoadImage("ikashop/lite/safebox/money_box.png")
+		mx, my = self.moneyBox.GetLocalPosition()
+
+		self.moneyText = self.CreateWidget(ui.TextLine, parent = self.moneyBox, pos = (23, 4))
+		self.moneyText.SetFontName("Tahoma:11")
+		self.moneyText.SetPackedFontColor(0xFFFFFFFF)
+		self.moneyText.SetText(locale.NumberToString(2**31))
+
+		self.moneyClaimButton = self.CreateWidget(ui.Button, pos = (mx + self.moneyBox.GetWidth() + 2, my))
+		self.moneyClaimButton.SetUpVisual("ikashop/lite/safebox/buttons/claim_money/default.png")
+		self.moneyClaimButton.SetOverVisual("ikashop/lite/safebox/buttons/claim_money/hover.png")
+		self.moneyClaimButton.SetDownVisual("ikashop/lite/safebox/buttons/claim_money/default.png")
+		self.moneyClaimButton.SetToolTipText(locale.IKASHOP_SAFEBOX_CLAIM_MONEY_BUTTON_TEXT)
+		self.moneyClaimButton.SetEvent(self._OnClickClaimMoneyButton)
+
+		# making page selection box
+		self.selectPageButtons = []
+		for i in xrange(self.PAGE_COUNT):
+			selectPageButton = self.CreateWidget(ui.Button, pos = (158 + i*41, 405))
+			selectPageButton.SetUpVisual("ikashop/lite/safebox/buttons/select_page/default.png")
+			selectPageButton.SetDownVisual("ikashop/lite/safebox/buttons/select_page/default.png")
+			selectPageButton.SetOverVisual("ikashop/lite/safebox/buttons/select_page/hover.png")
+			selectPageButton.SetDisableVisual("ikashop/lite/safebox/buttons/select_page/disabled.png")
+			selectPageButton.SetText(RomeNumber(i+1))
+			selectPageButton.SAFE_SetEvent(self._OnSelectPage, i)
+			self.selectPageButtons.append(selectPageButton)
+
+		# making claim items button
+		self.itemsClaimButton = self.CreateWidget(ui.Button, pos = (158 + self.PAGE_COUNT*41 + 2, 405))
+		self.itemsClaimButton.SetUpVisual("ikashop/lite/safebox/buttons/claim_items/default.png")
+		self.itemsClaimButton.SetDownVisual("ikashop/lite/safebox/buttons/claim_items/default.png")
+		self.itemsClaimButton.SetOverVisual("ikashop/lite/safebox/buttons/claim_items/hover.png")
+		self.itemsClaimButton.SetToolTipText(locale.IKASHOP_SAFEBOX_CLAIM_ITEMS_BUTTON_TEXT)
+		self.itemsClaimButton.SAFE_SetEvent(self._OnClickClaimAllItemsButton)
+
+		# default opening first page
+		self._OnSelectPage(0)
+===
+		import uiAkravonPazar
+		uiAkravonPazar.BuildSafebox(self)
+>>>
+
+@@ uiikashop.py
+<<<
+		self.items = {item['cell'] : item for item in items}
+===
+		self.items = dict((i, data) for (i, data) in enumerate(sorted(items, key = lambda d : d['cell'])))
+>>>
+
+@@ uiikashop.py
+<<<
+				self.moneyInputDialog = uicommon.MoneyInputDialogNew(itemVnum, itemCount)
+===
+				import uiAkravonPazar
+				self.moneyInputDialog = uiAkravonPazar.PriceDialog(itemVnum, itemCount)
+>>>
+
+@@ uiikashop.py
+<<<
+			self.titleText.SetPosition(width/2, 3)
+===
+			self.titleText.SetPosition(width/2, getattr(self, 'akrTitleY', 3))
+>>>
+

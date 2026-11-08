@@ -1,0 +1,41 @@
+name: ios
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Yapilandir (cmake + Xcode)
+        run: |
+          cmake -S mobile/ios -B build -G Xcode \
+            -DCMAKE_SYSTEM_NAME=iOS \
+            -DCMAKE_OSX_ARCHITECTURES=arm64 \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=13.0
+
+      - name: Derle
+        run: |
+          cmake --build build --config Release -- CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO 2>&1 | tee derleme.log
+          test -d build/Release-iphoneos/cynexmobil.app
+
+      - name: IPA paketle (imzasiz)
+        run: |
+          mkdir -p Payload
+          cp -R build/Release-iphoneos/cynexmobil.app Payload/AKRAVON.app
+          zip -qr AKRAVON.ipa Payload
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AKRAVON-ipa
+          path: AKRAVON.ipa
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: derleme-gunlugu
+          path: derleme.log

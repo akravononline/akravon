@@ -1,0 +1,19 @@
+# derleme ciktilari / gecici
+build/
+*.log
+*.apk
+*.ipa
+__pycache__/
+*.pyc
+*.yedek*
+*.bak*
+# oyun varliklari ve buyuk dosyalar bu depoda tutulmaz
+*.zip
+*.dds
+*.tga
+*.mp3
+*.wav
+*.ttf
+mobile/ui/skin/yedek_*/
+mobile/ui/skin/ikonlar/
+mobile/ui/skin/src/

@@ -1,0 +1,93 @@
+# Cynex: dokunmatik hud (joystick, saldiri, beceri yayi) - masaustunde IsEnabled() kapali, davranis ayni
+@@ game.py
+<<<
+import interfaceModule
+===
+import interfaceModule
+import uiMobileHud	# Cynex: dokunmatik arayuz
+import uiMobileHudController
+>>>
+
+@@ game.py
+<<<
+cameraHeight = 100.0
+===
+cameraHeight = 100.0
+
+# Cynex: telefonda giris kamerasi suruklemeden sonraki egimle ayni
+if uiMobileHud.IsCameraSettingSupported():
+	cameraPitch = uiMobileHud.GetCameraPitch()
+>>>
+
+@@ game.py
+<<<
+		self.loopList = []
+
+		self.SelectSkill = None
+===
+		self.loopList = []
+
+		self.SelectSkill = None
+
+		self.mobileHud = None
+		self.touchRefreshPending = False
+>>>
+
+@@ game.py
+<<<
+		self.__ServerCommand_Build()
+		self.__ProcessPreservedServerCommand()
+===
+		self.__ServerCommand_Build()
+		self.__ProcessPreservedServerCommand()
+
+		# Cynex: masaustu arayuzunun ustune dokunmatik katman
+		uiMobileHud.Refresh()
+		self.RefreshTouchLayout()
+		uiMobileHud.BindRefreshRequest(ui.__mem_func__(self.RequestTouchRefresh))
+>>>
+
+@@ game.py
+<<<
+	def Close(self):
+		self.Hide()
+===
+	def Close(self):
+		self.Hide()
+
+		# Cynex: hud ana karakterden once kapanir (yuruyus ve saldiri durur)
+		self.__DestroyMobileHud(False)
+		uiMobileHud.BindRefreshRequest(None)
+		uiMobileHud.SetDoubleTapGate(False)
+>>>
+
+@@ game.py
+<<<
+	def OnUpdate(self):
+		app.UpdateGame()
+===
+	def RequestTouchRefresh(self):
+		self.touchRefreshPending = True
+
+	def RefreshTouchLayout(self):
+		self.touchRefreshPending = False
+		self.__DestroyMobileHud(True)
+		if not uiMobileHud.IsEnabled() or not self.interface:
+			return
+		self.mobileHud = uiMobileHudController.MobileHudController(self, self.interface)
+		if self.targetBoard and self.targetBoard.IsShow():
+			self.targetBoard.SetTop()
+
+	def __DestroyMobileHud(self, restoreDesktop):
+		if self.mobileHud:
+			self.mobileHud.Destroy(restoreDesktop)
+			self.mobileHud = None
+
+	def OnUpdate(self):
+		app.UpdateGame()
+
+		if self.touchRefreshPending:
+			self.RefreshTouchLayout()
+		if self.mobileHud:
+			self.mobileHud.Update()
+>>>

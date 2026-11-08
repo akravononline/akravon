@@ -1,0 +1,17 @@
+@@ EterLib/Util.cpp
+<<<
+bool SetDefaultCodePage(DWORD codePage)
+{
+	gs_codePage=codePage;
+===
+#ifdef CYNEX_MOBILE
+namespace cynex { void SetDefaultCodePageCompat(UINT cp); }
+#endif
+
+bool SetDefaultCodePage(DWORD codePage)
+{
+	gs_codePage=codePage;
+#ifdef CYNEX_MOBILE
+	cynex::SetDefaultCodePageCompat(codePage);	// Cynex: CP_ACP oyunun kod sayfasi olsun
+#endif
+>>>

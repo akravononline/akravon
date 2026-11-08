@@ -1,0 +1,82 @@
+// Cynex: EterGrnLib'in kullandigi tum granny sembolleri cozuluyor mu (-Wl,--no-undefined ile .so)
+#include <granny.h>
+
+typedef void (*TAnyFunction)();
+
+#define CYNEX_FN(name) reinterpret_cast<TAnyFunction>(&name),
+
+extern "C" __attribute__((visibility("default"))) const void * CynexGrannyLinkCheck(int index)
+{
+	static const TAnyFunction s_apfnFunctions[] =
+	{
+		CYNEX_FN(GrannyBuildWorldPose)
+		CYNEX_FN(GrannyCompleteControlAt)
+		CYNEX_FN(GrannyControlIsComplete)
+		CYNEX_FN(GrannyConvertSingleObject)
+		CYNEX_FN(GrannyCopyMeshIndices)
+		CYNEX_FN(GrannyCopyMeshVertices)
+		CYNEX_FN(GrannyDeformVertices)
+		CYNEX_FN(GrannyEaseControlIn)
+		CYNEX_FN(GrannyEaseControlOut)
+		CYNEX_FN(GrannyFindBoneByName)
+		CYNEX_FN(GrannyFindMatchingMember)
+		CYNEX_FN(GrannyFreeCompletedModelControls)
+		CYNEX_FN(GrannyFreeControl)
+		CYNEX_FN(GrannyFreeControlIfComplete)
+		CYNEX_FN(GrannyFreeControlOnceUnused)
+		CYNEX_FN(GrannyFreeFile)
+		CYNEX_FN(GrannyFreeFileSection)
+		CYNEX_FN(GrannyFreeLocalPose)
+		CYNEX_FN(GrannyFreeMeshBinding)
+		CYNEX_FN(GrannyFreeMeshDeformer)
+		CYNEX_FN(GrannyFreeModelInstance)
+		CYNEX_FN(GrannyFreeWorldPose)
+		CYNEX_FN(GrannyGetControlDurationLeft)
+		CYNEX_FN(GrannyGetControlLocalDuration)
+		CYNEX_FN(GrannyGetControlLoopCount)
+		CYNEX_FN(GrannyGetControlRawLocalClock)
+		CYNEX_FN(GrannyGetControlSpeed)
+		CYNEX_FN(GrannyGetFileInfo)
+		CYNEX_FN(GrannyGetLogMessageOriginString)
+		CYNEX_FN(GrannyGetLogMessageTypeString)
+		CYNEX_FN(GrannyGetMaterialTextureByType)
+		CYNEX_FN(GrannyGetMeshBindingToBoneIndices)
+		CYNEX_FN(GrannyGetMeshIndexCount)
+		CYNEX_FN(GrannyGetMeshTriangleGroupCount)
+		CYNEX_FN(GrannyGetMeshTriangleGroups)
+		CYNEX_FN(GrannyGetMeshVertexCount)
+		CYNEX_FN(GrannyGetMeshVertexType)
+		CYNEX_FN(GrannyGetMeshVertices)
+		CYNEX_FN(GrannyGetSourceSkeleton)
+		CYNEX_FN(GrannyGetSystemSeconds)
+		CYNEX_FN(GrannyGetTotalTypeSize)
+		CYNEX_FN(GrannyGetWorldPose4x4)
+		CYNEX_FN(GrannyGetWorldPoseComposite4x4)
+		CYNEX_FN(GrannyGetWorldPoseComposite4x4Array)
+		CYNEX_FN(GrannyInstantiateModel)
+		CYNEX_FN(GrannyMeshIsRigid)
+		CYNEX_FN(GrannyNewLocalPose)
+		CYNEX_FN(GrannyNewMeshBinding)
+		CYNEX_FN(GrannyNewMeshDeformer)
+		CYNEX_FN(GrannyNewWorldPose)
+		CYNEX_FN(GrannyPlayControlledAnimation)
+		CYNEX_FN(GrannyReadEntireFileFromMemory)
+		CYNEX_FN(GrannySampleModelAnimations)
+		CYNEX_FN(GrannySampleModelAnimationsAccelerated)
+		CYNEX_FN(GrannySetControlEaseIn)
+		CYNEX_FN(GrannySetControlEaseInCurve)
+		CYNEX_FN(GrannySetControlEaseOut)
+		CYNEX_FN(GrannySetControlEaseOutCurve)
+		CYNEX_FN(GrannySetControlLoopCount)
+		CYNEX_FN(GrannySetControlRawLocalClock)
+		CYNEX_FN(GrannySetControlSpeed)
+		CYNEX_FN(GrannySetLogCallback)
+		CYNEX_FN(GrannySetModelClock)
+		CYNEX_FN(GrannyUpdateModelMatrix)
+	};
+
+	const int count = (int) (sizeof(s_apfnFunctions) / sizeof(s_apfnFunctions[0]));
+	if (index < 0)
+		return GrannyPNT332VertexType;
+	return index < count ? reinterpret_cast<const void *>(s_apfnFunctions[index]) : 0;
+}

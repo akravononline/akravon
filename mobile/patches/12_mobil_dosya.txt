@@ -1,0 +1,17 @@
+@@ EterPack/EterPackManager.cpp
+<<<
+bool CEterPackManager::Get(CMappedFile & rMappedFile, const char * c_szFileName, LPCVOID * pData)
+{
+===
+#ifdef CYNEX_MOBILE
+bool CynexAssetOverride_Get(CMappedFile& rMappedFile, const char* c_szFileName, LPCVOID* pData);
+#endif
+
+bool CEterPackManager::Get(CMappedFile & rMappedFile, const char * c_szFileName, LPCVOID * pData)
+{
+#ifdef CYNEX_MOBILE
+	// Cynex: mobile/ klasorundeki donusturulmus model/agac dosyalari once
+	if (CynexAssetOverride_Get(rMappedFile, c_szFileName, pData))
+		return true;
+#endif
+>>>

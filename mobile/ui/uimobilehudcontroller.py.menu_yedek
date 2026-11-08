@@ -1,0 +1,722 @@
+from __future__ import division
+import app
+import mouseModule
+import player
+import wndMgr
+import ui
+import uiScriptLocale
+import uiMobileCompat
+import uiMobileHud
+import uiMobileStyle
+import uiMobileChrome
+import uiVirtualJoystick
+import uiAttackButton
+
+from _weakref import proxy
+
+STATE_HIDDEN = 0
+STATE_MOVEMENT_ONLY = 1
+STATE_FULL = 2
+
+BLOCKING_WINDOW_NAMES = ("wndInventory", "wndCharacter", "wndSpecialStorage", "wndMessenger", "wndDragonSoul", "dlgExchange", "dlgShop", "wndSafebox", "wndMall")
+QUICK_SLOT_REFRESH_INTERVAL = 0.5
+EVENT_BUTTON_NAMES = ("wheelShowButton", "wheelEventShowButton", "publisherShowButton")
+AFFECT_TOGGLE_NAME = "AffectShowHideBtn"
+AFFECT_LABEL_NAME = "AffectShowHideLabel"
+AFFECT_SWITCH_IMAGE = "mobile_ui/cynex/affect_switch_%s.png"
+AFFECT_DESKTOP_IMAGES = ("refine/checkbox.tga", "refine/checked.tga")
+AFFECT_DESKTOP_CHECK_Y = -4
+AFFECT_LABEL_GAP = 6
+AFFECT_DESKTOP_LABEL_COLOR = 0xFFFFFFFF
+# Cynex: barbaros mini harita kisayollari (biyolog, uzaktan market, siralama) dokunmayla da calisiyor - gizlenmez
+MINIMAP_HIDDEN_BUTTONS = ()
+# AKRAVON: kare harita - masaustu halka dugmeleri gizlenir; yerine ortak kitten kucuk yuvarlak zoom dugmeleri (haritanin
+# sag alt kosesi) ve haritanin altinda kisayol sirasi. Hepsi pencerenin icinde (ebeveyn disi secilmez).
+MINIMAP_DESKTOP_BUTTONS = ("AtlasShowButton", "MiniMapHideButton", "ScaleUpButton", "ScaleDownButton", "MiniMapShowButton")
+MINIMAP_FRAME_ASSET = "map_frame"
+MINIMAP_BACKGROUND_NAME = "OpenWindowBGI"
+MINIMAP_SIZE = (136, 137)
+MINIMAP_ZOOM_SIZE = 24
+# (kit adi, mini harita metodu, x, y)
+MINIMAP_ZOOM_BUTTONS = (("zoomout", "ScaleDown", 76, 104), ("zoomin", "ScaleUp", 102, 104))
+# (mini harita ozniteligi, kit adi): sol -> sag
+MINIMAP_SHORTCUTS = (("btnRank", "shield"), ("btnBiyolog", "quest"), ("btnUM", "pin"), ("btnMucadele", "attack"))
+MINIMAP_MARGIN = (14, 12)
+# Canli Yayin afisi (publisher_live.png 175x150, afis y 35-110): mobilde olcekli, masaustu X yerine yuvarlak X
+PUBLISHER_BUTTON_NAME = "publisherShowButton"
+PUBLISHER_CLOSE_NAME = "publisherCloseButton"
+PUBLISHER_SCALE = 0.7
+PUBLISHER_SIZE = (175, 150)
+PUBLISHER_CLOSE_ASSET = "close_28"
+PUBLISHER_CLOSE_TOP = 10
+TASKBAR_TOOLTIP_NAMES = ("tooltipHP", "tooltipSP", "tooltipST", "tooltipEXP")
+# Cynex: gorev cubugu gizliyken beceri yayi da ayni olaylari alsin
+TASKBAR_HOOKS = (("RefreshQuickSlot", "RefreshQuickSlot"), ("OnUseSkill", "OnUseSkill"), ("OnActivateSkill", "OnActivateSkill"), ("OnDeactivateSkill", "OnDeactivateSkill"))
+
+
+def _MakeTaskBarHook(function, taskBar, arc, arcName):
+	def Hooked(*args):
+		result = function(taskBar, *args)
+		try:
+			getattr(arc, arcName)(*args)
+		except ReferenceError:
+			pass
+		return result
+	return Hooked
+
+
+class MobileHudController(object):
+	def __init__(self, gameWindow, interface):
+		self.interface = proxy(interface)
+		self.gameWindow = proxy(gameWindow)
+		self.state = None
+		self.arcVisible = None
+		self.arcAttached = False
+		self.floatingPositions = {}
+		self.hiddenMinimapButtons = {}
+		self.minimapDesktopButtons = {}
+		self.minimapButtons = []
+		self.minimapTapWindow = None
+		self.publisherStyled = None
+		self.affectToggleDesktop = None
+		self.nextQuickSlotRefresh = 0.0
+		self.menuHighlights = {}
+
+		layout = uiMobileHud.GetTouchLayout(wndMgr.GetScreenWidth(), wndMgr.GetScreenHeight())
+		self.eventRow = layout["eventRow"]
+		self.affectTogglePosition = layout["affectToggle"]
+
+		(x, y, size) = layout["joystick"]
+		zone = layout["joystickZone"] if uiMobileHud.IsDynamicJoystick() else None
+		self.joystick = uiVirtualJoystick.VirtualJoystick(gameWindow, size, zone, layout["runLock"])
+		self.joystick.Place(x, y)
+
+		(x, y, size) = layout["attack"]
+		self.attackButton = uiAttackButton.AttackButton(size)
+		self.attackButton.SetPosition(x, y)
+
+		self.skillArc = uiMobileHud.SkillArc(interface.wndTaskBar, layout)
+		self.taskBarHooks = []
+		self.__HookTaskBar(interface.wndTaskBar)
+
+		(utilityPositions, utilitySize) = layout["utilities"]
+		self.utilities = uiMobileChrome.ButtonRow(uiMobileChrome.UTILITY_BUTTONS, utilitySize)
+		self.utilities.SetEvent("pickup", uiMobileChrome.RunPickup)
+		self.utilities.SetEvent("autohunt", self.__GetInterfaceEvent("OpenAutoHunt") if getattr(app, "__AUTO_HUNT__", 0) else None)
+		self.utilities.SetEvent("mount", uiMobileChrome.RunMount)
+		self.utilities.PlaceVertical(utilityPositions)
+		self.utilityOrigin = utilityPositions[0]
+
+		self.statusBar = uiMobileChrome.StatusBar()
+		self.__RedirectSystemDialog(interface)
+		self.statusBar.SetPosition(*layout["statusBar"])
+		self.statusBar.SetEvent(self.__GetInterfaceEvent("ToggleCharacterWindowStatusPage"))
+
+		(menuX, menuY, menuSize, menuGap) = layout["menuBar"]
+		self.menuMoreOpen = False
+		self.menuExtra = []
+		self.menuGeometry = (menuX, menuY, menuSize, menuGap, len(uiMobileChrome.MENU_BUTTONS))
+		self.menuBar = uiMobileChrome.ButtonRow(uiMobileChrome.MENU_BUTTONS, menuSize)
+		self.menuBar.SetEvent("inventory", self.__GetInterfaceEvent("ToggleInventoryWindow"))
+		self.menuBar.SetEvent("itemshop", self.__GetInterfaceEvent("ItemShopSendOpen"))
+		self.menuBar.SetEvent("character", self.__GetInterfaceEvent("ToggleCharacterWindowStatusPage"))
+		self.menuBar.SetEvent("more", self.__ToggleMenuMore)
+		self.menuBar.PlaceHorizontal(menuX, menuY, menuSize, menuGap)
+
+		self.menuMore = uiMobileChrome.ButtonRow(uiMobileChrome.MENU_MORE_BUTTONS, menuSize)
+		self.menuMore.SetEvent("messenger", self.__GetInterfaceEvent("ToggleMessenger"))
+		self.menuMore.SetEvent("system", self.__ToggleSystemMenu)
+		self.menuMore.SetLongPressEvent("system", self.__ToggleSettings)
+		moreCount = len(self.menuMore.order)
+		moreX = menuX + (len(uiMobileChrome.MENU_BUTTONS) - moreCount) * (menuSize + menuGap)
+		self.menuMore.PlaceHorizontal(moreX, menuY + menuSize + menuGap, menuSize, menuGap)
+
+		(pillX, pillY, pillWidth, pillHeight) = layout["chatPill"]
+		self.chatToggle = uiMobileChrome.ChatToggle(pillWidth, pillHeight)
+		self.chatToggle.SetPosition(pillX, pillY)
+		self.chatController = uiMobileChrome.ChatController(interface, self.chatToggle)
+		self.chatController.Place()
+		self.chatController.Collapse()
+
+		self.notifications = None
+		gameButtonWindow = getattr(interface, "wndGameButton", None)
+		if gameButtonWindow:
+			self.notifications = uiMobileChrome.NotificationLayout(gameButtonWindow)
+			self.notifications.Apply(uiMobileHud.SCREEN_EDGE, layout["notificationY"])
+
+		self.affectShower = None
+		self.affectShowerPosition = None
+		affectShower = getattr(gameWindow, "affectShower", None)
+		if affectShower:
+			self.affectShower = proxy(affectShower)
+			self.affectShowerPosition = affectShower.GetGlobalPosition()
+			affectShower.SetPosition(*layout["affectShower"])
+
+		self.__ArrangeFloatingWindows()
+
+	def __HookTaskBar(self, taskBar):
+		if not taskBar:
+			return
+		taskBarProxy = proxy(taskBar)
+		arcProxy = proxy(self.skillArc)
+		for (name, arcName) in TASKBAR_HOOKS:
+			method = getattr(taskBar.__class__, name, None)
+			function = getattr(method, "im_func", None)
+			if function is None:
+				continue
+			setattr(taskBar, name, _MakeTaskBarHook(function, taskBarProxy, arcProxy, arcName))
+			self.taskBarHooks.append(name)
+		self.taskBarProxy = taskBarProxy
+
+	def __UnhookTaskBar(self):
+		taskBar = getattr(self, "taskBarProxy", None)
+		for name in getattr(self, "taskBarHooks", []):
+			try:
+				if name in taskBar.__dict__:
+					del taskBar.__dict__[name]
+			except (ReferenceError, AttributeError):
+				pass
+		self.taskBarHooks = []
+		self.taskBarProxy = None
+
+	@staticmethod
+	def __ToggleSettings():
+		import uiMobileOptions
+		uiMobileOptions.Open(3)
+
+	def __ToggleSystemMenu(self):
+		import uiMobileSystem
+		uiMobileSystem.Toggle(self.interface)
+
+	def __RedirectSystemDialog(self, interface):
+		# AKRAVON: ESC / eski "Sistem" penceresi yerine yeni ayarlar menusu acilir
+		self.systemDialog = None
+		dialog = getattr(interface, "dlgSystem", None)
+		if not dialog:
+			return
+		try:
+			weakInterface = proxy(interface)
+		except TypeError:
+			weakInterface = interface
+
+		def OpenMobileMenu():
+			import uiMobileSystem
+			uiMobileSystem.Open(weakInterface)
+
+		dialog.OpenDialog = OpenMobileMenu
+		self.systemDialog = proxy(dialog)
+
+	def __RestoreSystemDialog(self):
+		dialog = getattr(self, "systemDialog", None)
+		self.systemDialog = None
+		if not dialog:
+			return
+		try:
+			if "OpenDialog" in dialog.__dict__:
+				del dialog.__dict__["OpenDialog"]
+		except (ReferenceError, AttributeError):
+			pass
+
+	def __ToggleMenuMore(self):
+		self.menuMoreOpen = not self.menuMoreOpen
+		button = self.menuBar.GetButton("more")
+		if button:
+			button.SetIcon("less" if self.menuMoreOpen else "more")
+		if self.menuMoreOpen and self.state != STATE_HIDDEN:
+			self.menuMore.Show()
+		else:
+			self.menuMore.Hide()
+		for extra in self.menuExtra:
+			if self.menuMoreOpen and self.state != STATE_HIDDEN:
+				extra.Show()
+			else:
+				extra.Hide()
+
+	def __GetInterfaceEvent(self, name):
+		method = getattr(self.interface, name, None)
+		if method is None:
+			return None
+		return ui.__mem_func__(method)
+
+	def Destroy(self, restoreDesktop):
+		self.__UnhookTaskBar()
+		self.__RestoreSystemDialog()
+
+		if restoreDesktop:
+			self.__RestoreDesktop()
+		else:
+			import uiMobileSettings
+			uiMobileSettings.Hide()
+
+		self.skillArc.Destroy()
+		self.attackButton.Destroy()
+		self.joystick.Destroy()
+		import uiMobileSystem
+		uiMobileSystem.Destroy()
+		import uiMobileOptions
+		uiMobileOptions.Destroy()
+		self.utilities.Destroy()
+		self.menuBar.Destroy()
+		self.menuMore.Destroy()
+		self.statusBar.Destroy()
+		self.chatController.Destroy()
+		self.chatToggle.Destroy()
+
+		self.skillArc = None
+		self.attackButton = None
+		self.joystick = None
+		self.utilities = None
+		self.menuBar = None
+		self.menuMore = None
+		self.statusBar = None
+		self.chatController = None
+		self.chatToggle = None
+		self.notifications = None
+		self.affectShower = None
+		self.floatingPositions = {}
+		self.gameWindow = None
+		self.interface = None
+
+	def __RestoreDesktop(self):
+		try:
+			taskBar = self.interface.wndTaskBar
+		except ReferenceError:
+			return
+		if taskBar:
+			taskBar.Show()
+		self.chatController.Restore()
+		if self.notifications:
+			self.notifications.Restore()
+		if self.affectShower and self.affectShowerPosition:
+			try:
+				self.affectShower.SetPosition(*self.affectShowerPosition)
+			except ReferenceError:
+				pass
+		for (window, position) in self.floatingPositions.values():
+			try:
+				window.SetPosition(*position)
+			except ReferenceError:
+				pass
+		for button in self.hiddenMinimapButtons.values():
+			try:
+				button.Show()
+			except ReferenceError:
+				pass
+		self.hiddenMinimapButtons = {}
+		self.__RestoreMinimapButtons()
+		self.__RestorePublisher()
+		self.__RestoreAffectToggle()
+
+	def __GetGameWindowChild(self, name):
+		try:
+			return getattr(self.gameWindow, name, None)
+		except ReferenceError:
+			return None
+
+	def __IsTracked(self, name, window):
+		stored = self.floatingPositions.get(name)
+		if not stored:
+			return False
+		try:
+			return stored[0] == window
+		except ReferenceError:
+			return False
+
+	def __MoveFloatingWindow(self, name, window, x, y):
+		if not self.__IsTracked(name, window):
+			self.floatingPositions[name] = (proxy(window), tuple(window.GetLocalPosition()))
+		if tuple(window.GetLocalPosition()) != (x, y):
+			window.SetPosition(x, y)
+
+	def __ArrangeFloatingWindows(self):
+		self.__StylePublisher()
+		(rightX, rowY) = self.eventRow
+		for name in EVENT_BUTTON_NAMES:
+			window = self.__GetGameWindowChild(name)
+			if not window or not window.IsShow():
+				continue
+			rightX -= window.GetWidth()
+			self.__MoveFloatingWindow(name, window, rightX, rowY)
+			rightX -= uiMobileHud.WINDOW_GAP
+
+		toggle = self.__GetGameWindowChild(AFFECT_TOGGLE_NAME)
+		if toggle:
+			self.__StyleAffectToggle(toggle)
+			self.__MoveFloatingWindow(AFFECT_TOGGLE_NAME, toggle, *self.affectTogglePosition)
+
+		self.__HideMinimapButtons()
+		self.__BuildMinimapButtons()
+		self.__ArrangeWhisperButtons()
+
+	def __ArrangeWhisperButtons(self):
+		# Cynex: fisilti/[DUYURU] dugmeleri sag sutundaki Topla/Oto Av/Binek ile cakismasin - solunda dizilir
+		buttons = getattr(self.interface, "whisperButtonList", None)
+		if not buttons:
+			return
+		(utilityX, utilityY) = self.utilityOrigin
+		y = utilityY
+		for button in buttons:
+			x = utilityX - button.GetWidth() - uiMobileHud.WINDOW_GAP * 2
+			if button.GetLocalPosition() != (x, y):
+				button.SetPosition(x, y)
+			y += button.GetHeight() + uiMobileHud.WINDOW_GAP
+
+	def __StyleAffectToggle(self, toggle):
+		if self.affectToggleDesktop:
+			return
+		label = self.__GetGameWindowChild(AFFECT_LABEL_NAME)
+		if not label or not toggle.backgroundImage or not toggle.checkImage:
+			return
+		self.affectToggleDesktop = (proxy(toggle), proxy(label), label.GetText(), tuple(label.GetLocalPosition()), (toggle.GetWidth(), toggle.GetHeight()))
+		toggle.backgroundImage.LoadImage(AFFECT_SWITCH_IMAGE % "off")
+		toggle.checkImage.LoadImage(AFFECT_SWITCH_IMAGE % "on")
+		toggle.checkImage.SetPosition(0, 0)
+		switchWidth = toggle.backgroundImage.GetWidth()
+		switchHeight = toggle.backgroundImage.GetHeight()
+		label.SetText(uiScriptLocale.MOBILE_AFFECT_TOGGLE)
+		label.SetPackedFontColor(uiMobileStyle.GOLD_COLOR)
+		label.SetPosition(switchWidth + AFFECT_LABEL_GAP, (switchHeight - 14) // 2)
+		toggle.SetSize(switchWidth + AFFECT_LABEL_GAP + label.GetTextSize()[0], switchHeight)
+
+	def __RestoreAffectToggle(self):
+		if not self.affectToggleDesktop:
+			return
+		(toggle, label, text, position, size) = self.affectToggleDesktop
+		self.affectToggleDesktop = None
+		try:
+			toggle.backgroundImage.LoadImage(AFFECT_DESKTOP_IMAGES[0])
+			toggle.checkImage.LoadImage(AFFECT_DESKTOP_IMAGES[1])
+			toggle.checkImage.SetPosition(0, AFFECT_DESKTOP_CHECK_Y)
+			toggle.SetSize(*size)
+			label.SetText(text)
+			label.SetPackedFontColor(AFFECT_DESKTOP_LABEL_COLOR)
+			label.SetPosition(*position)
+		except ReferenceError:
+			pass
+
+	def __HideMinimapButtons(self):
+		miniMap = getattr(self.interface, "wndMiniMap", None)
+		if not miniMap:
+			return
+		for name in MINIMAP_HIDDEN_BUTTONS:
+			button = getattr(miniMap, name, None)
+			if button and button.IsShow():
+				button.Hide()
+				self.hiddenMinimapButtons[name] = proxy(button)
+
+	def __BuildMinimapButtons(self):
+		miniMap = getattr(self.interface, "wndMiniMap", None)
+		if not miniMap:
+			return
+		for name in MINIMAP_DESKTOP_BUTTONS:
+			button = getattr(miniMap, name, None)
+			if button and button.IsShow():
+				button.Hide()
+				self.minimapDesktopButtons[name] = proxy(button)
+		for (attribute, kitName) in MINIMAP_SHORTCUTS:
+			button = getattr(miniMap, attribute, None)
+			if button and button.IsShow():
+				button.Hide()
+				self.minimapDesktopButtons[attribute] = proxy(button)
+
+		openWindow = getattr(miniMap, "OpenWindow", None)
+		if not self.minimapButtons and openWindow:
+			self.__StyleMinimap(miniMap, openWindow)
+
+		# haritaya dokunus = buyuk harita (dugmeler kardes: dokunuslari kendilerinde kalir)
+		mapWindow = getattr(miniMap, "MiniMapWindow", None)
+		if mapWindow and not self.minimapTapWindow:
+			toggle = ui.__mem_func__(miniMap.ToggleAtlasWindow)
+			mapWindow.SetTouchTapEvent(lambda x, y: toggle())
+			self.minimapTapWindow = proxy(mapWindow)
+
+	def __StyleMinimap(self, miniMap, openWindow):
+		(width, height) = MINIMAP_SIZE
+		try:
+			background = miniMap.GetChild(MINIMAP_BACKGROUND_NAME)
+			background.Hide()
+			self.minimapBackground = proxy(background)
+		except Exception:
+			self.minimapBackground = None
+
+		self.minimapFrame = uiMobileChrome.HudImage(openWindow, MINIMAP_FRAME_ASSET, 0, 0)
+
+		# kenarlara yapismasin: sag ve ustten bosluk
+		self.minimapOrigin = (miniMap, tuple(miniMap.GetLocalPosition()))
+		miniMap.SetPosition(wndMgr.GetScreenWidth() - width - MINIMAP_MARGIN[0], MINIMAP_MARGIN[1])
+
+		for (kitName, methodName, x, y) in MINIMAP_ZOOM_BUTTONS:
+			method = getattr(miniMap, methodName, None)
+			if not method:
+				continue
+			button = uiMobileChrome.HudButton(MINIMAP_ZOOM_SIZE, kitName)
+			button.SetParent(openWindow)
+			button.SetPosition(x, y)
+			button.SetEvent(ui.__mem_func__(method))
+			button.Show()
+			self.minimapButtons.append(button)
+
+		# haritayi gizle / goster
+		closeWindow = getattr(miniMap, "CloseWindow", None)
+		for (parent, kitName, methodName, x, y) in ((openWindow, "less", "HideMiniMap", 10, 104), (closeWindow, "more", "ShowMiniMap", width - MINIMAP_ZOOM_SIZE - 6, 6)):
+			method = getattr(miniMap, methodName, None)
+			if not parent or not method:
+				continue
+			button = uiMobileChrome.HudButton(MINIMAP_ZOOM_SIZE + 4, kitName)
+			button.SetParent(parent)
+			button.SetPosition(x, y)
+			button.SetEvent(ui.__mem_func__(method))
+			button.Show()
+			self.minimapButtons.append(button)
+
+		# kisayollar (siralama, biyolog, pazar, mucadele) haritanin altindan kalkti: acilir menude durur
+		(menuX, menuY, menuSize, menuGap, count) = self.menuGeometry
+		shortcuts = [(attribute, kitName) for (attribute, kitName) in MINIMAP_SHORTCUTS if getattr(miniMap, attribute, None)]
+		rowRight = menuX + count * (menuSize + menuGap) - menuGap
+		startX = rowRight - len(shortcuts) * (menuSize + menuGap) + menuGap
+		for (index, (attribute, kitName)) in enumerate(shortcuts):
+			button = uiMobileChrome.HudButton(menuSize, kitName)
+			button.SetPosition(startX + index * (menuSize + menuGap), menuY + 2 * (menuSize + menuGap))
+			button.SetEvent(ui.__mem_func__(getattr(miniMap, attribute).CallEvent))
+			if self.menuMoreOpen and self.state != STATE_HIDDEN:
+				button.Show()
+			else:
+				button.Hide()
+			self.menuExtra.append(button)
+
+	def __RestoreMinimapButtons(self):
+		for button in self.minimapButtons:
+			button.Hide()
+			button.Destroy()
+		self.minimapButtons = []
+		for button in self.menuExtra:
+			button.Hide()
+			button.Destroy()
+		self.menuExtra = []
+		frame = getattr(self, "minimapFrame", None)
+		if frame:
+			frame.Hide()
+			self.minimapFrame = None
+		background = getattr(self, "minimapBackground", None)
+		if background:
+			try:
+				background.Show()
+			except ReferenceError:
+				pass
+			self.minimapBackground = None
+		origin = getattr(self, "minimapOrigin", None)
+		if origin:
+			try:
+				origin[0].SetPosition(*origin[1])
+			except ReferenceError:
+				pass
+			self.minimapOrigin = None
+		for button in self.minimapDesktopButtons.values():
+			try:
+				button.Show()
+			except ReferenceError:
+				pass
+		self.minimapDesktopButtons = {}
+		if self.minimapTapWindow:
+			try:
+				self.minimapTapWindow.eventTouchTap = None
+				if "OnTouchTap" in self.minimapTapWindow.__dict__:
+					del self.minimapTapWindow.OnTouchTap
+			except ReferenceError:
+				pass
+			self.minimapTapWindow = None
+
+	def __StylePublisher(self):
+		button = self.__GetGameWindowChild(PUBLISHER_BUTTON_NAME)
+		if not button:
+			return
+		if self.publisherStyled:
+			try:
+				if self.publisherStyled[0] == button:
+					return
+			except ReferenceError:
+				pass
+			self.__RestorePublisher()
+		desktopClose = self.__GetGameWindowChild(PUBLISHER_CLOSE_NAME)
+		(width, height) = PUBLISHER_SIZE
+		scaledWidth = int(width * PUBLISHER_SCALE)
+		scaledHeight = int(height * PUBLISHER_SCALE)
+		button.SetButtonScale(PUBLISHER_SCALE, PUBLISHER_SCALE)
+		button.SetSize(scaledWidth, scaledHeight)
+		close = uiMobileStyle.StateImageButton(PUBLISHER_CLOSE_ASSET)
+		close.SetParent(button)
+		close.SetPosition(scaledWidth - close.GetWidth(), PUBLISHER_CLOSE_TOP)
+		if desktopClose:
+			desktopClose.Hide()
+			close.SetEvent(ui.__mem_func__(desktopClose.CallEvent))
+		close.Show()
+		self.publisherStyled = (proxy(button), proxy(desktopClose) if desktopClose else None, close)
+
+	def __RestorePublisher(self):
+		if not self.publisherStyled:
+			return
+		(button, desktopClose, close) = self.publisherStyled
+		self.publisherStyled = None
+		close.Hide()
+		close.Destroy()
+		try:
+			button.SetButtonScale(1.0, 1.0)
+			button.SetSize(*PUBLISHER_SIZE)
+			if desktopClose and button.IsShow():
+				desktopClose.Show()
+		except ReferenceError:
+			pass
+
+	def __IsWindowOpen(self, name):
+		window = self.interface.__dict__.get(name)
+		if not window:
+			return False
+		try:
+			return bool(window.IsShow())
+		except Exception:
+			return False
+
+	def __IsCombatBlocked(self):
+		for name in BLOCKING_WINDOW_NAMES:
+			if self.__IsWindowOpen(name):
+				return True
+		return False
+
+	def __GetState(self):
+		if uiMobileHud.IsCameraMode():
+			return STATE_HIDDEN
+		if player.IsObserverMode() or self.__IsCombatBlocked():
+			return STATE_MOVEMENT_ONLY
+		return STATE_FULL
+
+	def __ApplyState(self, state):
+		if state == STATE_HIDDEN:
+			self.joystick.Stop()
+			self.joystick.Hide()
+			self.statusBar.Hide()
+			self.menuBar.Hide()
+			self.menuMore.Hide()
+			for extra in self.menuExtra:
+				extra.Hide()
+			self.chatController.Hide()
+		else:
+			self.joystick.Show()
+			self.statusBar.Show()
+			self.menuBar.Show()
+			for extra in self.menuExtra:
+				if self.menuMoreOpen:
+					extra.Show()
+				else:
+					extra.Hide()
+			if self.menuMoreOpen:
+				self.menuMore.Show()
+			else:
+				self.menuMore.Hide()
+			self.chatController.Show()
+
+		if state == STATE_FULL:
+			self.attackButton.Show()
+			self.utilities.Show()
+		else:
+			self.attackButton.Stop()
+			self.attackButton.Hide()
+			self.utilities.Hide()
+
+	# Hizli erisim yayi C paneli acikken de gorunur (beceri uzun basisla yaya birakilir) ve imlece nesne takiliyken
+	# her durumda (envanterden iksir); saldiri dugmesi ve yardimcilar yine gizli. O durumlarda yay ustte: 16:9
+	# ekranda C panelinin altinda kalmasin.
+	def __RefreshSkillArc(self, state):
+		attached = bool(mouseModule.mouseController.isAttached())
+		if state == STATE_FULL:
+			wanted = True
+		elif state == STATE_HIDDEN or player.IsObserverMode():
+			wanted = False
+		else:
+			wanted = attached or self.__IsWindowOpen("wndCharacter")
+
+		raiseArc = wanted and state != STATE_FULL and (not self.arcVisible or (attached and not self.arcAttached))
+		self.arcAttached = attached
+		if wanted != self.arcVisible:
+			self.arcVisible = wanted
+			if wanted:
+				self.skillArc.Show()
+			else:
+				self.skillArc.Hide()
+		if raiseArc:
+			self.skillArc.SetTop()
+
+	def __HideTaskBar(self):
+		taskBar = self.interface.wndTaskBar
+		if not taskBar:
+			return
+		if taskBar.IsShow():
+			taskBar.Hide()
+		for name in TASKBAR_TOOLTIP_NAMES:
+			tooltip = getattr(taskBar, name, None)
+			if tooltip and tooltip.IsShow():
+				tooltip.Hide()
+
+	def __RefreshMenuHighlights(self):
+		for (buttonName, windowName) in (("inventory", "wndInventory"), ("character", "wndCharacter")):
+			button = self.menuBar.GetButton(buttonName)
+			if not button:
+				continue
+			isOpen = self.__IsWindowOpen(windowName)
+			if self.menuHighlights.get(buttonName) != isOpen:
+				self.menuHighlights[buttonName] = isOpen
+				button.SetHighlight(isOpen)
+		for (buttonName, windowName) in (("system", "dlgSystem"), ("messenger", "wndMessenger")):
+			button = self.menuMore.GetButton(buttonName)
+			if not button:
+				continue
+			isOpen = self.__IsWindowOpen(windowName)
+			if self.menuHighlights.get(buttonName) != isOpen:
+				self.menuHighlights[buttonName] = isOpen
+				button.SetHighlight(isOpen)
+
+	def __RefreshPointAlert(self):
+		if self.notifications:
+			self.notifications.HidePointButtons()
+		button = self.menuBar.GetButton("character")
+		if button:
+			button.SetAlert(player.GetStatus(player.STAT) > 0 or player.GetStatus(player.SKILL_ACTIVE) > 0)
+
+	def __RefreshLinkTooltip(self):
+		# AKRAVON: sohbetteki esya karti acikken ekranda herhangi bir yere ilk dokunus karti kapatir
+		tooltip = getattr(self.interface, "hyperlinkItemTooltip", None)
+		if not tooltip:
+			return
+		try:
+			shown = tooltip.IsShow()
+		except ReferenceError:
+			return
+		touching = app.GetTouchCount() > 0 if hasattr(app, "GetTouchCount") else False
+		if not shown:
+			self.linkTooltipArmed = False
+			return
+		if not touching:
+			self.linkTooltipArmed = True
+		elif getattr(self, "linkTooltipArmed", False):
+			self.linkTooltipArmed = False
+			tooltip.Hide()
+
+	def Update(self):
+		state = self.__GetState()
+		if state != self.state:
+			self.state = state
+			self.__ApplyState(state)
+		self.__RefreshSkillArc(state)
+		self.__RefreshLinkTooltip()
+
+		self.__HideTaskBar()
+		self.__RefreshMenuHighlights()
+		self.__RefreshPointAlert()
+
+		if state != STATE_HIDDEN:
+			self.chatController.Update()
+
+		now = app.GetTime()
+		if now >= self.nextQuickSlotRefresh:
+			self.nextQuickSlotRefresh = now + QUICK_SLOT_REFRESH_INTERVAL
+			self.skillArc.RefreshQuickSlot()
+			self.__ArrangeFloatingWindows()

@@ -1,0 +1,3 @@
+Noto Sans (c) The Noto Project Authors - SIL Open Font License 1.1
+https://github.com/notofonts/latin-greek-cyrillic
+Dosya: notosanssb.ttf = NotoSans-SemiBold.ttf (AKRAVON oyun ici isim etiketleri)

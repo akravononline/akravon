@@ -1,0 +1,35 @@
+@@ EterBase/tea.h
+<<<
+    int tea_encrypt(unsigned long *dest, const unsigned long *src, const unsigned long *key, int size);
+    int tea_decrypt(unsigned long *dest, const unsigned long *src, const unsigned long *key, int size);
+===
+    // Cynex: 64bit'te unsigned long 8 bayt - blok 32bit kalmali (windows'ta DWORD = unsigned long)
+    int tea_encrypt(DWORD *dest, const DWORD *src, const DWORD *key, int size);
+    int tea_decrypt(DWORD *dest, const DWORD *src, const DWORD *key, int size);
+>>>
+@@ EterBase/tea.cpp 0
+<<<
+unsigned long
+===
+DWORD
+>>>
+@@ EterBase/Random.h
+<<<
+extern void				srandom(unsigned long seed);
+extern unsigned long	random();
+===
+extern void				srandom(unsigned int seed);	// Cynex: bionic ile ayni imza
+extern long				random();
+>>>
+@@ EterBase/Random.cpp
+<<<
+void srandom(unsigned long seed)
+===
+void srandom(unsigned int seed)
+>>>
+@@ EterBase/Random.cpp
+<<<
+unsigned long random()
+===
+long random()
+>>>

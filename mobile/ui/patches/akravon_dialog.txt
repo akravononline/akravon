@@ -1,0 +1,41 @@
+# AKRAVON: genel giris kutusu (uiakravondialog.py)
+@@ uicommon.py
+<<<
+		pyScrLoader.LoadScriptFile(self, "uiscript/inputdialog.py")
+
+		getObject = self.GetChild
+		self.board = getObject("Board")
+		self.acceptButton = getObject("AcceptButton")
+		self.cancelButton = getObject("CancelButton")
+		self.inputSlot = getObject("InputSlot")
+		self.inputValue = getObject("InputValue")
+===
+		pyScrLoader.LoadScriptFile(self, "uiscript/inputdialog.py")
+
+		getObject = self.GetChild
+		self.board = getObject("Board")
+		self.acceptButton = getObject("AcceptButton")
+		self.cancelButton = getObject("CancelButton")
+		self.inputSlot = getObject("InputSlot")
+		self.inputValue = getObject("InputValue")
+		import uiAkravonDialog
+		uiAkravonDialog.Style(self)
+>>>
+
+@@ uicommon.py
+<<<
+	def SetMaxLength(self, length):
+		width = length * 6 + 10
+		self.SetBoardWidth(max(width + 50, 160))
+		self.SetSlotWidth(width)
+		self.inputValue.SetMax(length)
+===
+	def SetMaxLength(self, length):
+		if getattr(self, "akrKeep", None):	# AKRAVON: sabit mobil boyut
+			self.inputValue.SetMax(length)
+			return
+		width = length * 6 + 10
+		self.SetBoardWidth(max(width + 50, 160))
+		self.SetSlotWidth(width)
+		self.inputValue.SetMax(length)
+>>>

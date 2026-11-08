@@ -1,0 +1,15 @@
+@@ EterBase/Debug.h
+<<<
+#define TraceError(...)
+#define TraceErrorWithoutEnter(...)
+===
+#ifdef CYNEX_MOBILE
+// Cynex: mobilde hata satirlari logcat'e
+extern void CynexTraceError(const char* c_szFormat, ...);
+#define TraceError(...) CynexTraceError(__VA_ARGS__)
+#define TraceErrorWithoutEnter(...) CynexTraceError(__VA_ARGS__)
+#else
+#define TraceError(...)
+#define TraceErrorWithoutEnter(...)
+#endif
+>>>

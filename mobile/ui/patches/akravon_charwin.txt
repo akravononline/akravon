@@ -1,0 +1,271 @@
+# AKRAVON: kenar cubuklu karakter penceresi (skin/build_akravon_charwin.py) - ad konumu, detay dugmesi, cubuk doluluklari
+@@ uicharacter.py
+<<<
+					self.characterNameSlot.SetPosition(109, 34)
+===
+					self.characterNameSlot.SetPosition(14, 134)
+>>>
+
+@@ uicharacter.py
+<<<
+					self.characterNameSlot.SetPosition(153, 34)
+===
+					self.characterNameSlot.SetPosition(14, 134)
+>>>
+
+@@ uicharacter.py
+<<<
+			self.ExpandBtn = ui.MakeButton(MainBoard, 240, 120, "",
+===
+			self.ExpandBtn = ui.MakeButton(MainBoard, 520, 16, "",
+>>>
+
+@@ uicharacter.py
+<<<
+			self.MinimizeBtn = ui.MakeButton(MainBoard, 240, 120, "",
+===
+			self.MinimizeBtn = ui.MakeButton(MainBoard, 520, 16, "",
+>>>
+
+@@ uicharacter.py
+<<<
+			self.GetChild("SP_Value").SetText(str(player.GetStatus(player.SP)) + '/' + str(player.GetStatus(player.MAX_SP)))
+===
+			self.GetChild("SP_Value").SetText(str(player.GetStatus(player.SP)) + '/' + str(player.GetStatus(player.MAX_SP)))
+			# AKRAVON: EXP / HP / SP cubuk doluluklari
+			for (akrName, akrCur, akrMax) in (("Exp_Fill", unsigned32(player.GetEXP()), unsigned32(player.GetStatus(player.NEXT_EXP))),
+					("HP_Fill", player.GetStatus(player.HP), player.GetStatus(player.MAX_HP)),
+					("SP_Fill", player.GetStatus(player.SP), player.GetStatus(player.MAX_SP))):
+				try:
+					akrRate = min(1.0, max(0.0, float(akrCur) / float(akrMax))) if akrMax > 0 else 0.0
+					self.GetChild(akrName).SetRenderingRect(0.0, 0.0, akrRate - 1.0, 0.0)
+				except Exception:
+					pass
+>>>
+
+@@ uicharacter.py
+<<<
+		gradeColor = ui.GenerateColor(colorList[0], colorList[1], colorList[2])
+===
+		gradeColor = ui.GenerateColor(colorList[0], colorList[1], colorList[2])
+		# AKRAVON: derece karti (ad + puan)
+		try:
+			self.GetChild("Align_Name").SetText(localeInfo.TITLE_NAME_LIST[grade])
+			self.GetChild("Align_Name").SetPackedFontColor(gradeColor)
+			self.GetChild("Align_Value").SetText(localeInfo.NumberToMoneyString(point).replace(" Yang", "") if hasattr(localeInfo, "NumberToMoneyString") else str(point))
+		except Exception:
+			pass
+>>>
+
+@@ uicharacter.py
+<<<
+				self.faceImage.LoadImage(faceImageName)
+===
+				self.faceImage.LoadImage(faceImageName)
+				try:
+					self.faceImage.SetScale(2.0, 2.0)	# AKRAVON: buyuk portre
+				except Exception:
+					pass
+>>>
+
+@@ uicharacter.py
+<<<
+			self.__BindObject()
+			self.__BindEvent()
+===
+			self.__BindObject()
+			self.__BindEvent()
+			# AKRAVON: yetenek yuvalari 40 px (mobil dokunma)
+			try:
+				import wndMgr
+				if hasattr(wndMgr, "SetSlotUnitSize"):
+					for akrName in ("SoloEmotionSlot", "DualEmotionSlot"):
+						wndMgr.SetSlotUnitSize(self.GetChild(akrName).hWnd, 40, 40)
+					wndMgr.SetSlotUnitSize(self.GetChild("Skill_ETC_Slot").hWnd, 30, 30)
+			except Exception:
+				pass
+			# AKRAVON: kenar cubugu "Bonuslar" bolumu
+			try:
+				self.GetChild("Akravon_Nav_Bonus").Hide()
+				self.GetChild("Tab_Button_05").SetEvent(ui.__mem_func__(self.AkravonShowBonus))
+			except Exception:
+				pass
+>>>
+
+@@ uicharacter.py
+<<<
+	def __OnClickTabButton(self, stateKey):
+===
+	def AkravonSkillCard(self, slotIndex, skillIndex, skillGrade, skillLevel):
+		# AKRAVON: tek yuva = mevcut kademe ikonu + HD yuvarlak ikon + ad + rozet (Lv / M1 / G1 / P)
+		try:
+			k = (slotIndex - 1) % self.ACTIVE_PAGE_SLOT_COUNT
+			hd = self.GetChild("Skill_HD_%d" % k)
+			nameText = self.GetChild("Skill_Name_%d" % k)
+			gradeText = self.GetChild("Skill_Grade_%d" % k)
+		except Exception:
+			return
+		import uiAkravonSkillGrade
+		if not hasattr(hd, "skillGradeBadge"):
+			hd.skillGradeBadge = uiAkravonSkillGrade.SkillGradeBadge(hd, 48)
+		if 0 == skillIndex:
+			hd.Hide()
+			hd.skillGradeBadge.Hide()
+			nameText.SetText("")
+			gradeText.SetText("")
+			return
+		grade = min(skillGrade, skill.SKILL_GRADE_COUNT - 1)
+		page = self.skillPageDict["ACTIVE"]
+		page.SetSkillSlotNew(slotIndex, skillIndex, grade, skillLevel)
+		page.SetSlotCount(slotIndex, 0)
+		page.SetCoverButton(slotIndex)
+		if not self.__CanUseSkillNow():
+			page.DisableCoverButton(slotIndex)
+		try:
+			nameText.SetText(skill.GetSkillName(skillIndex, grade))
+		except Exception:
+			nameText.SetText(skill.GetSkillName(skillIndex))
+		gradeText.SetText("")
+		hd.skillGradeBadge.Refresh(skillGrade, skillLevel)
+		try:
+			import uiAkravonSkillIcon
+			icon = uiAkravonSkillIcon.GetIcon(skillIndex, skillGrade)	# P = kademe 3 (_04)
+		except Exception:
+			icon = None
+		if icon:
+			hd.LoadImage(icon)
+			hd.SetScale(48.0 / 64.0, 48.0 / 64.0)
+			hd.Show()
+		else:
+			hd.Hide()
+
+	def AkravonShowBonus(self):
+		# AKRAVON: karakter bonuslari pencerenin sag alanina gomulu acilir
+		for tabButton in self.tabButtonDict.itervalues():
+			tabButton.SetUp()
+		for akrDict in (self.tabDict, self.pageDict, self.titleBarDict):
+			for akrValue in akrDict.itervalues():
+				akrValue.Hide()
+		self.titleBarDict["STATUS"].Show()
+		try:
+			self.GetChild("Akravon_Nav_Bonus").Show()
+			self.GetChild("Tab_Button_05").Down()
+		except Exception:
+			pass
+		if not getattr(self, "akravonBonus", None):
+			import uiAkravonBonus
+			self.akravonBonus = uiAkravonBonus.BonusPanel(346, 436)
+			self.akravonBonus.SetParent(self.GetChild("board"))
+			self.akravonBonus.SetPosition(170, 22)
+		self.akravonBonus.Refresh()
+		self.akravonBonus.Show()
+
+	def __OnClickTabButton(self, stateKey):
+>>>
+
+@@ uicharacter.py
+<<<
+		self.state = stateKey
+===
+		self.state = stateKey
+		try:
+			self.GetChild("Akravon_Nav_Bonus").Hide()
+			self.GetChild("Tab_Button_05").SetUp()
+			if self.chDetailsWnd:
+				self.chDetailsWnd.Hide()
+			if getattr(self, "akravonBonus", None):
+				self.akravonBonus.Hide()
+		except Exception:
+			pass
+>>>
+
+@@ uicharacter.py
+<<<
+		def Hide(self):
+			if self.chDetailsWnd:
+				self.isOpenedDetailsWnd = self.chDetailsWnd.IsShow()
+===
+		def Hide(self):
+			if self.chDetailsWnd:
+				self.isOpenedDetailsWnd = False	# AKRAVON: bonuslar gomulu, tekrar acilista Durum
+>>>
+
+@@ uicharacter.py
+<<<
+		def __InitCharacterDetailsUIButton(self):
+			self.ExpandBtn.Show()
+			self.MinimizeBtn.Hide()
+===
+		def __InitCharacterDetailsUIButton(self):
+			self.ExpandBtn.Hide()	# AKRAVON: yerine kenar cubugunda "Bonuslar"
+			self.MinimizeBtn.Hide()
+>>>
+
+@@ uicharacter.py
+<<<
+				skillPage.ClearSlot(realSlotIndex)
+
+			if 0 == skillIndex:
+				continue
+===
+				skillPage.ClearSlot(realSlotIndex)
+
+			if 0 == skillIndex:
+				if "ACTIVE" == name:
+					self.AkravonSkillCard(slotIndex, 0, 0, 0)
+				continue
+>>>
+
+@@ uicharacter.py
+<<<
+						if coolTime:
+							skillPage.SetSlotCoolTime(realSlotIndex, coolTime, elapsedTime)
+			else:
+===
+						if coolTime:
+							skillPage.SetSlotCoolTime(realSlotIndex, coolTime, elapsedTime)
+				self.AkravonSkillCard(slotIndex, skillIndex, skillGrade, skillLevel)
+			else:
+>>>
+
+@@ uicharacter.py
+<<<
+					skillPage.SetSkillSlot(realSlotIndex, skillIndex, skillLevel)
+===
+					skillPage.SetSkillSlot(realSlotIndex, skillIndex, skillLevel)
+					try:
+						import uiAkravonSkillIcon
+						akrHD = self.GetChild("Support_HD_%d" % (realSlotIndex - 101))
+						akrIcon = uiAkravonSkillIcon.GetIcon(skillIndex, 0)
+						if akrIcon:
+							akrHD.LoadImage(akrIcon)
+							akrHD.SetScale(44.0 / 64.0, 44.0 / 64.0)
+							akrHD.Show()
+					except Exception:
+						pass
+>>>
+
+@@ uicharacter.py
+<<<
+		self.characterNameSlot.SetEvent(ui.__mem_func__(self.__UseAlignmentToolTip), "mouse_click")
+===
+		self.characterNameSlot.SetEvent(ui.__mem_func__(self.__UseAlignmentToolTip), "mouse_click")
+		# AKRAVON: Derece kartina dokununca derece detaylari acilir
+		try:
+			self.GetChild("Align_Card").SetEvent(ui.__mem_func__(self.__UseAlignmentToolTip), "mouse_click")
+		except Exception:
+			pass
+>>>
+
+@@ uicharacter.py
+<<<
+	def __UseAlignmentToolTip(self):
+		if not self.alignmentPanelDlg:
+			self.alignmentPanelDlg = uiAlignmentPanel.AlignmenPanelDialog()
+		self.alignmentPanelDlg.Show()
+===
+	def __UseAlignmentToolTip(self):
+		# AKRAVON: klasik 9 derece, bonussuz liste (uiakravonalign.py)
+		import uiAkravonAlign
+		uiAkravonAlign.Open()
+>>>

@@ -1,0 +1,31 @@
+@@ GameLib/PropertyManager.cpp
+<<<
+bool CPropertyManager::Initialize(const char * c_pszPackFileName)
+{
+	if (c_pszPackFileName)
+	{
+===
+#ifdef CYNEX_MOBILE
+void CynexAssetOverride_List(const char* c_szPrefix, void (*fn)(const char*, void*), void* pv);
+#endif
+
+bool CPropertyManager::Initialize(const char * c_pszPackFileName)
+{
+#ifdef CYNEX_MOBILE
+	// Cynex: mobil veri paketinde pack/property yok - property/* dosyalari arsivden kaydedilir
+	if (c_pszPackFileName && 0 != _access((std::string(c_pszPackFileName) + ".mt2").c_str(), 0))
+	{
+		m_isFileMode = false;
+		CynexAssetOverride_List("property/", [](const char* c_szName, void* pv) {
+			CPropertyManager* pThis = (CPropertyManager*)pv;
+			if (!stricmp("property/reserve", c_szName))
+				pThis->LoadReservedCRC(c_szName);
+			else
+				pThis->Register(c_szName);
+		}, this);
+		return true;
+	}
+#endif
+	if (c_pszPackFileName)
+	{
+>>>

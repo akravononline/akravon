@@ -1,0 +1,76 @@
+@@ UserInterface/Locale_inc.h
+<<<
+// ### New System Defines - Extended Version ###
+//////////////////////////////////////////////////////////////////////////
+===
+// ### New System Defines - Extended Version ###
+//////////////////////////////////////////////////////////////////////////
+
+// Cynex: mobil - windows'a bagli ozellikler kapali (paket yapisina dokunmuyorlar)
+#ifdef CYNEX_MOBILE
+	#undef ENABLE_DISCORD_RPC
+	#undef ENABLE_DISCORD_STUFF
+	#undef ENABLE_HIYUS_FIX
+	#undef ENABLE_HILE_ENGEL
+	#undef ENABLE_CYPOR_ENGEL
+	#undef ENABLE_SIKITUT_ENGEL
+	#undef ENABLE_TURKLOKASYON_FIREWALL
+	#undef ENABLE_RASCAL_ANTICHEAT
+#endif
+>>>
+@@ EterLib/Pool.h
+<<<
+        void * operator new(unsigned int /*mem_size*/)
+===
+        void * operator new(size_t /*mem_size*/)
+>>>
+@@ EterLib/Pool.h
+<<<
+        void * operator new(unsigned int mem_size)
+===
+        void * operator new(size_t mem_size)
+>>>
+@@ EffectLib/Type.h
+<<<
+	typedef std::vector<CTimeEvent<T> >::iterator iterator;
+===
+	typedef typename std::vector<CTimeEvent<T> >::iterator iterator;
+>>>
+@@ UserInterface/MarkImage.cpp
+<<<
+#if !defined(_MSC_VER)
+===
+#if !defined(_MSC_VER) && !defined(CYNEX_MOBILE)
+>>>
+@@ UserInterface/MarkManager.cpp
+<<<
+#if _MSC_VER < 1200
+===
+#if _MSC_VER < 1200 && !defined(CYNEX_MOBILE)
+>>>
+@@ UserInterface/MarkManager.cpp
+<<<
+#if _MSC_VER >= 1200
+	_mkdir("data/symbol/");
+===
+#if _MSC_VER >= 1200 || defined(CYNEX_MOBILE)
+	_mkdir("data/symbol/");
+>>>
+@@ PRTerrainLib/TerrainType.h
+<<<
+#define PR_FLOAT_TO_INTASM __asm	\
+{									\
+	__asm fld PR_FCNV				\
+	__asm fistp PR_ICNV				\
+}
+===
+#ifdef CYNEX_MOBILE
+#define PR_FLOAT_TO_INTASM { PR_ICNV = lrintf(PR_FCNV); }	// Cynex: fistp ile ayni, en yakina yuvarlar
+#else
+#define PR_FLOAT_TO_INTASM __asm	\
+{									\
+	__asm fld PR_FCNV				\
+	__asm fistp PR_ICNV				\
+}
+#endif
+>>>

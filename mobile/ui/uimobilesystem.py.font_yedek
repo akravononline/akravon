@@ -1,0 +1,275 @@
+from __future__ import division
+import app
+import net
+import wndMgr
+import ui
+import uiMobileStyle
+import uiAkravon
+
+from _weakref import proxy
+
+# AKRAVON: oyun ici ayarlar menusu - login'deki kanal secicinin panel / satir / KAPAT dugmesi dili
+PANEL_WIDTH = 340
+PADDING_X = 22
+TOP = 20
+TITLE_HEIGHT = 40
+ROW_HEIGHT = 38
+ROW_GAP = 6
+CLOSE_GAP = 12
+CLOSE_HEIGHT = 48
+BOTTOM = 20
+DIM_ALPHA = 150
+ICON_SIZE = 26
+ICON_X = 10
+TEXT_X = ICON_X + ICON_SIZE + 10
+CHEVRON_RIGHT = 18
+CHANNEL_COUNT = 6
+KIT_ICON = "mobile_ui/akravon/hud/btn_%s_normal_xs.png"
+KIT_ICON_SIZE = 34.0
+FONT_ROW = "Marcellus:18"
+FONT_VALUE = "Marcellus:15"
+FONT_TITLE = "Marcellus:24"
+CURRENT_COLOR = uiAkravon.STATE_OPEN_COLOR
+
+# (anahtar, ikon, metin)
+MENU_ROWS = (
+	("option", "system", "Oyun Seçenekleri"),
+	("channel", "channel", "Kanal Değiştir"),
+	("shop", "itemshop", "Nesne Market"),
+	("character", "character", "Karakter Değiştir"),
+	("logout", "less", "Çıkış Yap"),
+	("exit", "quest", "Oyundan Çık"),
+)
+
+menu = None
+
+
+def Open(interface):
+	global menu
+	if menu is None:
+		menu = SystemMenu(interface)
+	menu.Open()
+
+
+def Toggle(interface):
+	global menu
+	if menu is None:
+		menu = SystemMenu(interface)
+	if menu.IsShow():
+		menu.Close()
+	else:
+		menu.Open()
+
+
+def Hide():
+	if menu is not None:
+		menu.Close()
+
+
+def Destroy():
+	global menu
+	if menu is not None:
+		menu.Destroy()
+	menu = None
+
+
+def CurrentChannel():
+	try:
+		import pysettings
+		return int(pysettings.ch)
+	except Exception:
+		return 0
+
+
+class MenuRow(uiMobileStyle.Pressable):
+	def __init__(self, width, iconName, text):
+		uiMobileStyle.Pressable.__init__(self, width, ROW_HEIGHT)
+		self.panel = uiAkravon.Box()
+		self.panel.SetParent(self)
+		self.panel.SetSize(width, ROW_HEIGHT)
+		self.panel.Show()
+		uiAkravon.SkinBox(self.panel, "picker_row_normal", "picker_row_active")
+		self.icon = None
+		if iconName:
+			self.icon = ui.ExpandedImageBox()
+			self.icon.SetParent(self)
+			self.icon.AddFlag("not_pick")
+			self.icon.LoadImage(KIT_ICON % iconName)
+			self.icon.SetScale(ICON_SIZE / KIT_ICON_SIZE, ICON_SIZE / KIT_ICON_SIZE)
+			self.icon.SetPosition(ICON_X, (ROW_HEIGHT - ICON_SIZE) // 2)
+			self.icon.Show()
+		self.text = uiMobileStyle.CreateText(self, text, TEXT_X if iconName else 22, ROW_HEIGHT // 2 - 10, uiMobileStyle.BRIGHT_COLOR, FONT_ROW)
+		self.value = uiMobileStyle.CreateText(self, "", width - CHEVRON_RIGHT - 16, ROW_HEIGHT // 2 - 8, uiAkravon.HINT_COLOR, FONT_VALUE, "right")
+		self.chevron = uiMobileStyle.CreateCenteredImage(self, "icon_chevron", width - CHEVRON_RIGHT, ROW_HEIGHT // 2)
+		self.selected = False
+
+	def Destroy(self):
+		uiMobileStyle.Pressable.Destroy(self)
+		self.panel = None
+		self.icon = None
+		self.text = None
+		self.value = None
+		self.chevron = None
+
+	def SetValue(self, text, color = None):
+		self.value.SetText(text)
+		self.value.SetPackedFontColor(color or uiAkravon.HINT_COLOR)
+
+	def SetSelected(self, selected):
+		self.selected = selected
+		self.RefreshVisual()
+
+	def RefreshVisual(self):
+		if not getattr(self, "panel", None):
+			return
+		active = self.selected or self.pressed
+		uiAkravon.SetSkinState(self.panel, active)
+		self.text.SetPackedFontColor(uiMobileStyle.GOLD_COLOR if active else uiMobileStyle.BRIGHT_COLOR)
+
+
+class SystemMenu(uiMobileStyle.Pressable):
+	def __init__(self, interface):
+		import uiMobileCreate
+		(screenWidth, screenHeight) = (wndMgr.GetScreenWidth(), wndMgr.GetScreenHeight())
+		uiMobileStyle.Pressable.__init__(self, screenWidth, screenHeight)
+		self.AddFlag("float")
+		try:
+			self.interface = proxy(interface)
+		except TypeError:
+			self.interface = interface	# zaten zayif referans
+		self.page = None
+
+		self.dim = uiMobileStyle.CreateBar(self, uiMobileStyle.Color(0, 0, 0, DIM_ALPHA), 0, 0, screenWidth, screenHeight)
+		self.panel = uiAkravon.Frame(True, True)
+		self.panel.SetParent(self)
+		self.panel.Show()
+		uiAkravon.SkinFrame(self.panel, "picker_panel")
+		self.title = uiMobileStyle.CreateText(self.panel, "", PANEL_WIDTH // 2, TOP, uiAkravon.HEADER_COLOR, FONT_TITLE, "center")
+		self.titleLine = uiMobileStyle.CreateBar(self.panel, uiAkravon.FRAME_INNER, PADDING_X, TOP + 32, PANEL_WIDTH - PADDING_X * 2, 1)
+
+		rowWidth = PANEL_WIDTH - PADDING_X * 2
+		self.menuRows = []
+		for (key, iconName, text) in MENU_ROWS:
+			row = MenuRow(rowWidth, iconName, text)
+			row.SetParent(self.panel)
+			row.SetEvent(ui.__mem_func__(self.__OnMenu), key)
+			self.menuRows.append((key, row))
+
+		self.channelRows = []
+		for index in range(CHANNEL_COUNT):
+			row = MenuRow(rowWidth, None, "Kanal %d" % (index + 1))
+			row.SetParent(self.panel)
+			row.SetEvent(ui.__mem_func__(self.__OnChannel), index + 1)
+			self.channelRows.append(row)
+
+		self.closeButton = uiMobileCreate.PlateButton("create_button", "KAPAT")
+		self.closeButton.SetParent(self.panel)
+		self.closeButton.SetEvent(ui.__mem_func__(self.__OnClose))
+		self.closeButton.Show()
+
+		self.SetEvent(ui.__mem_func__(self.Close))
+		self.__ShowPage("menu")
+
+	def Destroy(self):
+		for (key, row) in self.menuRows:
+			row.Destroy()
+		for row in self.channelRows:
+			row.Destroy()
+		self.menuRows = []
+		self.channelRows = []
+		self.closeButton.Destroy()
+		self.closeButton = None
+		uiMobileStyle.Pressable.Destroy(self)
+		self.interface = None
+		self.dim = None
+		self.panel = None
+		self.title = None
+		self.titleLine = None
+
+	def Open(self):
+		self.__ShowPage("menu")
+		self.Show()
+		self.SetTop()
+
+	def Close(self):
+		self.Hide()
+
+	def OnPressEscapeKey(self):
+		if self.page == "channel":
+			self.__ShowPage("menu")
+		else:
+			self.Close()
+		return True
+
+	def __OnClose(self):
+		if self.page == "channel":
+			self.__ShowPage("menu")
+		else:
+			self.Close()
+
+	def __ShowPage(self, page):
+		self.page = page
+		current = CurrentChannel()
+		if page == "menu":
+			self.title.SetText("Ayarlar")
+			rows = [row for (key, row) in self.menuRows]
+			for (key, row) in self.menuRows:
+				if key == "channel":
+					row.SetValue("Kanal %d" % current if current else "")
+			for row in self.channelRows:
+				row.Hide()
+			self.closeButton.text.SetText("KAPAT")
+		else:
+			self.title.SetText("Kanal Seçimi")
+			rows = self.channelRows
+			for (key, row) in self.menuRows:
+				row.Hide()
+			for (index, row) in enumerate(self.channelRows):
+				isCurrent = index + 1 == current
+				row.SetValue("Şu an" if isCurrent else "", CURRENT_COLOR if isCurrent else None)
+				row.SetSelected(isCurrent)
+			self.closeButton.text.SetText("GERİ")
+		self.__Layout(rows)
+
+	def __Layout(self, rows):
+		y = TOP + TITLE_HEIGHT
+		for row in rows:
+			row.SetPosition(PADDING_X, y)
+			row.Show()
+			y += ROW_HEIGHT + ROW_GAP
+		y += CLOSE_GAP - ROW_GAP
+		self.closeButton.SetPosition((PANEL_WIDTH - self.closeButton.GetWidth()) // 2, y)
+		height = y + self.closeButton.GetHeight() + BOTTOM
+		self.panel.SetSize(PANEL_WIDTH, height)
+		self.panel.SetPosition((self.GetWidth() - PANEL_WIDTH) // 2, max(10, (self.GetHeight() - height) // 2))
+
+	def __SystemDialog(self):
+		try:
+			return self.interface.dlgSystem
+		except (ReferenceError, AttributeError):
+			return None
+
+	def __OnMenu(self, key):
+		if key == "channel":
+			self.__ShowPage("channel")
+			return
+		self.Close()
+		dialog = self.__SystemDialog()
+		if key == "option":
+			import uiMobileOptions
+			uiMobileOptions.Open(0)
+		elif key == "shop":
+			opener = getattr(self.interface, "ItemShopSendOpen", None)
+			if opener:
+				opener()
+		elif key == "character" and dialog:
+			dialog._SystemDialog__ClickChangeCharacterButton()
+		elif key == "logout" and dialog:
+			dialog._SystemDialog__ClickLogOutButton()
+		elif key == "exit" and dialog:
+			dialog._SystemDialog__ClickExitButton()
+
+	def __OnChannel(self, channel):
+		self.Close()
+		if channel != CurrentChannel():
+			net.SendChatPacket("/channel %d" % channel)

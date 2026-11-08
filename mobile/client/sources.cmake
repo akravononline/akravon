@@ -1,0 +1,396 @@
+# Cynex: tools/gen_sources.py uretti, elle degistirme
+
+set(EterBase_SOURCES
+	${CLIENT}/source/EterBase/poly/Base.cpp
+	${CLIENT}/source/EterBase/poly/Poly.cpp
+	${CLIENT}/source/EterBase/poly/Symbol.cpp
+	${CLIENT}/source/EterBase/poly/SymTable.cpp
+	${CLIENT}/source/EterBase/cipher.cpp
+	${CLIENT}/source/EterBase/CPostIt.cpp
+	${CLIENT}/source/EterBase/CRC32.cpp
+	${CLIENT}/source/EterBase/Debug.cpp
+	${CLIENT}/source/EterBase/error.cpp
+	${CLIENT}/source/EterBase/FileBase.cpp
+	${CLIENT}/source/EterBase/FileDir.cpp
+	${CLIENT}/source/EterBase/FileLoader.cpp
+	${CLIENT}/source/EterBase/lzo.cpp
+	${CLIENT}/source/EterBase/MappedFile.cpp
+	${CLIENT}/source/EterBase/Random.cpp
+	${CLIENT}/source/EterBase/StdAfx.cpp
+	${CLIENT}/source/EterBase/Stl.cpp
+	${CLIENT}/source/EterBase/tea.cpp
+	${CLIENT}/source/EterBase/TempFile.cpp
+	${CLIENT}/source/EterBase/Timer.cpp
+	${CLIENT}/source/EterBase/Utils.cpp
+)
+
+set(EterLocale_SOURCES
+	${CLIENT}/source/EterLocale/Arabic.cpp
+	${CLIENT}/source/EterLocale/Japanese.cpp
+	${CLIENT}/source/EterLocale/StdAfx.cpp
+	${CLIENT}/source/EterLocale/StringCodec.cpp
+	${CLIENT}/source/EterLocale/StringCodec_Vietnamese.cpp
+)
+
+set(EterPack_SOURCES
+	${CLIENT}/source/EterPack/EterPack.cpp
+	${CLIENT}/source/EterPack/EterPackCursor.cpp
+	${CLIENT}/source/EterPack/EterPackManager.cpp
+	${CLIENT}/source/EterPack/EterPackPolicy_CSHybridCrypt.cpp
+	${CLIENT}/source/EterPack/md5.c
+	${CLIENT}/source/EterPack/StdAfx.cpp
+)
+
+set(EterImageLib_SOURCES
+	${CLIENT}/source/EterImageLib/DXTCImage.cpp
+	${CLIENT}/source/EterImageLib/Image.cpp
+	${CLIENT}/source/EterImageLib/StdAfx.cpp
+	${CLIENT}/source/EterImageLib/TGAImage.cpp
+)
+
+set(EterLib_SOURCES
+	${CLIENT}/source/EterLib/AttributeData.cpp
+	${CLIENT}/source/EterLib/AttributeInstance.cpp
+	${CLIENT}/source/EterLib/Camera.cpp
+	${CLIENT}/source/EterLib/CollisionData.cpp
+	${CLIENT}/source/EterLib/ColorTransitionHelper.cpp
+	${CLIENT}/source/EterLib/CRenderTarget.cpp
+	${CLIENT}/source/EterLib/CRenderTargetManager.cpp
+	${CLIENT}/source/EterLib/Decal.cpp
+	${CLIENT}/source/EterLib/EnvironmentMap.cpp
+	${CLIENT}/source/EterLib/FileLoaderThread.cpp
+	${CLIENT}/source/EterLib/GrpCollisionObject.cpp
+	${CLIENT}/source/EterLib/GrpColor.cpp
+	${CLIENT}/source/EterLib/GrpColorInstance.cpp
+	${CLIENT}/source/EterLib/GrpD3DXBuffer.cpp
+	${CLIENT}/source/EterLib/GrpDIB.cpp
+	${CLIENT}/source/EterLib/GrpIndexBuffer.cpp
+	${CLIENT}/source/EterLib/GrpLightManager.cpp
+	${CLIENT}/source/EterLib/GrpObjectInstance.cpp
+	${CLIENT}/source/EterLib/GrpPixelShader.cpp
+	${CLIENT}/source/EterLib/GrpRatioInstance.cpp
+	${CLIENT}/source/EterLib/GrpRenderTargetTexture.cpp
+	${CLIENT}/source/EterLib/GrpShadowTexture.cpp
+	${CLIENT}/source/EterLib/GrpVertexBuffer.cpp
+	${CLIENT}/source/EterLib/GrpVertexBufferDynamic.cpp
+	${CLIENT}/source/EterLib/GrpVertexBufferStatic.cpp
+	${CLIENT}/source/EterLib/GrpVertexShader.cpp
+	${CLIENT}/source/EterLib/Input.cpp
+	${CLIENT}/source/EterLib/LensFlare.cpp
+	${CLIENT}/source/EterLib/lineintersect_utils.cpp
+	${CLIENT}/source/EterLib/MSApplication.cpp
+	${CLIENT}/source/EterLib/MSWindow.cpp
+	${CLIENT}/source/EterLib/Mutex.cpp
+	${CLIENT}/source/EterLib/parser.cpp
+	${CLIENT}/source/EterLib/PathStack.cpp
+	${CLIENT}/source/EterLib/ReferenceObject.cpp
+	${CLIENT}/source/EterLib/ScreenFilter.cpp
+	${CLIENT}/source/EterLib/SkyBox.cpp
+	${CLIENT}/source/EterLib/StdAfx.cpp
+	${CLIENT}/source/EterLib/TargaResource.cpp
+	${CLIENT}/source/EterLib/Thread.cpp
+	${CLIENT}/source/EterLib/Util.cpp
+	${CLIENT}/source/EterLib/CullingManager.cpp
+	${CLIENT}/source/EterLib/GrpBase.cpp
+	${CLIENT}/source/EterLib/GrpDetector.cpp
+	${CLIENT}/source/EterLib/GrpDevice.cpp
+	${CLIENT}/source/EterLib/GrpMath.cpp
+	${CLIENT}/source/EterLib/GrpScreen.cpp
+	${CLIENT}/source/EterLib/JpegFile.cpp
+	${CLIENT}/source/EterLib/StateManager.cpp
+	${CLIENT}/source/EterLib/Resource.cpp
+	${CLIENT}/source/EterLib/ResourceManager.cpp
+	${CLIENT}/source/EterLib/GrpExpandedImageInstance.cpp
+	${CLIENT}/source/EterLib/GrpImage.cpp
+	${CLIENT}/source/EterLib/GrpImageInstance.cpp
+	${CLIENT}/source/EterLib/GrpImageTexture.cpp
+	${CLIENT}/source/EterLib/GrpMarkInstance.cpp
+	${CLIENT}/source/EterLib/GrpSubImage.cpp
+	${CLIENT}/source/EterLib/GrpTexture.cpp
+	${CLIENT}/source/EterLib/NetAddress.cpp
+	${CLIENT}/source/EterLib/NetDatagram.cpp
+	${CLIENT}/source/EterLib/NetDatagramReceiver.cpp
+	${CLIENT}/source/EterLib/NetDatagramSender.cpp
+	${CLIENT}/source/EterLib/NetDevice.cpp
+	${CLIENT}/source/EterLib/NetPacketHeaderMap.cpp
+	${CLIENT}/source/EterLib/NetStream.cpp
+	${CLIENT}/source/EterLib/GrpFontTexture.cpp
+	${CLIENT}/source/EterLib/GrpText.cpp
+	${CLIENT}/source/EterLib/GrpTextInstance.cpp
+	${CLIENT}/source/EterLib/TextTag.cpp
+	${CLIENT}/source/EterLib/BlockTexture.cpp
+	${CLIENT}/source/EterLib/DibBar.cpp
+	${CLIENT}/source/EterLib/TextBar.cpp
+	${CLIENT}/source/EterLib/IME.cpp
+	${CLIENT}/source/EterLib/TextFileLoader.cpp
+)
+
+set(EterGrnLib_SOURCES
+	${CLIENT}/source/EterGrnLib/LODController.cpp
+	${CLIENT}/source/EterGrnLib/Material.cpp
+	${CLIENT}/source/EterGrnLib/Mesh.cpp
+	${CLIENT}/source/EterGrnLib/Model.cpp
+	${CLIENT}/source/EterGrnLib/ModelInstance.cpp
+	${CLIENT}/source/EterGrnLib/ModelInstanceCollisionDetection.cpp
+	${CLIENT}/source/EterGrnLib/ModelInstanceModel.cpp
+	${CLIENT}/source/EterGrnLib/ModelInstanceMotion.cpp
+	${CLIENT}/source/EterGrnLib/ModelInstanceRender.cpp
+	${CLIENT}/source/EterGrnLib/ModelInstanceUpdate.cpp
+	${CLIENT}/source/EterGrnLib/Motion.cpp
+	${CLIENT}/source/EterGrnLib/StdAfx.cpp
+	${CLIENT}/source/EterGrnLib/Thing.cpp
+	${CLIENT}/source/EterGrnLib/ThingInstance.cpp
+	${CLIENT}/source/EterGrnLib/Util.cpp
+)
+
+set(EffectLib_SOURCES
+	${CLIENT}/source/EffectLib/EffectData.cpp
+	${CLIENT}/source/EffectLib/EffectElementBase.cpp
+	${CLIENT}/source/EffectLib/EffectElementBaseInstance.cpp
+	${CLIENT}/source/EffectLib/EffectInstance.cpp
+	${CLIENT}/source/EffectLib/EffectManager.cpp
+	${CLIENT}/source/EffectLib/EffectMesh.cpp
+	${CLIENT}/source/EffectLib/EffectMeshInstance.cpp
+	${CLIENT}/source/EffectLib/EffectUpdateDecorator.cpp
+	${CLIENT}/source/EffectLib/EmitterProperty.cpp
+	${CLIENT}/source/EffectLib/FrameController.cpp
+	${CLIENT}/source/EffectLib/ParticleInstance.cpp
+	${CLIENT}/source/EffectLib/ParticleProperty.cpp
+	${CLIENT}/source/EffectLib/ParticleSystemData.cpp
+	${CLIENT}/source/EffectLib/ParticleSystemInstance.cpp
+	${CLIENT}/source/EffectLib/SimpleLightData.cpp
+	${CLIENT}/source/EffectLib/SimpleLightInstance.cpp
+	${CLIENT}/source/EffectLib/StdAfx.cpp
+	${CLIENT}/source/EffectLib/Type.cpp
+)
+
+set(GameLib_SOURCES
+	${CLIENT}/source/GameLib/ActorInstance.cpp
+	${CLIENT}/source/GameLib/ActorInstanceAttach.cpp
+	${CLIENT}/source/GameLib/ActorInstanceBattle.cpp
+	${CLIENT}/source/GameLib/ActorInstanceBlend.cpp
+	${CLIENT}/source/GameLib/ActorInstanceCollisionDetection.cpp
+	${CLIENT}/source/GameLib/ActorInstanceData.cpp
+	${CLIENT}/source/GameLib/ActorInstanceEvent.cpp
+	${CLIENT}/source/GameLib/ActorInstanceFly.cpp
+	${CLIENT}/source/GameLib/ActorInstanceMotion.cpp
+	${CLIENT}/source/GameLib/ActorInstanceMotionEvent.cpp
+	${CLIENT}/source/GameLib/ActorInstancePosition.cpp
+	${CLIENT}/source/GameLib/ActorInstanceRender.cpp
+	${CLIENT}/source/GameLib/ActorInstanceRotation.cpp
+	${CLIENT}/source/GameLib/ActorInstanceSync.cpp
+	${CLIENT}/source/GameLib/ActorInstanceWeaponTrace.cpp
+	${CLIENT}/source/GameLib/DungeonBlock.cpp
+	${CLIENT}/source/GameLib/PhysicsObject.cpp
+	${CLIENT}/source/GameLib/RaceData.cpp
+	${CLIENT}/source/GameLib/RaceDataFile.cpp
+	${CLIENT}/source/GameLib/RaceManager.cpp
+	${CLIENT}/source/GameLib/RaceMotionData.cpp
+	${CLIENT}/source/GameLib/WeaponTrace.cpp
+	${CLIENT}/source/GameLib/Area.cpp
+	${CLIENT}/source/GameLib/AreaLoaderThread.cpp
+	${CLIENT}/source/GameLib/AreaTerrain.cpp
+	${CLIENT}/source/GameLib/MapBase.cpp
+	${CLIENT}/source/GameLib/MapManager.cpp
+	${CLIENT}/source/GameLib/MapOutdoor.cpp
+	${CLIENT}/source/GameLib/MapOutdoorCharacterShadow.cpp
+	${CLIENT}/source/GameLib/MapOutdoorIndexBuffer.cpp
+	${CLIENT}/source/GameLib/MapOutdoorLoad.cpp
+	${CLIENT}/source/GameLib/MapOutdoorQuadtree.cpp
+	${CLIENT}/source/GameLib/MapOutdoorRender.cpp
+	${CLIENT}/source/GameLib/MapOutdoorRenderHTP.cpp
+	${CLIENT}/source/GameLib/MapOutdoorRenderSTP.cpp
+	${CLIENT}/source/GameLib/MapOutdoorUpdate.cpp
+	${CLIENT}/source/GameLib/MapOutdoorWater.cpp
+	${CLIENT}/source/GameLib/MapType.cpp
+	${CLIENT}/source/GameLib/MapUtil.cpp
+	${CLIENT}/source/GameLib/MonsterAreaInfo.cpp
+	${CLIENT}/source/GameLib/Property.cpp
+	${CLIENT}/source/GameLib/PropertyLoader.cpp
+	${CLIENT}/source/GameLib/PropertyManager.cpp
+	${CLIENT}/source/GameLib/SnowEnvironment.cpp
+	${CLIENT}/source/GameLib/SnowParticle.cpp
+	${CLIENT}/source/GameLib/TerrainDecal.cpp
+	${CLIENT}/source/GameLib/TerrainPatch.cpp
+	${CLIENT}/source/GameLib/TerrainQuadtree.cpp
+	${CLIENT}/source/GameLib/GameEventManager.cpp
+	${CLIENT}/source/GameLib/GameType.cpp
+	${CLIENT}/source/GameLib/GameUtil.cpp
+	${CLIENT}/source/GameLib/ItemData.cpp
+	${CLIENT}/source/GameLib/ItemManager.cpp
+	${CLIENT}/source/GameLib/FlyingData.cpp
+	${CLIENT}/source/GameLib/FlyingInstance.cpp
+	${CLIENT}/source/GameLib/FlyingObjectManager.cpp
+	${CLIENT}/source/GameLib/FlyTarget.cpp
+	${CLIENT}/source/GameLib/FlyTrace.cpp
+	${CLIENT}/source/GameLib/StdAfx.cpp
+)
+
+set(MilesLib_SOURCES
+	${CLIENT}/source/MilesLib/SoundBase.cpp
+	${CLIENT}/source/MilesLib/SoundData.cpp
+	${CLIENT}/source/MilesLib/SoundInstance2D.cpp
+	${CLIENT}/source/MilesLib/SoundInstance3D.cpp
+	${CLIENT}/source/MilesLib/SoundInstanceStream.cpp
+	${CLIENT}/source/MilesLib/SoundManager.cpp
+	${CLIENT}/source/MilesLib/SoundManager2D.cpp
+	${CLIENT}/source/MilesLib/SoundManager3D.cpp
+	${CLIENT}/source/MilesLib/SoundManagerStream.cpp
+	${CLIENT}/source/MilesLib/Stdafx.cpp
+	${CLIENT}/source/MilesLib/Type.cpp
+)
+
+set(PRTerrainLib_SOURCES
+	${CLIENT}/source/PRTerrainLib/StdAfx.cpp
+	${CLIENT}/source/PRTerrainLib/Terrain.cpp
+	${CLIENT}/source/PRTerrainLib/TextureSet.cpp
+)
+
+set(ScriptLib_SOURCES
+	${CLIENT}/source/ScriptLib/PythonDebugModule.cpp
+	${CLIENT}/source/ScriptLib/PythonLauncher.cpp
+	${CLIENT}/source/ScriptLib/PythonMarshal.cpp
+	${CLIENT}/source/ScriptLib/PythonUtils.cpp
+	${CLIENT}/source/ScriptLib/Resource.cpp
+	${CLIENT}/source/ScriptLib/StdAfx.cpp
+)
+
+set(SpeedTreeLib_SOURCES
+	${CLIENT}/source/SpeedTreeLib/BoundaryShapeManager.cpp
+	${CLIENT}/source/SpeedTreeLib/SpeedGrassRT.cpp
+	${CLIENT}/source/SpeedTreeLib/SpeedGrassWrapper.cpp
+	${CLIENT}/source/SpeedTreeLib/SpeedTreeForest.cpp
+	${CLIENT}/source/SpeedTreeLib/SpeedTreeForestDirectX8.cpp
+	${CLIENT}/source/SpeedTreeLib/SpeedTreeWrapper.cpp
+	${CLIENT}/source/SpeedTreeLib/StdAfx.cpp
+)
+
+set(SphereLib_SOURCES
+	${CLIENT}/source/SphereLib/frustum.cpp
+	${CLIENT}/source/SphereLib/sphere.cpp
+	${CLIENT}/source/SphereLib/spherepack.cpp
+	${CLIENT}/source/SphereLib/StdAfx.cpp
+)
+
+set(EterPythonLib_SOURCES
+	${CLIENT}/source/EterPythonLib/PythonGridSlotWindow.cpp
+	${CLIENT}/source/EterPythonLib/PythonSlotWindow.cpp
+	${CLIENT}/source/EterPythonLib/PythonWindow.cpp
+	${CLIENT}/source/EterPythonLib/PythonWindowManager.cpp
+	${CLIENT}/source/EterPythonLib/PythonWindowManagerModule.cpp
+	${CLIENT}/source/EterPythonLib/PythonGraphic.cpp
+	${CLIENT}/source/EterPythonLib/PythonGraphicImageModule.cpp
+	${CLIENT}/source/EterPythonLib/PythonGraphicModule.cpp
+	${CLIENT}/source/EterPythonLib/PythonGraphicTextModule.cpp
+	${CLIENT}/source/EterPythonLib/PythonGraphicThingModule.cpp
+	${CLIENT}/source/EterPythonLib/StdAfx.cpp
+)
+
+set(UserInterface_SOURCES
+	${CLIENT}/source/UserInterface/AffectFlagContainer.cpp
+	${CLIENT}/source/UserInterface/Anti_Window_Tarama.cpp
+	${CLIENT}/source/UserInterface/CefClientApp.cpp
+	${CLIENT}/source/UserInterface/CefClientHandler.cpp
+	${CLIENT}/source/UserInterface/CefClientV8ExtensionHandler.cpp
+	${CLIENT}/source/UserInterface/CefWebBrowser.cpp
+	${CLIENT}/source/UserInterface/CPythonRenderTargetModule.cpp
+	${CLIENT}/source/UserInterface/InstanceBase.cpp
+	${CLIENT}/source/UserInterface/InstanceBaseBattle.cpp
+	${CLIENT}/source/UserInterface/InstanceBaseEffect.cpp
+	${CLIENT}/source/UserInterface/InstanceBaseEvent.cpp
+	${CLIENT}/source/UserInterface/InstanceBaseMotion.cpp
+	${CLIENT}/source/UserInterface/InstanceBaseMovement.cpp
+	${CLIENT}/source/UserInterface/InstanceBaseTransform.cpp
+	${CLIENT}/source/UserInterface/CameraProcedure.cpp
+	${CLIENT}/source/UserInterface/PythonAcce.cpp
+	${CLIENT}/source/UserInterface/PythonBackground.cpp
+	${CLIENT}/source/UserInterface/PythonBackgroundModule.cpp
+	${CLIENT}/source/UserInterface/PythonBackgroundPath.cpp
+	${CLIENT}/source/UserInterface/PythonChangeLook.cpp
+	${CLIENT}/source/UserInterface/PythonCharacterManager.cpp
+	${CLIENT}/source/UserInterface/PythonCharacterManagerModule.cpp
+	${CLIENT}/source/UserInterface/PythonCharacterModule.cpp
+	${CLIENT}/source/UserInterface/PythonCubeRenewal.cpp
+	${CLIENT}/source/UserInterface/PythonEffectModule.cpp
+	${CLIENT}/source/UserInterface/PythonEventManager.cpp
+	${CLIENT}/source/UserInterface/PythonEventManagerMoudle.cpp
+	${CLIENT}/source/UserInterface/PythonGameEventManagerModule.cpp
+	${CLIENT}/source/UserInterface/PythonIkarusShop.cpp
+	${CLIENT}/source/UserInterface/PythonItem.cpp
+	${CLIENT}/source/UserInterface/PythonItemModule.cpp
+	${CLIENT}/source/UserInterface/PythonNetworkStreamIkarusShop.cpp
+	${CLIENT}/source/UserInterface/PythonNonPlayer.cpp
+	${CLIENT}/source/UserInterface/PythonNonPlayerModule.cpp
+	${CLIENT}/source/UserInterface/PythonPlayer.cpp
+	${CLIENT}/source/UserInterface/PythonPlayerEventHandler.cpp
+	${CLIENT}/source/UserInterface/PythonPlayerInput.cpp
+	${CLIENT}/source/UserInterface/PythonPlayerInputKeyboard.cpp
+	${CLIENT}/source/UserInterface/PythonPlayerInputMouse.cpp
+	${CLIENT}/source/UserInterface/PythonPlayerModule.cpp
+	${CLIENT}/source/UserInterface/PythonPlayerSettingsModule.cpp
+	${CLIENT}/source/UserInterface/PythonPlayerSkill.cpp
+	${CLIENT}/source/UserInterface/PythonPrivateItemShop.cpp
+	${CLIENT}/source/UserInterface/PythonQuest.cpp
+	${CLIENT}/source/UserInterface/PythonSkill.cpp
+	${CLIENT}/source/UserInterface/PythonChat.cpp
+	${CLIENT}/source/UserInterface/PythonChatModule.cpp
+	${CLIENT}/source/UserInterface/PythonExchange.cpp
+	${CLIENT}/source/UserInterface/PythonExchangeModule.cpp
+	${CLIENT}/source/UserInterface/PythonFlyModule.cpp
+	${CLIENT}/source/UserInterface/PythonGuild.cpp
+	${CLIENT}/source/UserInterface/PythonMessenger.cpp
+	${CLIENT}/source/UserInterface/PythonMiniMap.cpp
+	${CLIENT}/source/UserInterface/PythonMiniMapModule.cpp
+	${CLIENT}/source/UserInterface/PythonSafeBox.cpp
+	${CLIENT}/source/UserInterface/PythonShop.cpp
+	${CLIENT}/source/UserInterface/PythonSwitchbot.cpp
+	${CLIENT}/source/UserInterface/PythonTextTail.cpp
+	${CLIENT}/source/UserInterface/PythonTextTailModule.cpp
+	${CLIENT}/source/UserInterface/PythonPackModule.cpp
+	${CLIENT}/source/UserInterface/ProcessScanner.cpp
+	${CLIENT}/source/UserInterface/PythonApplication.cpp
+	${CLIENT}/source/UserInterface/PythonApplicationCamera.cpp
+	${CLIENT}/source/UserInterface/PythonApplicationCursor.cpp
+	${CLIENT}/source/UserInterface/PythonApplicationEvent.cpp
+	${CLIENT}/source/UserInterface/PythonApplicationLogo.cpp
+	${CLIENT}/source/UserInterface/PythonApplicationModule.cpp
+	${CLIENT}/source/UserInterface/PythonApplicationProcedure.cpp
+	${CLIENT}/source/UserInterface/PythonApplicationWebPage.cpp
+	${CLIENT}/source/UserInterface/PythonIME.cpp
+	${CLIENT}/source/UserInterface/PythonIMEModule.cpp
+	${CLIENT}/source/UserInterface/PythonProfilerModule.cpp
+	${CLIENT}/source/UserInterface/PythonSoundManagerModule.cpp
+	${CLIENT}/source/UserInterface/PythonSystem.cpp
+	${CLIENT}/source/UserInterface/PythonSystemModule.cpp
+	${CLIENT}/source/UserInterface/GuildMarkDownloader.cpp
+	${CLIENT}/source/UserInterface/GuildMarkUploader.cpp
+	${CLIENT}/source/UserInterface/MarkImage.cpp
+	${CLIENT}/source/UserInterface/MarkManager.cpp
+	${CLIENT}/source/UserInterface/Locale.cpp
+	${CLIENT}/source/UserInterface/AccountConnector.cpp
+	${CLIENT}/source/UserInterface/InsultChecker.cpp
+	${CLIENT}/source/UserInterface/NetworkActorManager.cpp
+	${CLIENT}/source/UserInterface/ProcessCRC.cpp
+	${CLIENT}/source/UserInterface/PythonExceptionSender.cpp
+	${CLIENT}/source/UserInterface/PythonNetworkDatagram.cpp
+	${CLIENT}/source/UserInterface/PythonNetworkDatagramModule.cpp
+	${CLIENT}/source/UserInterface/PythonNetworkStream.cpp
+	${CLIENT}/source/UserInterface/PythonNetworkStreamCommand.cpp
+	${CLIENT}/source/UserInterface/PythonNetworkStreamEvent.cpp
+	${CLIENT}/source/UserInterface/PythonNetworkStreamModule.cpp
+	${CLIENT}/source/UserInterface/PythonNetworkStreamPhaseGame.cpp
+	${CLIENT}/source/UserInterface/PythonNetworkStreamPhaseGameActor.cpp
+	${CLIENT}/source/UserInterface/PythonNetworkStreamPhaseGameItem.cpp
+	${CLIENT}/source/UserInterface/PythonNetworkStreamPhaseHandShake.cpp
+	${CLIENT}/source/UserInterface/PythonNetworkStreamPhaseLoading.cpp
+	${CLIENT}/source/UserInterface/PythonNetworkStreamPhaseLogin.cpp
+	${CLIENT}/source/UserInterface/PythonNetworkStreamPhaseOffline.cpp
+	${CLIENT}/source/UserInterface/PythonNetworkStreamPhaseSelect.cpp
+	${CLIENT}/source/UserInterface/ServerStateChecker.cpp
+	${CLIENT}/source/UserInterface/ServerStateCheckerModule.cpp
+	${CLIENT}/source/UserInterface/CheckLatestFiles.cpp
+	${CLIENT}/source/UserInterface/GameType.cpp
+	${CLIENT}/source/UserInterface/MovieMan.cpp
+	${CLIENT}/source/UserInterface/StdAfx.cpp
+	${CLIENT}/source/UserInterface/UserInterface.cpp
+)

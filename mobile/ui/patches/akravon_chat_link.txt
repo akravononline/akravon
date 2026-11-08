@@ -1,0 +1,21 @@
+# AKRAVON: sohbetteki "esya ekle" dugmesi - envanterde dokunulan esyanin baglantisi sohbet kutusuna eklenir
+@@ uiinventory.py
+<<<
+	def UseItemSlot(self, slotIndex):
+		curCursorNum = app.GetCursor()
+===
+	def UseItemSlot(self, slotIndex):
+		if __import__("uiMobileChat").TakeItemSlot(player, self.__InventoryLocalSlotPosToGlobalSlotPos(slotIndex)):
+			return
+		curCursorNum = app.GetCursor()
+>>>
+@@ uiinventory.py
+<<<
+	def SelectItemSlot(self, itemSlotIndex):
+		if constInfo.GET_ITEM_QUESTION_DIALOG_STATUS() == 1:
+===
+	def SelectItemSlot(self, itemSlotIndex):
+		if __import__("uiMobileChat").TakeItemSlot(player, self.__InventoryLocalSlotPosToGlobalSlotPos(itemSlotIndex)):
+			return
+		if constInfo.GET_ITEM_QUESTION_DIALOG_STATUS() == 1:
+>>>

@@ -1,0 +1,10 @@
+@@ UserInterface/CefWebBrowser.h
+<<<
+#include "CefClientApp.h"
+#include "CefClientHandler.h"
+===
+#ifndef CYNEX_MOBILE
+#include "CefClientApp.h"
+#include "CefClientHandler.h"
+#endif
+>>>

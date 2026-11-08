@@ -1,0 +1,43 @@
+@@ UserInterface/PythonIkarusShop.h
+<<<
+#include "PythonBackground.h"
+#include "Packet.h"
+===
+#include "PythonBackground.h"
+#include "Packet.h"
+#include <msl/msl.h>
+>>>
+@@ UserInterface/PythonIkarusShop.h
+<<<
+			PyObject* makeInteger(LONG val) { return _Register(PyInt_FromLong(val)); }
+===
+#ifdef CYNEX_MOBILE
+			// Cynex: android'de LONG = int, int64_t = long - long long ayrica lazim
+			PyObject* makeInteger(long long val) { return _Register(PyLong_FromLongLong(val)); }
+			PyObject* makeInteger(unsigned long long val) { return _Register(PyLong_FromUnsignedLongLong(val)); }
+#else
+			PyObject* makeInteger(LONG val) { return _Register(PyInt_FromLong(val)); }
+#endif
+>>>
+@@ UserInterface/PythonIkarusShop.h
+<<<
+			void set(const std::string& key, LONG value) { PyDict_SetItemString(dict, key.c_str(), collector.makeInteger(value)); }
+===
+#ifdef CYNEX_MOBILE
+			void set(const std::string& key, long long value) { PyDict_SetItemString(dict, key.c_str(), collector.makeInteger(value)); }
+			void set(const std::string& key, unsigned long long value) { PyDict_SetItemString(dict, key.c_str(), collector.makeInteger(value)); }
+#else
+			void set(const std::string& key, LONG value) { PyDict_SetItemString(dict, key.c_str(), collector.makeInteger(value)); }
+#endif
+>>>
+@@ UserInterface/PythonIkarusShop.h
+<<<
+			void append(LONG value) { PyList_Append(list, collector.makeInteger(value)); }
+===
+#ifdef CYNEX_MOBILE
+			void append(long long value) { PyList_Append(list, collector.makeInteger(value)); }
+			void append(unsigned long long value) { PyList_Append(list, collector.makeInteger(value)); }
+#else
+			void append(LONG value) { PyList_Append(list, collector.makeInteger(value)); }
+#endif
+>>>

@@ -1,0 +1,14 @@
+@@ UserInterface/PythonPlayer.cpp
+<<<
+#include "InstanceBase.h"
+#include "StdAfx.h"
+===
+#include "StdAfx.h"	// Cynex: pch'den onceki satirlari msvc zaten yok sayiyor
+#include "InstanceBase.h"
+>>>
+@@ EterLib/IME.cpp
+<<<
+	unsigned char c = unsigned char(wParam & 0xff);
+===
+	unsigned char c = (unsigned char)(wParam & 0xff);
+>>>

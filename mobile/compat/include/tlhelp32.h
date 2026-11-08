@@ -1,0 +1,57 @@
+// Cynex: surec/modul listesi - mobilde bos doner (hile taramasi bir sey bulmaz)
+#pragma once
+#include <windows.h>
+
+#define TH32CS_SNAPHEAPLIST 0x00000001
+#define TH32CS_SNAPPROCESS 0x00000002
+#define TH32CS_SNAPTHREAD 0x00000004
+#define TH32CS_SNAPMODULE 0x00000008
+#define TH32CS_SNAPMODULE32 0x00000010
+#define TH32CS_SNAPALL (TH32CS_SNAPHEAPLIST | TH32CS_SNAPPROCESS | TH32CS_SNAPTHREAD | TH32CS_SNAPMODULE)
+#define MAX_MODULE_NAME32 255
+#define PROCESS_TERMINATE 0x0001
+#define PROCESS_VM_READ 0x0010
+#define PROCESS_VM_WRITE 0x0020
+#define PROCESS_VM_OPERATION 0x0008
+#define PROCESS_QUERY_INFORMATION 0x0400
+#define PROCESS_ALL_ACCESS 0x001F0FFF
+#define ERROR_PARTIAL_COPY 299L
+
+typedef struct tagPROCESSENTRY32
+{
+	DWORD dwSize;
+	DWORD cntUsage;
+	DWORD th32ProcessID;
+	ULONG_PTR th32DefaultHeapID;
+	DWORD th32ModuleID;
+	DWORD cntThreads;
+	DWORD th32ParentProcessID;
+	LONG pcPriClassBase;
+	DWORD dwFlags;
+	CHAR szExeFile[MAX_PATH];
+} PROCESSENTRY32, *PPROCESSENTRY32, *LPPROCESSENTRY32;
+
+typedef struct tagMODULEENTRY32
+{
+	DWORD dwSize;
+	DWORD th32ModuleID;
+	DWORD th32ProcessID;
+	DWORD GlblcntUsage;
+	DWORD ProccntUsage;
+	BYTE* modBaseAddr;
+	DWORD modBaseSize;
+	HMODULE hModule;
+	char szModule[MAX_MODULE_NAME32 + 1];
+	char szExePath[MAX_PATH];
+} MODULEENTRY32, *PMODULEENTRY32, *LPMODULEENTRY32;
+
+inline HANDLE CreateToolhelp32Snapshot(DWORD, DWORD) { return INVALID_HANDLE_VALUE; }
+inline BOOL Process32First(HANDLE, LPPROCESSENTRY32) { return FALSE; }
+inline BOOL Process32Next(HANDLE, LPPROCESSENTRY32) { return FALSE; }
+inline BOOL Module32First(HANDLE, LPMODULEENTRY32) { return FALSE; }
+inline BOOL Module32Next(HANDLE, LPMODULEENTRY32) { return FALSE; }
+inline HANDLE OpenProcess(DWORD, BOOL, DWORD) { return NULL; }
+inline BOOL ReadProcessMemory(HANDLE, LPCVOID, LPVOID, SIZE_T, SIZE_T* n) { if (n) *n = 0; return FALSE; }
+inline BOOL ReadProcessMemory(HANDLE, LPCVOID, LPVOID, SIZE_T, DWORD* n) { if (n) *n = 0; return FALSE; }	// Cynex: pc 32bit SIZE_T = DWORD
+#define PROCESSENTRY32W PROCESSENTRY32
+#define MODULEENTRY32W MODULEENTRY32

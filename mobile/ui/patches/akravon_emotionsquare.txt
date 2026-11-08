@@ -1,0 +1,14 @@
+# AKRAVON: square character-only covers preserve native slot events and round HUD icons.
+@@ uicharacter.py
+<<<
+			slot.SetEmotionSlot(slotIdx, emotionIdx)
+			slot.SetCoverButton(slotIdx)
+===
+			slot.SetEmotionSlot(slotIdx, emotionIdx)
+			import uiAkravonActionIcon
+			icon = uiAkravonActionIcon.GetCharacterEmotionIcon(emotionIdx)
+			if icon:
+				slot.SetCoverButton(slotIdx, icon, icon, icon, icon)
+			else:
+				slot.SetCoverButton(slotIdx)
+>>>

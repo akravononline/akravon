@@ -1,0 +1,24 @@
+@@ UserInterface/MarkManager.cpp
+<<<
+	snprintf(buf, sizeof(buf), "data/symbol/%s_%lu.tga", m_pathPrefix.c_str(), imgIdx);
+===
+	snprintf(buf, sizeof(buf), "data/symbol/%s_%u.tga", m_pathPrefix.c_str(), imgIdx);	// Cynex: DWORD = %u
+>>>
+@@ UserInterface/MarkManager.cpp
+<<<
+		sscanf(line, "%lu %lu", &guildID, &markID);
+===
+		sscanf(line, "%u %u", &guildID, &markID);	// Cynex: %lu android'de 8 bayt yaziyordu
+>>>
+@@ PRTerrainLib/TextureSet.cpp
+<<<
+	fprintf(pFile, "TextureCount %ld\n", GetTextureCount()?(GetTextureCount() - 1):0);
+===
+	fprintf(pFile, "TextureCount %u\n", GetTextureCount()?(GetTextureCount() - 1):0);
+>>>
+@@ UserInterface/PythonChatModule.cpp
+<<<
+							atoi(results[i+1].c_str()));
+===
+							atoll(results[i+1].c_str()));	// Cynex: %lld
+>>>

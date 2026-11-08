@@ -1,0 +1,12 @@
+# Cynex: Kanal Secimi geri tusuyla (ESC) kapansin - telefonda
+@@ uisystem.py
+<<<
+	def Open(self):
+		self.dialog.Show()
+===
+	def Open(self):
+		self.dialog.Show()
+		# Cynex: ESC gosterilen karta gider, ScriptWindow'a degil
+		if getattr(app, "IsMobile", None):
+			self.dialog.OnPressEscapeKey = ui.__mem_func__(self.OnPressEscapeKey)
+>>>

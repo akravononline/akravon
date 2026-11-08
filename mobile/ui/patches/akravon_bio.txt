@@ -1,0 +1,96 @@
+# AKRAVON: Uzaktan Biyolog - karakter penceresi cercevesi / baslik / kapat / yazilar (skin/build_akravon_bio.py)
+@@ uibiyolog.py
+<<<
+	def __LoadWindow(self):
+		wallPaper = ui.ImageBox()
+===
+	def __LoadWindow(self):
+		akrBoard = ui.ExpandedImageBox()
+		akrBoard.SetParent(self)
+		akrBoard.AddFlag("not_pick")
+		akrBoard.LoadImage("d:/ymir work/ui/akravon_legacy/bio_board.png")
+		akrBoard.SetPosition(0, 0)
+		akrBoard.Show()
+		self.children.append(akrBoard)
+		wallPaper = ui.ImageBox()
+>>>
+
+@@ uibiyolog.py
+<<<
+		wallPaper.SetPosition(12,28)
+		wallPaper.Show()
+		self.children.append(wallPaper)
+		self.SetSize(12+wallPaper.GetWidth()+12, 32+wallPaper.GetHeight()+10)
+===
+		wallPaper.SetPosition(16,52)
+		wallPaper.Show()
+		self.children.append(wallPaper)
+		self.SetSize(16+wallPaper.GetWidth()+16, 52+wallPaper.GetHeight()+16)
+>>>
+
+@@ uibiyolog.py
+<<<
+	def LoadEmpty(self):
+===
+		# AKRAVON: sifirdan yerlesim - karakter penceresi dili (skin/build_akravon_bio.py Background2)
+		import uiMobileStyle
+		for part in list(getattr(self, "Corners", [])) + list(getattr(self, "Lines", [])) + [getattr(self, "Base", None), self.titleBar]:
+			if part:
+				part.Hide()
+		gold = uiMobileStyle.Color(222, 184, 110)
+		(X0, RW) = (200, 328)
+		images = [c for c in self.children if c.__class__ is ui.ImageBox]
+		buttons = [c for c in self.children if c.__class__ is ui.Button]
+		windows = [c for c in self.children if c.__class__ is ui.Window]
+		texts = [c for c in self.children if c.__class__ is ui.TextLine]
+		(wall, missionSlot, ozutSlot, unutSlot) = images[:4]
+		wall.LoadImage("d:/ymir work/ui/akravon_legacy/bio_bg2.png")
+		wall.SetPosition(16, 52)
+		self.SetSize(16 + 528 + 16, 52 + 340 + 16)
+		self.SetCenterPosition()
+		missionSlot.SetPosition(X0 + 14, 34)
+		ozutSlot.SetPosition(X0 + RW - 126, 34)
+		unutSlot.SetPosition(X0 + RW - 62, 34)
+		self.checkBoxOzut.SetPosition(X0 + RW - 106, 56)
+		self.checkBoxUnutkanlik.SetPosition(X0 + RW - 42, 56)
+		buttons[0].SetPosition(X0 + RW - 104, 110)
+		label = buttons[0].GetText()
+		buttons[0].SetText("")
+		self.children.append(uiMobileStyle.CreateText(buttons[0], label, 44, 12, uiMobileStyle.Color(250, 236, 210), "LatoBd:16", "center"))
+		if len(buttons) > 1:
+			buttons[1].Hide()
+		self.missionName.SetPosition(X0 + RW // 2, 4)
+		nameSetText = self.missionName.SetText
+		self.missionName.SetText = lambda text, f = nameSetText: f("" if text.strip() in ("-", "") else text)	# bos gorevde tek "-" gorunmesin
+		self.missionName.SetFontName("LatoBd:14")
+		self.missionName.SetPackedFontColor(gold)
+		self.missionStatusText.SetPosition(X0 + 103, 135)
+		self.missionStatusText.SetFontName("LatoBd:15")
+		self.statusText.SetPosition(X0 + RW // 2 - 10, 173)
+		self.statusText.SetFontName("Lato:15")
+		self.checkBoxCall.SetPosition(X0 + RW - 52, 172)
+		for box in (self.checkBoxCall, self.checkBoxOzut, self.checkBoxUnutkanlik):
+			box.backgroundImage.LoadImage("d:/ymir work/ui/akravon_legacy/bio_check_off.png")
+			box.checkImage.LoadImage("d:/ymir work/ui/akravon_legacy/bio_check_on.png")
+			box.checkImage.SetPosition(0, 0)
+			box.SetSize(20, 20)
+		for text in texts:
+			text.Hide()		# "Gorev Odulleri" arka plana cizili
+		if windows:
+			windows[0].SetPosition(X0 + 11, 234)
+		for line in (self.missionName, self.missionStatusText, self.statusText):
+			line.SetText(line.GetText())
+		self.children.append(uiMobileStyle.CreateText(self, localeInfo.BIO_TITLE, self.GetWidth() // 2, 13, gold, "Marcellus:22", "center"))
+		self.children.append(uiMobileStyle.CreateBar(self, uiMobileStyle.Color(96, 74, 42), 16, 44, self.GetWidth() - 32, 1))
+		akrClose = ui.Button()
+		akrClose.SetParent(self)
+		akrClose.SetUpVisual("d:/ymir work/ui/akravon_legacy/close_1.png")
+		akrClose.SetOverVisual("d:/ymir work/ui/akravon_legacy/close_2.png")
+		akrClose.SetDownVisual("d:/ymir work/ui/akravon_legacy/close_3.png")
+		akrClose.SetPosition(self.GetWidth() - 40, 9)
+		akrClose.SAFE_SetEvent(self.Close)
+		akrClose.Show()
+		self.children.append(akrClose)
+
+	def LoadEmpty(self):
+>>>

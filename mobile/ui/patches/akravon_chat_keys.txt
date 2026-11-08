@@ -1,0 +1,14 @@
+# AKRAVON: sohbet yazi kutusu odaktayken W/A/S/D gibi tuslar karakteri yurutmesin
+@@ game.py
+<<<
+	def OnKeyDown(self, key):
+		if self.interface.wndWeb and self.interface.wndWeb.IsShow():
+			return
+===
+	def OnKeyDown(self, key):
+		if __import__("uiMobileChat").IsTyping():
+			return True
+
+		if self.interface.wndWeb and self.interface.wndWeb.IsShow():
+			return
+>>>

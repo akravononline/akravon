@@ -1,0 +1,12 @@
+@@ EterLib/SkyBox.cpp
+<<<
+CSkyObject::~CSkyObject()
+{
+	Destroy();
+}
+===
+CSkyObject::~CSkyObject()
+{
+	CSkyObject::Destroy();	// Cynex: yikicida saf sanal cagri - msvc dogrudan cagiriyordu, clang vtable'dan gidip cokuyor
+}
+>>>

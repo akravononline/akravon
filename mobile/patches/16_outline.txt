@@ -1,0 +1,10 @@
+@@ EterPythonLib/PythonWindow.cpp
+<<<
+BOOL g_bOutlineBoxEnable = TRUE;
+===
+#ifdef CYNEX_MOBILE
+BOOL g_bOutlineBoxEnable = FALSE;	// Cynex: pencere hata ayiklama cercevesi mobilde kapali
+#else
+BOOL g_bOutlineBoxEnable = TRUE;
+#endif
+>>>

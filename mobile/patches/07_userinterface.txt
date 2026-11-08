@@ -1,0 +1,38 @@
+@@ UserInterface/UserInterface.cpp
+<<<
+#define ENABLE_PYLIB_CHECK
+#define ENABLE_MILES_CHECK
+===
+#ifndef CYNEX_MOBILE	// Cynex: mobil kendi python lib ve ses kitapligini tasiyor
+#define ENABLE_PYLIB_CHECK
+#define ENABLE_MILES_CHECK
+#endif
+>>>
+@@ UserInterface/UserInterface.cpp
+<<<
+		LogBoxf("METIN2 BINARY DEBUG VERSION %s ( MS C++ %d Compiled )", __TIMESTAMP__, _MSC_VER);
+===
+		LogBoxf("METIN2 BINARY DEBUG VERSION %s ( MS C++ %d Compiled )", __TIMESTAMP__, CYNEX_MSC_VER);
+>>>
+@@ UserInterface/UserInterface.cpp
+<<<
+		LogBoxf("METIN2 BINARY TEST VERSION %s  ( MS C++ %d Compiled )", __TIMESTAMP__, _MSC_VER);
+	else
+		LogBoxf("METIN2 BINARY DISTRIBUTE VERSION %s ( MS C++ %d Compiled )", __TIMESTAMP__, _MSC_VER);
+===
+		LogBoxf("METIN2 BINARY TEST VERSION %s  ( MS C++ %d Compiled )", __TIMESTAMP__, CYNEX_MSC_VER);
+	else
+		LogBoxf("METIN2 BINARY DISTRIBUTE VERSION %s ( MS C++ %d Compiled )", __TIMESTAMP__, CYNEX_MSC_VER);
+>>>
+@@ UserInterface/UserInterface.cpp
+<<<
+// #define ENABLE_DAEMONPROTECTION
+===
+// #define ENABLE_DAEMONPROTECTION
+
+#ifdef _MSC_VER
+#define CYNEX_MSC_VER _MSC_VER
+#else
+#define CYNEX_MSC_VER 0
+#endif
+>>>

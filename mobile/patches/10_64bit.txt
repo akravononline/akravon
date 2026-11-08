@@ -1,0 +1,54 @@
+@@ EterBase/Singleton.h
+<<<
+		int offset = (int) (T*) 1 - (int) (CSingleton <T>*) (T*) 1;
+		ms_singleton = (T*) ((int) this + offset);
+===
+		intptr_t offset = (intptr_t) (T*) 1 - (intptr_t) (CSingleton <T>*) (T*) 1;	// Cynex: 64bit
+		ms_singleton = (T*) ((intptr_t) this + offset);
+>>>
+@@ EterBase/Singleton.h
+<<<
+		int offset = (int) (T*) 1 - (int) (singleton <T>*) (T*) 1;
+		ms_singleton = (T*) ((int) this + offset);
+===
+		intptr_t offset = (intptr_t) (T*) 1 - (intptr_t) (singleton <T>*) (T*) 1;	// Cynex: 64bit
+		ms_singleton = (T*) ((intptr_t) this + offset);
+>>>
+@@ UserInterface/AbstractSingleton.h
+<<<
+		int offset = (int) (T*) 1 - (int) (CSingleton <T>*) (T*) 1;
+		ms_singleton = (T*) ((int) this + offset);
+===
+		intptr_t offset = (intptr_t) (T*) 1 - (intptr_t) (CSingleton <T>*) (T*) 1;	// Cynex: 64bit
+		ms_singleton = (T*) ((intptr_t) this + offset);
+>>>
+@@ EterImageLib/DXTCImage.cpp 0
+<<<
+(DWORD) pPos
+===
+(intptr_t) pPos
+>>>
+@@ EterImageLib/DXTCImage.cpp 0
+<<<
+(DWORD) pBase
+===
+(intptr_t) pBase
+>>>
+@@ EffectLib/EffectUpdateDecorator.h
+<<<
+				pData((T*)( (unsigned char*)ted.pData - (DWORD)pFirstInstance + (DWORD)pInstance))
+===
+				pData((T*)( (unsigned char*)ted.pData - (intptr_t)pFirstInstance + (intptr_t)pInstance))	// Cynex: 64bit
+>>>
+@@ EterLib/Util.cpp 2
+<<<
+(FONTENUMPROC)EnumFontFamExProc, (LONG)fontFace, 0)
+===
+(FONTENUMPROC)EnumFontFamExProc, (LPARAM)fontFace, 0)
+>>>
+@@ UserInterface/PythonApplicationModule.cpp
+<<<
+	return Py_BuildValue("i", (int)pTextLineLoader);
+===
+	return Py_BuildValue("i", pTextLineLoader);	// Cynex: 64bit tutamac (Py_BuildValue sarmalayicisi)
+>>>

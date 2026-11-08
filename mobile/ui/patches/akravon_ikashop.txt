@@ -1,0 +1,181 @@
+# AKRAVON: pazar pencereleri - baslik yazisi bizim yazi tipi ve altin renk (gorseller: skin/build_akravon_ikashop.py)
+@@ uiikashop.py
+<<<
+			self.titleText.SetFontName("Tahoma:20")
+			self.titleText.SetPackedFontColor(0xFFFFFFFF)
+===
+			self.titleText.SetFontName("Marcellus:22")
+			self.titleText.SetPackedFontColor(0xFFDEB86E)
+>>>
+
+@@ uicommon.py
+<<<
+			self.board.LoadImage(self.PATH_ROOT + "bg.tga")
+===
+			self.board.LoadImage("d:/ymir work/ui/akravon_legacy/ikm_board.png")
+>>>
+
+@@ uicommon.py
+<<<
+			self.acceptButton = ui.MakeButton(self, 25, (280 + 40) + self.EX_Y * 2, False, self.PATH_ROOT, "btn_norm.dds", "btn_hover.dds", "btn_down.dds")
+===
+			self.acceptButton = ui.MakeButton(self, 25, (280 + 40) + self.EX_Y * 2, False, "d:/ymir work/ui/akravon_legacy/", "ikm_btn_1.png", "ikm_btn_2.png", "ikm_btn_3.png")
+>>>
+
+@@ uicommon.py
+<<<
+			self.cancelButton = ui.MakeButton(self, 125, (280 + 40) + self.EX_Y * 2, False, self.PATH_ROOT, "btn_norm.dds", "btn_hover.dds", "btn_down.dds")
+===
+			self.cancelButton = ui.MakeButton(self, 125, (280 + 40) + self.EX_Y * 2, False, "d:/ymir work/ui/akravon_legacy/", "ikm_btn_1.png", "ikm_btn_2.png", "ikm_btn_3.png")
+>>>
+
+@@ uicommon.py
+<<<
+			self.boardItem.LoadImage(self.PATH_ROOT + "bg_item.dds")
+===
+			self.boardItem.LoadImage("d:/ymir work/ui/akravon_legacy/ikm_item.png")
+>>>
+
+@@ uicommon.py
+<<<
+			self.boardYang.LoadImage(self.PATH_ROOT + "price.dds")
+===
+			self.boardYang.LoadImage("d:/ymir work/ui/akravon_legacy/ikm_price.png")
+>>>
+
+@@ uicommon.py
+<<<
+			self.SetSize(self.board.GetWidth(), self.board.GetHeight() + self.EX_Y * 2)
+
+		def OnPressEscapeKey(self):
+			self.Close()
+			return True
+
+		def Open(self):
+			self.inputValue.SetText("")
+===
+			for line in (self.wndNameItem, self.wndNameLine1, self.wndNameLine2, self.moneyText):
+				line.SetFontName("Lato:17")
+				line.SetPackedFontColor(0xFFFAECD2)
+				line.SetText(line.GetText())
+			self.wndNameItem.SetPackedFontColor(0xFFFFD65A)
+			for line in (self.minPriceText, self.maxPriceText, self.avgPrice):
+				line.SetFontName("Lato:15")
+				line.SetPackedFontColor(0xFFDEB86E)
+				line.SetText(line.GetText())
+			for button in (self.acceptButton, self.cancelButton):
+				button.SetText(button.GetText())
+			self.SetSize(self.board.GetWidth(), self.board.GetHeight() + self.EX_Y * 2)
+
+		def OnPressEscapeKey(self):
+			self.Close()
+			return True
+
+		def Open(self):
+			self.inputValue.SetText("")
+>>>
+
+@@ uiikashop.py
+<<<
+		def SetTitleName(self, title):
+			self.titleText.SetText(title)
+===
+		def SetTitleName(self, title):
+			self.titleText.SetFontName("Marcellus:22")
+			self.titleText.SetPackedFontColor(0xFFDEB86E)
+			self.titleText.SetText(title)
+>>>
+
+@@ uiikashop.py
+<<<
+		child = type()
+		child.SetParent(parent if parent else self)
+===
+		child = type()
+		if type is ui.TextLine:
+			child.SetFontName("Lato:15")	# AKRAVON: pazar yazilari bizim yazi tipiyle
+		child.SetParent(parent if parent else self)
+>>>
+
+@@ uicommon.py
+<<<
+			self.accceptButton = self.GetChild("accept")
+			self.accceptButton.SetEvent(ui.__mem_func__(self.Close))
+
+		except:
+			import exception
+			exception.Abort("PopupDialog.LoadDialog.BindObject")
+
+	def Open(self):
+		self.SetCenterPosition()
+		self.SetTop()
+		self.Show()
+
+	def Close(self):
+		self.Hide()
+		self.acceptEvent()
+
+	def Destroy(self):
+		self.Close()
+		self.ClearDictionary()
+
+	def SetWidth(self, width):
+		height = self.GetHeight()
+		self.SetSize(width, height)
+		self.board.SetSize(width, height)
+		self.SetCenterPosition()
+		self.UpdateRect()
+
+	def SetText(self, text):
+		self.message.SetText(text)
+
+	def SetAcceptEvent(self, event):
+		self.acceptEvent = event
+
+	def SetButtonName(self, name):
+		self.accceptButton.SetText(name)
+===
+			self.accceptButton = self.GetChild("accept")
+			self.accceptButton.SetEvent(ui.__mem_func__(self.Close))
+			import uiAkravonPopup
+			uiAkravonPopup.Style(self, 1)
+
+		except:
+			import exception
+			exception.Abort("PopupDialog.LoadDialog.BindObject")
+
+	def Open(self):
+		self.SetCenterPosition()
+		self.SetTop()
+		self.Show()
+
+	def Close(self):
+		self.Hide()
+		self.acceptEvent()
+
+	def Destroy(self):
+		self.Close()
+		self.ClearDictionary()
+
+	def SetAcceptEvent(self, event):
+		self.acceptEvent = event
+>>>
+
+@@ uicommon.py
+<<<
+		self.board = self.GetChild("board")
+		self.textLine = self.GetChild("message")
+		self.acceptButton = self.GetChild("accept")
+		self.cancelButton = self.GetChild("cancel")
+
+	def Open(self):
+===
+		self.board = self.GetChild("board")
+		self.textLine = self.GetChild("message")
+		self.acceptButton = self.GetChild("accept")
+		self.cancelButton = self.GetChild("cancel")
+		import uiAkravonPopup
+		uiAkravonPopup.Style(self, 1)
+
+	def Open(self):
+>>>

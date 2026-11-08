@@ -1,0 +1,29 @@
+@@ EterPythonLib/PythonWindow.cpp
+<<<
+				if (!pWin->IsFlag(CWindow::FLAG_IGNORE_SIZE))
+				{
+					if (!pWin->IsIn(x, y)) {
+						if (0L <= pWin->GetWidth()) {
+							continue;
+						}
+					}
+				}
+
+				CWindow * pResult = pWin->PickWindow(x, y);
+===
+				if (!pWin->IsFlag(CWindow::FLAG_IGNORE_SIZE))
+				{
+					if (!pWin->IsIn(x, y)) {
+						if (0L <= pWin->GetWidth()) {
+							continue;
+						}
+					}
+#ifdef CYNEX_MOBILE
+					// Cynex: boyutsuz pencere (dugme yazisi) tam ortasina dokununca dugmeyi yutmasin
+					else if (0L == pWin->GetWidth() || 0L == pWin->GetHeight())
+						continue;
+#endif
+				}
+
+				CWindow * pResult = pWin->PickWindow(x, y);
+>>>

@@ -1,0 +1,169 @@
+# AKRAVON: envanter + kayan ekipman (skin/build_akravon_inventory.py, uiakravoninventory.py)
+@@ uiinventory.py
+<<<
+		## Refresh
+		self.SetInventoryPage(0)
+		self.SetEquipmentPage(0)
+===
+		import uiAkravonInventory
+		uiAkravonInventory.Apply(self)
+
+		## Refresh
+		self.SetInventoryPage(0)
+		self.SetEquipmentPage(0)
+>>>
+
+@@ uiinventory.py
+<<<
+			pyScrLoader.LoadScriptFile(self, "UIScript/InventoryWindowEx.py")
+		except:
+			import exception
+			exception.Abort("InventoryWindow.LoadWindow.LoadObject")
+===
+			pyScrLoader.LoadScriptFile(self, "UIScript/InventoryWindowEx.py")
+		except:
+			import traceback
+			open("akravon_hata.txt", "w").write(traceback.format_exc())
+			import exception
+			exception.Abort("InventoryWindow.LoadWindow.LoadObject")
+>>>
+
+@@ uiinventory.py
+<<<
+		except:
+			import exception
+			exception.Abort("InventoryWindow.LoadWindow.BindObject")
+===
+		except:
+			import traceback
+			open("akravon_hata.txt", "w").write(traceback.format_exc())
+			import exception
+			exception.Abort("InventoryWindow.LoadWindow.BindObject")
+>>>
+
+@@ uiinventory.py
+<<<
+			self.hairBox = CheckBox(self, 105, 65, "hair", 0, "costume_hide/button_hide_0.tga")
+===
+			self.hairBox = CheckBox(self.GetChild("board"), 108, 64, "hair", 0, "costume_hide/button_hide_0.tga")
+>>>
+
+@@ uiinventory.py
+<<<
+			self.costumeBox = CheckBox(self, 105, 100, "costume", 0, "costume_hide/button_hide_0.tga")
+===
+			self.costumeBox = CheckBox(self.GetChild("board"), 108, 124, "costume", 0, "costume_hide/button_hide_0.tga")
+>>>
+
+@@ uiinventory.py
+<<<
+			self.weaponBox = CheckBox(self, 58, 65, "weapon", 0, "costume_hide/button_hide_0.tga")
+===
+			self.weaponBox = CheckBox(self.GetChild("board"), 48, 64, "weapon", 0, "costume_hide/button_hide_0.tga")
+>>>
+
+@@ uiinventory.py
+<<<
+			self.hairBox = CheckBox(self, 105, 65, "hair", constInfo.costumeHair, "costume_hide/button_hide_0.tga")
+===
+			self.hairBox = CheckBox(self.GetChild("board"), 108, 64, "hair", constInfo.costumeHair, "costume_hide/button_hide_0.tga")
+>>>
+
+@@ uiinventory.py
+<<<
+			self.costumeBox = CheckBox(self, 105, 100, "costume", constInfo.costumeCostume, "costume_hide/button_hide_0.tga")
+===
+			self.costumeBox = CheckBox(self.GetChild("board"), 108, 124, "costume", constInfo.costumeCostume, "costume_hide/button_hide_0.tga")
+>>>
+
+@@ uiinventory.py
+<<<
+			self.weaponBox = CheckBox(self, 58, 65, "weapon", constInfo.costumeWeapon, "costume_hide/button_hide_0.tga")
+===
+			self.weaponBox = CheckBox(self.GetChild("board"), 48, 64, "weapon", constInfo.costumeWeapon, "costume_hide/button_hide_0.tga")
+>>>
+
+@@ uiinventory.py
+<<<
+		wndEquip.SetSelectItemSlotEvent(ui.__mem_func__(self.wndInventory.SelectItemSlot))
+
+		self.wndEquip = wndEquip
+===
+		wndEquip.SetSelectItemSlotEvent(ui.__mem_func__(self.wndInventory.SelectItemSlot))
+
+		self.wndEquip = wndEquip
+		# AKRAVON: ekipmanla ayni baslik / kapat / 50 px yuvalar
+		import uiMobileStyle, uiAkravonInventory, wndMgr
+		self.akrKeep = [uiMobileStyle.CreateText(self, uiScriptLocale.COSTUME_WINDOW_TITLE, self.GetWidth() // 2, 13, uiMobileStyle.Color(222, 184, 110), "Marcellus:22", "center"),
+			uiMobileStyle.CreateBar(self, uiMobileStyle.Color(96, 74, 42), 16, 52, self.GetWidth() - 32, 1)]
+		self.GetChild("TitleBar").Hide()	# eski baslik / kapat (ekran disinda kalan X)
+		if hasattr(wndMgr, "SetSlotUnitSize"):
+			wndMgr.SetSlotUnitSize(wndEquip.hWnd, 50, 50, 4)
+>>>
+
+@@ uiinventory.py
+<<<
+			self.mouseReflector.UpdateRect()
+			
+			if status == True:
+===
+			self.mouseReflector.UpdateRect()
+			# AKRAVON: telefonda dokunma (tap) olayi - goz simgesi aninda acilip kapanir
+			ui.EnableSingleTap(self)
+			self.SetTouchTapEvent(ui.__mem_func__(self.OnTapToggle))
+
+			if status == True:
+>>>
+
+@@ uiinventory.py
+<<<
+		def OnMouseLeftButtonUp(self):
+			if not self.Enable:
+				return
+			self.mouseReflector.Up()
+			self.SendCostumeUpdate()
+===
+		def OnTapToggle(self):
+			if not self.Enable:
+				return
+			self.SendCostumeUpdate()
+			self.SetCheck(self.IsChecked())
+			# yerel durum sunucu durumuyla ayni kalsin (pencere yenilenince geri donmesin)
+			value = 0 if self.image.IsShow() else 1
+			if self.event == "hair":
+				constInfo.costumeHair = value
+			elif self.event == "costume":
+				constInfo.costumeCostume = value
+			elif self.event == "weapon":
+				constInfo.costumeWeapon = value
+
+		def OnMouseLeftButtonUp(self):
+			if not self.Enable:
+				return
+			self.mouseReflector.Up()
+>>>
+
+@@ uiinventory.py
+<<<
+	def Close(self):
+		self.Hide()
+
+	def __LoadWindow(self):
+===
+	def Close(self):
+		self.Hide()
+
+	def AkrTapClose(self):
+		self.Hide()
+
+	def __LoadWindow(self):
+>>>
+
+@@ uiinventory.py
+<<<
+				if slotNumber in self.liHighlightedItems:
+					self.wndItem.ActivateSlot(i)
+===
+				if slotNumber in self.liHighlightedItems:
+					self.wndItem.ActivateSlot(i, 1.0, 0.82, 0.25, 1.0)	# AKRAVON: yeni esya sari + yildiz
+>>>

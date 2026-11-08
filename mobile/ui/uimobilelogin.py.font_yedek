@@ -1,0 +1,1213 @@
+from __future__ import division
+# Cynex: barbaros giris ekraninin dokunmatik yerlesimi - giris/kanal/hesap mantigi barbaros'un kendi kodu
+import app
+import dbg
+import os
+import wndMgr
+import constInfo
+import localeInfo
+import serverInfo
+import uiScriptLocale
+import ui
+import introLogin
+import uiMobileCompat
+import uiMobileHud
+import uiMobileStyle
+import uiAkravon
+import uiMobileCreate
+
+from _weakref import proxy
+from uiMobileWidgets import GuardAutoFocus
+
+SCREEN_EDGE = 48
+TOP_MARGIN = 10
+PARK_POSITION = -4000
+
+ACCOUNT_PANEL_WIDTH = 340
+ACCOUNT_INSET = 8
+ACCOUNT_HEADER_HEIGHT = 44
+ACCOUNT_ROW_HEIGHT = 60
+ACCOUNT_ROW_WIDTH = ACCOUNT_PANEL_WIDTH - ACCOUNT_INSET * 2
+ACCOUNT_SLOT_COUNT = 4
+ACCOUNT_TEXT_X = 66
+AVATAR_SIZE = 44
+DELETE_SIZE = 40
+DELETE_CONFIRM_TIME = 3.0
+
+CARD_WIDTH = 440
+CARD_PADDING_X = 24
+CARD_PADDING_Y = 22
+CARD_GAP = 12
+INNER_WIDTH = CARD_WIDTH - CARD_PADDING_X * 2
+SELECTOR_HEIGHT = 56
+SELECTOR_GAP = 8
+SELECTOR_TOP = 30
+FIELD_HEIGHT = 54
+FIELD_GAP = 10
+TOGGLE_HEIGHT = 30
+LOGIN_BUTTON_KEY = "primary_392x58"
+LOGIN_BUTTON_HEIGHT = 58
+EXIT_BUTTON_HEIGHT = 48
+
+CHIP_WIDTH = 380
+CHIP_HEIGHT = 50
+CHIP_GAP = 8
+CHIP_COLUMNS = 1	# AKRAVON: kanallar alt alta
+SERVER_CARD_HEIGHT = 56
+PICKER_PADDING_X = 30
+PICKER_TOP = 28
+PICKER_TITLE_HEIGHT = 44
+PICKER_LABEL_HEIGHT = 22
+PICKER_SECTION_GAP = 16
+PICKER_CLOSE_WIDTH = 200
+PICKER_CLOSE_HEIGHT = 48
+PICKER_BOTTOM = 28
+PICKER_DIM_ALPHA = 185
+PICKER_EMPTY_HEIGHT = 56
+REGION_ID = 0
+FONT_CHIP = "Marcellus:22"
+FONT_CHIP_STATE = "Marcellus:18"
+FONT_ACCOUNT = "Marcellus:21"
+FONT_PANEL_HEADER = "Marcellus:22"
+
+# AKRAVON: giris ekrani yerlesimi (1280x720 arayuz olcegi, arka plan resmindeki bos alanlarla hizali)
+AKR_BACKGROUND = "login_bg"
+AKR_BACKGROUND_SIZE = (1280, 720)
+AKR_HIDDEN_NAMES = ("bg1", "bg2")	# barbaros arka plani + logosu
+AKR_CARD_RECT = (858, 150, 340, 454)	# AKRAVON: dar panel - sag kenar karakter ekranlariyla ayni (82)
+AKR_PAD_X = 26
+AKR_HEADER_Y = 28
+AKR_SELECTOR_Y = 50
+AKR_SELECTOR_HEIGHT = 38
+AKR_SELECTOR_GAP = 10
+AKR_FIELD_Y = 106
+AKR_FIELD_HEIGHT = 42
+AKR_FIELD_STEP = 52
+AKR_CHECK_Y = 268
+AKR_LOGIN_Y = 308
+AKR_EXIT_GAP = 10
+AKR_FIELD_ICONS = ("icon_user", "icon_lock", "icon_pin")
+AKR_ACCOUNT_X = 38
+AKR_ACCOUNT_BOTTOM = 604
+AKR_ACCOUNT_MIN_HEIGHT = 200
+ACCOUNT_PANEL_WIDTH = 362
+ACCOUNT_INSET = 12
+ACCOUNT_HEADER_HEIGHT = 50
+ACCOUNT_ROW_WIDTH = ACCOUNT_PANEL_WIDTH - ACCOUNT_INSET * 2
+
+REFRESH_INTERVAL = 1.0
+CONFIG_REMEMBER_ACCOUNT = "REMEMBER_ACCOUNT"
+CONFIG_PREFERRED_SERVER = "PREFERRED_SERVER"
+
+FIELD_NAMES = (
+	("ID_EditLine", "LOGIN_ID"),
+	("Password_EditLine", "LOGIN_PASSWORD"),
+	("pin_EditLine", "MOBILE_LOGIN_PIN"),
+)
+PARKED_NAMES = ("ConnectBoard", "ConnectBoard2", "LoginBoard", "KayitBoard")
+PARKED_BUTTONS = ("idButton", "sifreButton", "pinButton", "LoginButton", "LoginExitButton", "SelectConnectButton", "KaydetConnectButton")
+# Cynex: serverInfo.STATE_DICT sirasi: kapali, onerilen, yogun, dolu
+CHANNEL_STATES = {
+	1 : ("dot_normal", "MOBILE_CHANNEL_NORMAL"),
+	2 : ("dot_busy", "MOBILE_CHANNEL_BUSY"),
+	3 : ("dot_full", "MOBILE_CHANNEL_FULL"),
+}
+
+
+def Locale(name):
+	return getattr(uiScriptLocale, name, name)
+
+
+def SetVisible(window, visible):
+	if not window:
+		return
+	if visible and not window.IsShow():
+		window.Show()
+	elif not visible and window.IsShow():
+		window.Hide()
+
+
+def StripColor(text):
+	# Cynex: |cAARRGGBB ... |r renk kodlari
+	result = ""
+	index = 0
+	length = len(text)
+	while index < length:
+		if text[index] == "|" and index + 1 < length:
+			mark = text[index + 1]
+			if mark in "cC" and index + 10 <= length:
+				index += 10
+				continue
+			if mark in "rRhH":
+				index += 2
+				continue
+		result += text[index]
+		index += 1
+	return result.strip()
+
+
+def ChannelStateKey(stateName):
+	for (key, name) in serverInfo.STATE_DICT.items():
+		if name == stateName:
+			return key
+	return 0
+
+
+def ChannelStateVisual(stateKey):
+	(dotName, labelName) = CHANNEL_STATES.get(stateKey, ("dot_closed", "MOBILE_CHANNEL_CLOSED"))
+	return (dotName, Locale(labelName))
+
+
+def GetRegionDict():
+	try:
+		return serverInfo.REGION_DICT[REGION_ID]
+	except (KeyError, AttributeError):
+		return {}
+
+
+def ServerName(serverID):
+	try:
+		return StripColor(GetRegionDict()[serverID]["name"])
+	except (KeyError, TypeError):
+		return str(serverID)
+
+
+def ServerChannelCount(serverID):
+	try:
+		return len(GetRegionDict()[serverID]["channel"])
+	except (KeyError, TypeError):
+		return 0
+
+
+def AccountFileName(slot):
+	return "%soldhesap%d.cfg" % (getattr(constInfo, "CLIENT_YOL2", ""), slot)
+
+
+class ChannelChip(uiMobileStyle.Pressable):
+	def __init__(self, width):
+		uiMobileStyle.Pressable.__init__(self, width, CHIP_HEIGHT)
+		self.panel = uiAkravon.Box()
+		self.panel.SetParent(self)
+		self.panel.SetSize(width, CHIP_HEIGHT)
+		self.panel.Show()
+		uiAkravon.SkinBox(self.panel, "picker_row_normal", "picker_row_active")
+		self.name = uiMobileStyle.CreateText(self, "", 28, CHIP_HEIGHT // 2 - 12, uiMobileStyle.BRIGHT_COLOR, FONT_CHIP)
+		self.dot = uiMobileStyle.CreateImage(self, "dot_closed")
+		self.state = uiMobileStyle.CreateText(self, "", 0, CHIP_HEIGHT // 2 - 10, uiMobileStyle.MUTED_COLOR, FONT_CHIP_STATE)
+		self.stateKey = None
+
+	def Destroy(self):
+		uiMobileStyle.Pressable.Destroy(self)
+		self.panel = None
+		self.name = None
+		self.dot = None
+		self.state = None
+
+	def SetChannel(self, name, stateKey):
+		self.name.SetText(name)
+		if stateKey == self.stateKey:
+			return
+		self.stateKey = stateKey
+		(dotName, label) = ChannelStateVisual(stateKey)
+		uiMobileStyle.LoadAsset(self.dot, dotName)
+		self.state.SetText(label)
+		self.state.SetPackedFontColor(uiAkravon.STATE_OPEN_COLOR if stateKey in CHANNEL_STATES else uiAkravon.HINT_COLOR)
+		textWidth = uiMobileStyle.TextWidth(label, FONT_CHIP_STATE)
+		startX = self.GetWidth() - 28 - textWidth - 14
+		self.dot.SetPosition(startX, CHIP_HEIGHT // 2 - 3)
+		self.state.SetPosition(startX + 14, CHIP_HEIGHT // 2 - 10)
+
+	def SetSelected(self, selected):
+		uiAkravon.SetSkinState(self.panel, selected)
+
+
+class ServerCard(uiMobileStyle.Pressable):
+	def __init__(self, width):
+		uiMobileStyle.Pressable.__init__(self, width, SERVER_CARD_HEIGHT)
+		self.panel = uiAkravon.Box()
+		self.panel.SetParent(self)
+		self.panel.SetSize(width, SERVER_CARD_HEIGHT)
+		self.panel.Show()
+		uiAkravon.SkinBox(self.panel, "picker_server_normal", "picker_server_active")
+		self.name = uiMobileStyle.CreateText(self, "", width // 2, 9, uiMobileStyle.BRIGHT_COLOR, uiMobileStyle.FONT_MEDIUM, "center")
+		self.detail = uiMobileStyle.CreateText(self, "", width // 2, 31, uiMobileStyle.MUTED_COLOR, uiMobileStyle.FONT_SMALL, "center")
+		self.selected = False
+
+	def Destroy(self):
+		uiMobileStyle.Pressable.Destroy(self)
+		self.panel = None
+		self.name = None
+		self.detail = None
+
+	def SetServer(self, name, channelCount, selected):
+		self.name.SetText(name)
+		self.detail.SetText(Locale("MOBILE_SERVER_CHANNEL_COUNT") % channelCount if channelCount else "")
+		self.selected = selected
+		self.RefreshVisual()
+
+	def RefreshVisual(self):
+		if not getattr(self, "panel", None):
+			return
+		uiAkravon.SetSkinState(self.panel, self.selected)
+		self.name.SetPackedFontColor(uiMobileStyle.GOLD_COLOR if self.selected or self.pressed else uiMobileStyle.BRIGHT_COLOR)
+
+
+class SelectorButton(uiMobileStyle.Pressable):
+	def __init__(self, width, header):
+		uiMobileStyle.Pressable.__init__(self, width, SELECTOR_HEIGHT)
+		self.panel = uiMobileStyle.CreatePanel(self, "field", 0, 0, width, SELECTOR_HEIGHT, False)
+		self.header = uiMobileStyle.CreateText(self, header, 14, 8, uiMobileStyle.MUTED_COLOR, uiMobileStyle.FONT_SMALL)
+		self.dot = uiMobileStyle.CreateImage(self, "dot_closed", 14, 33)
+		self.dot.Hide()
+		self.value = uiMobileStyle.CreateText(self, "", 14, 26, uiMobileStyle.BRIGHT_COLOR, uiMobileStyle.FONT_MEDIUM)
+		self.chevron = uiMobileStyle.CreateCenteredImage(self, "icon_chevron", width - 18, SELECTOR_HEIGHT // 2)
+
+	def Destroy(self):
+		uiMobileStyle.Pressable.Destroy(self)
+		self.panel = None
+		self.header = None
+		self.dot = None
+		self.value = None
+		self.chevron = None
+
+	def SetValue(self, text, dotName = None):
+		if dotName:
+			uiMobileStyle.LoadAsset(self.dot, dotName)
+			self.dot.Show()
+			self.value.SetPosition(26, 26)
+		else:
+			self.dot.Hide()
+			self.value.SetPosition(14, 26)
+		self.value.SetText(text)
+
+	def RefreshVisual(self):
+		if getattr(self, "panel", None):
+			self.panel.SetStyle("chip_active" if self.pressed or self.hovered else "field")
+
+
+class SelectionPicker(uiMobileStyle.Pressable):
+	def __init__(self, owner, screenWidth, screenHeight):
+		uiMobileStyle.Pressable.__init__(self, screenWidth, screenHeight)
+		self.owner = proxy(owner)
+		self.dim = uiMobileStyle.CreateBar(self, uiMobileStyle.Color(0, 0, 0, PICKER_DIM_ALPHA), 0, 0, screenWidth, screenHeight)
+		# AKRAVON: klasik pencere + kutulu kanal dugmeleri
+		self.panel = uiAkravon.Frame(True, True)
+		self.panel.SetParent(self)
+		self.panel.Show()
+		uiAkravon.SkinFrame(self.panel, "picker_panel")
+		self.title = uiMobileStyle.CreateText(self.panel, "", 0, PICKER_TOP, uiAkravon.HEADER_COLOR, uiAkravon.FONT_TITLE, "center")
+		self.titleLine = uiMobileStyle.CreateBar(self.panel, uiAkravon.FRAME_INNER, PICKER_PADDING_X, PICKER_TOP + 36, 100, 1)
+		self.serverLabel = uiMobileStyle.CreateText(self.panel, Locale("MOBILE_SERVER_HEADER"), 0, 0, uiAkravon.HEADER_COLOR, uiAkravon.FONT_HEADER)
+		self.channelLabel = uiMobileStyle.CreateText(self.panel, Locale("MOBILE_CHANNEL_HEADER"), 0, 0, uiAkravon.HEADER_COLOR, uiAkravon.FONT_HEADER)
+		self.emptyText = uiMobileStyle.CreateText(self.panel, Locale("MOBILE_CHANNELS_WAIT"), 0, 0, uiAkravon.HINT_COLOR, uiMobileStyle.FONT_NORMAL, "center")
+		self.closeButton = uiMobileCreate.PlateButton("create_button", Locale("MOBILE_CLOSE_UPPER"))
+		self.closeButton.SetParent(self.panel)
+		self.closeButton.SetEvent(ui.__mem_func__(self.Close))
+		self.closeButton.Show()
+		self.serverCards = []
+		self.chips = []
+		self.layoutKey = None
+		self.SetEvent(ui.__mem_func__(self.Close))
+
+	def Destroy(self):
+		for widget in self.serverCards + self.chips:
+			widget.Destroy()
+		self.serverCards = []
+		self.chips = []
+		self.closeButton.Destroy()
+		self.closeButton = None
+		uiMobileStyle.Pressable.Destroy(self)
+		self.owner = None
+		self.dim = None
+		self.panel = None
+		self.title = None
+		self.serverLabel = None
+		self.channelLabel = None
+		self.emptyText = None
+
+	def Close(self):
+		if self.owner:
+			self.owner.OnClosePicker()
+
+	def __OnPickServer(self, index):
+		if self.owner:
+			self.owner.OnPickServer(index)
+
+	def __OnPickChannel(self, index):
+		if self.owner:
+			self.owner.OnPickChannel(index)
+
+	def __Rebuild(self, widgets, count, factory, event):
+		while len(widgets) > count:
+			widgets.pop().Destroy()
+		while len(widgets) < count:
+			widget = factory()
+			widget.SetParent(self.panel)
+			widget.SetEvent(ui.__mem_func__(event), len(widgets))
+			widget.Show()
+			widgets.append(widget)
+
+	def __Layout(self, serverCount, channelCount):
+		gridWidth = CHIP_COLUMNS * CHIP_WIDTH + (CHIP_COLUMNS - 1) * CHIP_GAP
+		width = gridWidth + PICKER_PADDING_X * 2
+		left = PICKER_PADDING_X
+		y = PICKER_TOP + PICKER_TITLE_HEIGHT
+
+		showServers = serverCount > 1
+		SetVisible(self.serverLabel, showServers)
+		if showServers:
+			self.serverLabel.SetPosition(left, y)
+			y += PICKER_LABEL_HEIGHT
+			cardWidth = (gridWidth - CHIP_GAP * (serverCount - 1)) // serverCount
+			for (index, card) in enumerate(self.serverCards):
+				card.SetPosition(left + index * (cardWidth + CHIP_GAP), y)
+			y += SERVER_CARD_HEIGHT + PICKER_SECTION_GAP
+
+		# AKRAVON: tek sunucuda baslik zaten "Kanal Secimi" - tekrar eden etiket gizli
+		SetVisible(self.channelLabel, showServers)
+		if showServers:
+			self.channelLabel.SetPosition(left, y)
+			y += PICKER_LABEL_HEIGHT
+		else:
+			y += 8
+		if channelCount:
+			self.emptyText.Hide()
+			rows = (channelCount + CHIP_COLUMNS - 1) // CHIP_COLUMNS
+			for (index, chip) in enumerate(self.chips):
+				chip.SetPosition(left + (index % CHIP_COLUMNS) * (CHIP_WIDTH + CHIP_GAP), y + (index // CHIP_COLUMNS) * (CHIP_HEIGHT + CHIP_GAP))
+			y += rows * CHIP_HEIGHT + (rows - 1) * CHIP_GAP
+		else:
+			self.emptyText.SetPosition(width // 2, y + PICKER_EMPTY_HEIGHT // 2 - 9)
+			self.emptyText.Show()
+			y += PICKER_EMPTY_HEIGHT
+
+		y += PICKER_SECTION_GAP + 2
+		self.closeButton.SetPosition((width - PICKER_CLOSE_WIDTH) // 2, y)
+		height = y + PICKER_CLOSE_HEIGHT + PICKER_BOTTOM
+		self.panel.SetSize(width, height)
+		self.panel.SetPosition((self.GetWidth() - width) // 2, max(TOP_MARGIN, (self.GetHeight() - height) // 2))
+		self.title.SetPosition(width // 2, PICKER_TOP)
+		self.titleLine.SetPosition(PICKER_PADDING_X, PICKER_TOP + 38)
+		self.titleLine.SetSize(width - PICKER_PADDING_X * 2, 1)
+		self.title.SetText("Sunucu ve Kanal Seçimi" if showServers else "Kanal Seçimi")
+
+	def SetContent(self, servers, channels, selectedChannel):
+		serverCount = len(servers)
+		if serverCount > 1:
+			gridWidth = CHIP_COLUMNS * CHIP_WIDTH + (CHIP_COLUMNS - 1) * CHIP_GAP
+			cardWidth = (gridWidth - CHIP_GAP * (serverCount - 1)) // serverCount
+			if self.serverCards and self.serverCards[0].GetWidth() != cardWidth:
+				self.__Rebuild(self.serverCards, 0, None, None)
+			self.__Rebuild(self.serverCards, serverCount, lambda: ServerCard(cardWidth), self.__OnPickServer)
+		else:
+			self.__Rebuild(self.serverCards, 0, None, None)
+		self.__Rebuild(self.chips, len(channels), lambda: ChannelChip(CHIP_WIDTH), self.__OnPickChannel)
+
+		layoutKey = (serverCount, len(channels))
+		if layoutKey != self.layoutKey:
+			self.layoutKey = layoutKey
+			self.__Layout(serverCount, len(channels))
+
+		for (card, (name, channelCount, selected)) in zip(self.serverCards, servers):
+			card.SetServer(name, channelCount, selected)
+		for (index, (name, state)) in enumerate(channels):
+			self.chips[index].SetChannel(name, state)
+			self.chips[index].SetSelected(index == selectedChannel)
+
+
+class AccountRow(uiMobileStyle.Pressable):
+	def __init__(self, owner):
+		uiMobileStyle.Pressable.__init__(self, ACCOUNT_ROW_WIDTH, ACCOUNT_ROW_HEIGHT)
+		self.owner = proxy(owner)
+		self.slot = 0
+		self.isAddRow = False
+		self.selected = False
+		self.confirmUntil = 0.0
+		self.confirmShown = None
+
+		# AKRAVON: her satir ince cizgili kutu icinde
+		self.box = uiAkravon.Box()
+		self.box.SetParent(self)
+		self.box.SetPosition(0, 3)
+		self.box.SetSize(ACCOUNT_ROW_WIDTH, ACCOUNT_ROW_HEIGHT - 6)
+		self.box.Show()
+		uiAkravon.SkinBox(self.box, "account_row_normal", "account_row_active")
+		self.highlight = uiMobileStyle.CreateBar(self, uiMobileStyle.LIST_SELECT_COLOR, 1, 4, ACCOUNT_ROW_WIDTH - 2, ACCOUNT_ROW_HEIGHT - 8)
+		self.highlight.Hide()
+		self.accent = uiMobileStyle.CreateBar(self, uiMobileStyle.LIST_ACCENT_COLOR, 0, 10, 2, ACCOUNT_ROW_HEIGHT - 20)
+		self.accent.Hide()
+		self.divider = uiMobileStyle.CreateBar(self, uiMobileStyle.DIVIDER_COLOR, ACCOUNT_TEXT_X, ACCOUNT_ROW_HEIGHT - 1, ACCOUNT_ROW_WIDTH - ACCOUNT_TEXT_X - 10, 1)
+
+		avatarY = (ACCOUNT_ROW_HEIGHT - AVATAR_SIZE) // 2
+		self.avatar = uiMobileStyle.CreateImage(self, "avatar_gold", 10, avatarY)
+		self.initial = uiMobileStyle.CreateText(self, "", 10 + AVATAR_SIZE // 2, avatarY + 11, uiMobileStyle.GOLD_COLOR, uiMobileStyle.FONT_LARGE, "center")
+		self.plus = uiAkravon.CreateImage(self, "icon_add")
+		self.plus.SetPosition(10 + (AVATAR_SIZE - self.plus.GetWidth()) // 2, (ACCOUNT_ROW_HEIGHT - self.plus.GetHeight()) // 2)
+		self.name = uiMobileStyle.CreateText(self, "", ACCOUNT_TEXT_X, 10, uiMobileStyle.BRIGHT_COLOR, FONT_ACCOUNT)
+		self.detail = uiMobileStyle.CreateText(self, "", ACCOUNT_TEXT_X, 33, uiMobileStyle.MUTED_COLOR, uiMobileStyle.FONT_SMALL)
+
+		self.deleteButton = uiMobileStyle.Pressable(DELETE_SIZE, DELETE_SIZE)
+		self.deleteButton.SetParent(self)
+		self.deleteButton.SetPosition(ACCOUNT_ROW_WIDTH - DELETE_SIZE - 4, (ACCOUNT_ROW_HEIGHT - DELETE_SIZE) // 2)
+		self.deleteIcon = uiMobileStyle.CreateCenteredImage(self.deleteButton, "icon_close", DELETE_SIZE // 2, DELETE_SIZE // 2)
+		self.deleteButton.SetEvent(ui.__mem_func__(self.__OnDelete))
+		self.deleteButton.Show()
+
+		self.SetEvent(ui.__mem_func__(self.__OnSelect))
+
+	def Destroy(self):
+		self.deleteButton.Destroy()
+		uiMobileStyle.Pressable.Destroy(self)
+		self.deleteButton = None
+		self.owner = None
+		self.box = None
+		self.highlight = None
+		self.accent = None
+		self.divider = None
+		self.avatar = None
+		self.initial = None
+		self.plus = None
+		self.name = None
+		self.detail = None
+		self.deleteIcon = None
+
+	def __OnSelect(self):
+		if not self.owner:
+			return
+		if self.isAddRow:
+			self.owner.OnAddAccount()
+		else:
+			self.owner.OnSelectAccount(self.slot)
+
+	def __OnDelete(self):
+		if not self.owner or self.isAddRow:
+			return
+		if self.confirmUntil > app.GetTime():
+			self.__SetConfirm(False)
+			self.owner.OnDeleteAccount(self.slot)
+		else:
+			self.__SetConfirm(True)
+
+	def __SetConfirm(self, confirm):
+		self.confirmUntil = app.GetTime() + DELETE_CONFIRM_TIME if confirm else 0.0
+		self.confirmShown = confirm
+		uiMobileStyle.SetCenteredAsset(self.deleteIcon, "icon_trash" if confirm else "icon_close", DELETE_SIZE // 2, DELETE_SIZE // 2)
+		self.detail.SetText(Locale("MOBILE_DELETE_CONFIRM") if confirm else Locale("MOBILE_ACCOUNT_HINT"))
+		self.detail.SetPackedFontColor(uiMobileStyle.DANGER_COLOR if confirm else uiMobileStyle.MUTED_COLOR)
+
+	def SetAccount(self, slot, accountId, selected):
+		self.slot = slot
+		self.isAddRow = False
+		self.selected = selected
+		uiMobileStyle.LoadAsset(self.avatar, "avatar_gold")
+		self.avatar.Show()
+		self.initial.SetText(accountId[:1].upper())
+		self.initial.Show()
+		self.plus.Hide()
+		self.name.SetText(accountId)
+		self.name.SetPackedFontColor(uiMobileStyle.BRIGHT_COLOR)
+		self.deleteButton.Show()
+		if self.confirmUntil <= app.GetTime() and self.confirmShown is not False:
+			self.__SetConfirm(False)
+		self.RefreshVisual()
+
+	def SetAddRow(self):
+		self.slot = 0
+		self.isAddRow = True
+		self.selected = False
+		self.confirmUntil = 0.0
+		self.confirmShown = None
+		self.avatar.Hide()
+		self.initial.Hide()
+		self.plus.Show()
+		self.name.SetText(Locale("MOBILE_ADD_ACCOUNT"))
+		self.name.SetPackedFontColor(uiMobileStyle.LABEL_COLOR)
+		self.detail.SetText(Locale("MOBILE_ADD_ACCOUNT_HINT"))
+		self.detail.SetPackedFontColor(uiMobileStyle.MUTED_COLOR)
+		self.deleteButton.Hide()
+		self.RefreshVisual()
+
+	def SetDividerVisible(self, visible):
+		SetVisible(self.divider, False)	# AKRAVON: satirlar kutulu, ayrac cizgisi yok
+
+	def RefreshVisual(self):
+		if not getattr(self, "highlight", None):
+			return
+		SetVisible(self.highlight, False)
+		SetVisible(self.accent, False)
+		uiAkravon.SetSkinState(self.box, self.selected or self.pressed)
+
+	def OnUpdate(self):
+		if self.confirmUntil and self.confirmUntil <= app.GetTime():
+			self.__SetConfirm(False)
+
+
+class AccountPanel(ui.Window):
+	def __init__(self, owner):
+		ui.Window.__init__(self)
+		self.panel = uiAkravon.Frame(False)
+		self.panel.SetParent(self)
+		self.panel.Show()
+		uiAkravon.SkinFrame(self.panel, "account_panel")
+		self.headerIcon = uiAkravon.CreateImage(self, "icon_accounts", 24, 18)
+		self.header = uiMobileStyle.CreateText(self, Locale("MOBILE_SAVED_ACCOUNTS_TITLE"), 64, 15, uiMobileCreate.CREAM, FONT_PANEL_HEADER)
+		self.count = uiMobileStyle.CreateText(self, "", ACCOUNT_PANEL_WIDTH - 24, 17, uiMobileCreate.MUTED_LABEL, uiAkravon.FONT_HEADER, "right")
+		self.headerLine = uiMobileStyle.CreateBar(self, uiAkravon.FRAME_INNER, ACCOUNT_INSET, ACCOUNT_HEADER_HEIGHT - 6, ACCOUNT_ROW_WIDTH, 1)
+		self.rows = []
+		for index in range(ACCOUNT_SLOT_COUNT + 1):
+			row = AccountRow(owner)
+			row.SetParent(self)
+			row.Hide()
+			self.rows.append(row)
+		self.signature = None
+
+	def __del__(self):
+		ui.Window.__del__(self)
+
+	def Destroy(self):
+		for row in self.rows:
+			row.Destroy()
+		self.rows = []
+		self.panel = None
+		self.headerIcon = None
+		self.header = None
+		self.count = None
+		self.headerLine = None
+
+	def SetAccounts(self, accounts, selectedSlot):
+		saved = [(slot, accountId) for (slot, accountId) in accounts if accountId]
+		hasFreeSlot = len(saved) < len(accounts)
+		visibleRows = len(saved) + (1 if hasFreeSlot else 0)
+
+		for (index, (slot, accountId)) in enumerate(saved):
+			self.rows[index].SetAccount(slot, accountId, slot == selectedSlot)
+		if hasFreeSlot:
+			self.rows[len(saved)].SetAddRow()
+
+		for (index, row) in enumerate(self.rows):
+			if index < visibleRows:
+				row.SetPosition(ACCOUNT_INSET, ACCOUNT_HEADER_HEIGHT + index * ACCOUNT_ROW_HEIGHT)
+				row.SetDividerVisible(index < visibleRows - 1)
+				row.Show()
+			else:
+				row.Hide()
+
+		self.count.SetText("%d/%d" % (len(saved), len(accounts)))
+		height = max(AKR_ACCOUNT_MIN_HEIGHT, ACCOUNT_HEADER_HEIGHT + visibleRows * ACCOUNT_ROW_HEIGHT + ACCOUNT_INSET)
+		if height != self.GetHeight():
+			self.SetSize(ACCOUNT_PANEL_WIDTH, height)
+			self.panel.SetSize(ACCOUNT_PANEL_WIDTH, height)
+			# AKRAVON: sol altta, giris paneliyle ayni alt cizgide; satir arttikca yukari uzar
+			self.SetPosition(AKR_ACCOUNT_X, max(TOP_MARGIN, AKR_ACCOUNT_BOTTOM - height))
+
+
+
+
+class MobileLoginWindow(introLogin.LoginWindow):
+	def __init__(self, stream):
+		self.mobileLayoutReady = False
+		self.mobileWidgets = []
+		self.fields = []
+		self.accountPanel = None
+		self.loginCard = None
+		self.channelButton = None
+		self.serverButton = None
+		self.picker = None
+		self.pickerRequested = False
+		self.rememberToggle = None
+		self.loginButton = None
+		self.exitButton = None
+		self.cardPosition = (0, 0)
+		self.cardShifted = False
+		self.autoConfirmPending = True
+		self.preferredServerApplied = False
+		self.selectedAccount = 0
+		self.nextRefreshTime = 0.0
+		introLogin.LoginWindow.__init__(self, stream)
+
+	def Open(self):
+		introLogin.LoginWindow.Open(self)
+		try:
+			self.__GuardFieldFocus()
+			self.__ApplyMobileLayout()
+		except Exception, error:
+			dbg.TraceError("MobileLoginWindow.Open - layout error: %s" % error)
+
+	# Cynex: barbaros Open() sonunda kimlik alanina odaklaniyor - telefonda klavye kendiliginden acilmasin
+	def _LoginWindow__LoadScript(self, fileName):
+		result = introLogin.LoginWindow._LoginWindow__LoadScript(self, fileName)
+		try:
+			self.__GuardFieldFocus()
+		except Exception, error:
+			dbg.TraceError("MobileLoginWindow focus guard: %s" % error)
+		return result
+
+	def __GuardFieldFocus(self):
+		editLines = [self.GetChild2(editLineName) for (editLineName, labelName) in FIELD_NAMES]
+		GuardAutoFocus([editLine for editLine in editLines if editLine])
+
+	def Close(self):
+		self.__DestroyMobileLayout()
+		introLogin.LoginWindow.Close(self)
+
+	def __DestroyMobileLayout(self):
+		self.mobileLayoutReady = False
+		if self.accountPanel:
+			self.accountPanel.Destroy()
+		if self.picker:
+			self.picker.Destroy()
+		for widget in self.mobileWidgets:
+			destroy = getattr(widget, "Destroy", None)
+			if destroy:
+				destroy()
+		self.accountPanel = None
+		self.picker = None
+		self.mobileWidgets = []
+		self.fields = []
+		self.loginCard = None
+		self.channelButton = None
+		self.serverButton = None
+		self.rememberToggle = None
+		self.loginButton = None
+		self.exitButton = None
+
+	def __Keep(self, widget):
+		self.mobileWidgets.append(widget)
+		return widget
+
+	def __ApplyMobileLayout(self):
+		if not self.GetChild2("LoginBoard"):
+			return
+
+		screenWidth = wndMgr.GetScreenWidth()
+		screenHeight = wndMgr.GetScreenHeight()
+
+		for name in PARKED_NAMES:
+			child = self.GetChild2(name)
+			if child:
+				uiMobileStyle.ParkWindow(child)
+
+		self.__BuildBackground(screenWidth, screenHeight)
+		self.__ParkServerBoard()
+		self.__BuildAccountPanel()
+		self.__BuildLoginCard(screenWidth, screenHeight)
+
+		self.picker = SelectionPicker(self, screenWidth, screenHeight)
+		self.picker.SetParent(self)
+		self.picker.SetPosition(0, 0)
+		self.picker.Hide()
+
+		self.mobileLayoutReady = True
+		self.__RefreshAccounts()
+		self.__RefreshChannels()
+		self.__SyncVisibility()
+
+	def __BuildBackground(self, screenWidth, screenHeight):
+		# AKRAVON: barbaros arka plan resimleri (logo dahil) gizlenir, AKRAVON sahnesi en alta konur
+		for name in AKR_HIDDEN_NAMES:
+			child = self.GetChild2(name)
+			if child:
+				child.Hide()
+		background = self.__Keep(ui.ExpandedImageBox())
+		background.SetParent(self)
+		background.AddFlag("not_pick")
+		background.LoadImage("mobile_ui/akravon/%s.jpg" % AKR_BACKGROUND)
+		(width, height) = AKR_BACKGROUND_SIZE
+		background.SetScale(float(screenWidth) / width, float(screenHeight) / height)
+		background.SetPosition(0, 0)
+		background.Show()
+		# AKRAVON: bos alana dokununca yazi alanlari odagi birakir (klavye kapanir, kart yerine doner)
+		backgroundTap = self.__Keep(uiMobileStyle.Pressable(screenWidth, screenHeight))
+		backgroundTap.SetParent(self)
+		backgroundTap.SetPosition(0, 0)
+		backgroundTap.SetEvent(ui.__mem_func__(self.__ReleaseFieldFocus))
+		backgroundTap.Show()
+
+	def __ReleaseFieldFocus(self):
+		# odak birakilinca barbaros kodu siradaki alana odak verebiliyor - kisa sure hepsini kapali tut
+		self.releaseFocusUntil = app.GetTime() + 0.3
+		self.__KillFieldFocus()
+
+	def __KillFieldFocus(self):
+		killed = False
+		for index in xrange(len(FIELD_NAMES)):
+			editLine = self.__GetEditLine(index)
+			if editLine and editLine.IsFocus():
+				editLine.KillFocus()
+				killed = True
+		if killed and hasattr(app, "ShowKeyboard"):
+			app.ShowKeyboard(0)
+
+	def __ParkServerBoard(self):
+		# Cynex: barbaros __OpenServerBoard bu konumu kullanir - kanal secimi mobil secicide
+		self.xServerBoard = PARK_POSITION
+		self.yServerBoard = PARK_POSITION
+		board = self.GetChild2("ServerBoard")
+		if board:
+			board.SetWindowHorizontalAlignLeft()
+			board.SetWindowVerticalAlignTop()
+			board.SetPosition(PARK_POSITION, PARK_POSITION)
+
+	def __BuildAccountPanel(self):
+		panel = AccountPanel(self)
+		panel.SetParent(self)
+		panel.SetPosition(AKR_ACCOUNT_X, TOP_MARGIN)
+		panel.SetSize(ACCOUNT_PANEL_WIDTH, 0)
+		panel.Show()
+		self.accountPanel = panel
+
+	def __BuildLoginCard(self, screenWidth, screenHeight):
+		# AKRAVON: klasik pencere - basliklar ustte, simgeli alanlar, onay kutusu, resimli GIRIS/CIKIS
+		(cardX, cardY, cardWidth, cardHeight) = AKR_CARD_RECT
+		innerWidth = cardWidth - AKR_PAD_X * 2
+		card = self.__Keep(uiAkravon.Frame())
+		card.SetParent(self)
+		card.Show()
+		uiAkravon.SkinFrame(card, "login_panel")
+		self.loginCard = card
+
+		selectorWidth = (innerWidth - AKR_SELECTOR_GAP) // 2
+		self.selectorHeaders = []
+		for (index, labelName) in enumerate(("MOBILE_CHANNEL_HEADER", "MOBILE_SERVER_HEADER")):
+			header = self.__Keep(uiMobileStyle.CreateText(card, Locale(labelName), AKR_PAD_X + index * (selectorWidth + AKR_SELECTOR_GAP) + 2, AKR_HEADER_Y, uiMobileCreate.CREAM, uiAkravon.FONT_HEADER))
+			self.selectorHeaders.append(header)
+		self.channelButton = self.__Keep(uiAkravon.Selector(selectorWidth, AKR_SELECTOR_HEIGHT))
+		self.channelButton.SetParent(card)
+		self.channelButton.SetEvent(ui.__mem_func__(self.__OpenPicker))
+		self.channelButton.Show()
+		uiAkravon.SkinBox(self.channelButton.box, "login_selector", "login_selector")
+		self.serverButton = self.__Keep(uiAkravon.Selector(selectorWidth, AKR_SELECTOR_HEIGHT))
+		uiAkravon.SkinBox(self.serverButton.box, "login_selector", "login_selector")
+		self.serverButton.SetParent(card)
+		self.serverButton.SetEvent(ui.__mem_func__(self.__OnServerButton))
+		self.serverButton.Show()
+
+		for ((editLineName, labelName), iconName) in zip(FIELD_NAMES, AKR_FIELD_ICONS):
+			field = self.__Keep(uiAkravon.Field(innerWidth, AKR_FIELD_HEIGHT, Locale(labelName), iconName))
+			uiAkravon.SkinBox(field.box, "login_field", "login_field_focus")
+			field.SetParent(card)
+			field.Show()
+			editLine = self.GetChild2(editLineName)
+			if editLine:
+				field.Attach(editLine)
+			self.fields.append(field)
+
+		for name in PARKED_BUTTONS:
+			child = self.GetChild2(name)
+			if child:
+				uiMobileStyle.ParkWindow(child)
+
+		self.rememberToggle = self.__Keep(uiAkravon.CheckBox(Locale("MOBILE_REMEMBER_ACCOUNT"), uiMobileHud.LoadConfig().get(CONFIG_REMEMBER_ACCOUNT, "0") == "1"))
+		self.rememberToggle.SetParent(card)
+		self.rememberToggle.SetChangeEvent(ui.__mem_func__(self.__OnRememberChanged))
+		self.rememberToggle.Show()
+
+		self.loginButton = self.__Keep(uiAkravon.ImageButton("btn_login", innerWidth + 8))
+		self.loginButton.SetParent(card)
+		self.loginButton.SetEvent(ui.__mem_func__(self.__OnClickLogin))
+		self.loginButton.Show()
+
+		self.exitButton = self.__Keep(uiAkravon.ImageButton("btn_exit", innerWidth))
+		self.exitButton.SetParent(card)
+		self.exitButton.SetEvent(ui.__mem_func__(self.__OnClickExit))
+		self.exitButton.Show()
+
+		self.__LayoutCard()
+
+	def __LayoutCard(self):
+		(cardX, cardY, cardWidth, cardHeight) = AKR_CARD_RECT
+		self.channelButton.SetPosition(AKR_PAD_X, AKR_SELECTOR_Y)
+		self.serverButton.SetPosition(AKR_PAD_X + self.channelButton.GetWidth() + AKR_SELECTOR_GAP, AKR_SELECTOR_Y)
+		y = AKR_FIELD_Y
+		for field in self.fields:
+			field.SetPosition(AKR_PAD_X, y)
+			y += AKR_FIELD_STEP
+		self.rememberToggle.SetPosition(AKR_PAD_X + 2, AKR_CHECK_Y)
+		self.loginButton.SetPosition((cardWidth - self.loginButton.GetWidth()) // 2, AKR_LOGIN_Y)
+		y = AKR_LOGIN_Y + self.loginButton.GetHeight() + AKR_EXIT_GAP
+		self.exitButton.SetPosition((cardWidth - self.exitButton.GetWidth()) // 2, y)
+
+		self.loginCard.SetSize(cardWidth, cardHeight)
+		self.cardPosition = (cardX, cardY)
+		self.cardShifted = False
+		self.loginCard.SetPosition(cardX, cardY)
+
+	def __RunOriginalButton(self, buttonName):
+		button = self.GetChild2(buttonName)
+		if button:
+			uiMobileStyle.RunButtonEvent(button)
+
+	def __CallBase(self, name, *arguments):
+		function = getattr(self, "_LoginWindow__%s" % name, None)
+		if function is None:
+			return False
+		function(*arguments)
+		return True
+
+	def __ConfirmServer(self):
+		if not self.__CallBase("OnClickSelectServerButton"):
+			self.__RunOriginalButton("ServerSelectButton")
+
+	def __IsServerBoardOpen(self):
+		board = self.GetChild2("ServerBoard")
+		return bool(board and board.IsShow())
+
+	def __IsAwaitingServer(self):
+		return self.autoConfirmPending and self.__IsServerBoardOpen()
+
+	def __GetServerList(self):
+		return self.GetChild2("ServerList")
+
+	def __GetChannelList(self):
+		return self.GetChild2("ChannelList")
+
+	def __GetServerEntries(self):
+		serverList = self.__GetServerList()
+		if not serverList:
+			return []
+		return [serverList.keyDict.get(index, 0) for index in xrange(serverList.GetItemCount())]
+
+	def __GetSelectedServerKey(self):
+		serverList = self.__GetServerList()
+		if not serverList or serverList.selectedLine < 0:
+			return None
+		return serverList.GetSelectedItem()
+
+	def __GetPreferredServerIndex(self):
+		entries = self.__GetServerEntries()
+		if not entries:
+			return -1
+		try:
+			savedServer = int(uiMobileHud.LoadConfig().get(CONFIG_PREFERRED_SERVER, "0"))
+		except ValueError:
+			savedServer = 0
+		for (index, serverID) in enumerate(entries):
+			if serverID == savedServer:
+				return index
+		return -1
+
+	def __ApplyPreferredServer(self):
+		self.preferredServerApplied = True
+		index = self.__GetPreferredServerIndex()
+		if index < 0:
+			return False
+		if self.__GetServerEntries()[index] == self.__GetSelectedServerKey():
+			return False
+		self.OnPickServer(index)
+		return True
+
+	def __AutoConfirmServer(self):
+		if not self.autoConfirmPending:
+			return
+		channelList = self.__GetChannelList()
+		if not channelList or not self.__IsServerBoardOpen():
+			return
+		if not self.preferredServerApplied and self.__ApplyPreferredServer():
+			return
+		if channelList.GetItemCount() == 0:
+			return
+		self.autoConfirmPending = False
+		if not channelList.keyDict.has_key(channelList.selectedLine):
+			channelList.SelectItem(0)
+		self.__ConfirmServer()
+
+	def __EnsureServerReady(self):
+		self.__AutoConfirmServer()
+		if self.__IsAwaitingServer():
+			self.PopupRiot(Locale("MOBILE_CHANNELS_LOADING"))
+			return False
+		return True
+
+	def __GetChannelEntries(self):
+		channelList = self.__GetChannelList()
+		if not channelList:
+			return ([], -1)
+		serverID = self.__GetSelectedServerKey()
+		try:
+			channelDict = GetRegionDict()[serverID]["channel"]
+		except (KeyError, TypeError):
+			channelDict = {}
+		entries = []
+		for index in xrange(channelList.GetItemCount()):
+			data = channelDict.get(channelList.keyDict.get(index, -1))
+			if data:
+				entries.append((StripColor(data.get("name", "")), ChannelStateKey(data.get("state", ""))))
+			else:
+				entries.append((StripColor(channelList.textDict.get(index, "")), 0))
+		return (entries, channelList.selectedLine)
+
+	def __RefreshPicker(self):
+		if not self.picker:
+			return
+		currentKey = self.__GetSelectedServerKey()
+		servers = [(ServerName(serverID), ServerChannelCount(serverID), serverID == currentKey) for serverID in self.__GetServerEntries()]
+		(channels, selectedChannel) = self.__GetChannelEntries()
+		self.picker.SetContent(servers, channels, selectedChannel)
+
+	def __OpenPicker(self):
+		if not self.__GetServerEntries():
+			self.__CallBase("RefreshServerList")
+		if self.__GetSelectedServerKey() is None and self.__GetServerEntries():
+			index = self.__GetPreferredServerIndex()
+			self.OnPickServer(max(0, index))
+		self.pickerRequested = True
+		self.__RefreshPicker()
+		self.picker.Show()
+		self.picker.SetTop()
+
+	def __OnServerButton(self):
+		# AKRAVON: tek sunucu varken (Turkuaz) secilecek bir sey yok - kanal secimi acilmaz
+		if len(self.__GetServerEntries()) > 1:
+			self.__OpenPicker()
+
+	def OnClosePicker(self):
+		self.pickerRequested = False
+		self.picker.Hide()
+		if self.__IsServerBoardOpen() and not self.autoConfirmPending:
+			if not self.__CallBase("OnClickExitServerButton"):
+				self.__RunOriginalButton("ServerExitButton")
+		self.__RefreshChannels()
+
+	def OnPickServer(self, index):
+		serverList = self.__GetServerList()
+		if not serverList or not 0 <= index < serverList.GetItemCount():
+			return
+		try:
+			serverList.SelectItem(index)
+		except Exception, error:
+			dbg.TraceError("MobileLoginWindow.OnPickServer: %s" % error)
+		self.__RefreshPicker()
+
+	def OnPickChannel(self, index):
+		channelList = self.__GetChannelList()
+		if channelList:
+			channelList.SelectItem(index)
+			self.channelPickedByUser = True
+			self.autoConfirmPending = False
+			self.__RememberServer()
+			self.__ConfirmServer()
+		self.pickerRequested = False
+		self.picker.Hide()
+		self.__RefreshChannels()
+
+	def __RememberServer(self):
+		serverKey = self.__GetSelectedServerKey()
+		if serverKey is None:
+			return
+		uiMobileHud.LoadConfig()[CONFIG_PREFERRED_SERVER] = str(serverKey)
+		uiMobileHud.SaveConfig()
+
+	def OnPressEscapeKey(self):
+		if self.picker and self.picker.IsShow():
+			self.OnClosePicker()
+			return True
+		baseHandler = getattr(introLogin.LoginWindow, "OnPressEscapeKey", None)
+		if baseHandler:
+			return baseHandler(self)
+		return False
+
+	def __RefreshChannels(self):
+		if not self.channelButton:
+			return
+
+		connectName = self.GetChild2("ConnectName")
+		if connectName:
+			parts = StripColor(connectName.GetText()).split(",")
+			self.serverButton.SetValue(parts[0].strip())
+			channelText = parts[1].strip() if len(parts) > 1 else ""
+		else:
+			channelText = ""
+
+		(entries, selectedIndex) = self.__GetChannelEntries()
+		# AKRAVON: kayitli kanal kapaliysa ilk acik kanala gec (oyuncu elle kapali kanal secmediyse)
+		if not getattr(self, "channelPickedByUser", False) and entries:
+			selectedOpen = 0 <= selectedIndex < len(entries) and entries[selectedIndex][1] in CHANNEL_STATES
+			openIndexes = [index for (index, (name, state)) in enumerate(entries) if state in CHANNEL_STATES]
+			if not selectedOpen and openIndexes:
+				channelList = self.__GetChannelList()
+				if channelList:
+					channelList.SelectItem(openIndexes[0])
+					self.autoConfirmPending = False
+					self.__RememberServer()
+					self.__ConfirmServer()
+					(entries, selectedIndex) = self.__GetChannelEntries()
+		if 0 <= selectedIndex < len(entries):
+			(name, state) = entries[selectedIndex]
+			(dotName, label) = ChannelStateVisual(state)
+			self.channelButton.SetValue(name, dotName)
+		elif channelText:
+			self.channelButton.SetValue(channelText)
+		else:
+			self.channelButton.SetValue("-")
+
+		if self.picker and self.picker.IsShow():
+			self.__RefreshPicker()
+
+	# Cynex: barbaros kayitli hesap dosyasi "|id|sifre|pin|"
+	def __GetSavedAccount(self, slot):
+		try:
+			fileName = AccountFileName(slot)
+			if not os.path.exists(fileName):
+				return None
+			value = old_open(fileName, "r").read()
+		except Exception:
+			return None
+		parts = value.split("|")
+		if len(parts) < 4 or not parts[1]:
+			return None
+		return (parts[1], parts[2], parts[3])
+
+	def __RefreshAccounts(self):
+		if not self.accountPanel:
+			return
+		accounts = []
+		for slot in xrange(1, ACCOUNT_SLOT_COUNT + 1):
+			account = self.__GetSavedAccount(slot)
+			accounts.append((slot, account[0] if account else ""))
+		self.accountPanel.SetAccounts(accounts, self.selectedAccount)
+
+	def __GetEditLine(self, index):
+		return self.GetChild2(FIELD_NAMES[index][0])
+
+	def __GetFieldValues(self):
+		values = []
+		for index in xrange(len(FIELD_NAMES)):
+			editLine = self.__GetEditLine(index)
+			values.append(editLine.GetText() if editLine else "")
+		return values
+
+	def OnSelectAccount(self, slot):
+		account = self.__GetSavedAccount(slot)
+		if not account:
+			self.__RefreshAccounts()
+			return
+		for index in xrange(len(FIELD_NAMES)):
+			editLine = self.__GetEditLine(index)
+			if editLine:
+				editLine.SetText(account[index])
+		self.selectedAccount = slot
+		self.__RefreshAccounts()
+		if self.__EnsureServerReady():
+			self.__RunOriginalButton("LoginButton")
+
+	def OnAddAccount(self):
+		for slot in xrange(1, ACCOUNT_SLOT_COUNT + 1):
+			if not self.__GetSavedAccount(slot):
+				self.__SaveAccountToSlot(slot, True)
+				return
+
+	def OnDeleteAccount(self, slot):
+		try:
+			fileName = AccountFileName(slot)
+			if os.path.exists(fileName):
+				os.remove(fileName)
+		except Exception, error:
+			dbg.TraceError("MobileLoginWindow.OnDeleteAccount: %s" % error)
+		if self.selectedAccount == slot:
+			self.selectedAccount = 0
+		self.__RefreshAccounts()
+
+	def __SaveAccountToSlot(self, slot, notify):
+		(accountId, password, pin) = self.__GetFieldValues()
+		if not accountId or not password or not pin:
+			if notify:
+				self.PopupRiot(Locale("MOBILE_NO_SAVED_ACCOUNT"))
+			return False
+		try:
+			fileName = AccountFileName(slot)
+			folder = os.path.dirname(fileName)
+			if folder and not os.path.isdir(folder):
+				os.makedirs(folder)
+			old_open(fileName, "w").write("|%s|%s|%s|" % (accountId, password, pin))
+		except Exception, error:
+			dbg.TraceError("MobileLoginWindow.SaveAccount: %s" % error)
+			return False
+		self.selectedAccount = slot
+		self.__RefreshAccounts()
+		if notify:
+			self.PopupRiot(Locale("MOBILE_ACCOUNT_SAVED"))
+		return True
+
+	def __RememberAccount(self):
+		(accountId, password, pin) = self.__GetFieldValues()
+		if not accountId or not password or not pin:
+			return
+		emptySlot = 0
+		for slot in xrange(1, ACCOUNT_SLOT_COUNT + 1):
+			account = self.__GetSavedAccount(slot)
+			if account and account[0] == accountId:
+				if account[1] != password or account[2] != pin:
+					self.__SaveAccountToSlot(slot, False)
+				return
+			if not account and not emptySlot:
+				emptySlot = slot
+		if emptySlot:
+			self.__SaveAccountToSlot(emptySlot, False)
+
+	def __OnRememberChanged(self, value):
+		uiMobileHud.LoadConfig()[CONFIG_REMEMBER_ACCOUNT] = "1" if value else "0"
+		uiMobileHud.SaveConfig()
+
+	def __OnClickLogin(self):
+		if not self.__EnsureServerReady():
+			return
+		# Cynex: barbaros bos pin'de olmayan SetPinEditLineFocus'u cagiriyor - once burada sor
+		(accountId, password, pin) = self.__GetFieldValues()
+		if accountId and password and not pin:
+			self.PopupRiot(localeInfo.LOGIN_INPUT_PASSWORD)
+			return
+		if self.rememberToggle and self.rememberToggle.GetValue():
+			self.__RememberAccount()
+		self.__RunOriginalButton("LoginButton")
+
+	def __OnClickExit(self):
+		self.__RunOriginalButton("LoginExitButton")
+
+	def __SyncVisibility(self):
+		loginBoard = self.GetChild2("LoginBoard")
+		serverOpen = self.__IsServerBoardOpen()
+		awaiting = self.autoConfirmPending and serverOpen
+		loginVisible = bool(loginBoard and loginBoard.IsShow()) or awaiting
+		pickerVisible = self.pickerRequested or (serverOpen and not awaiting)
+
+		SetVisible(self.accountPanel, loginVisible and not self.cardShifted and not pickerVisible)
+		SetVisible(self.loginCard, loginVisible and not pickerVisible)
+		if self.picker:
+			if pickerVisible and not self.picker.IsShow():
+				self.__RefreshPicker()
+				self.picker.Show()
+				self.picker.SetTop()
+			elif not pickerVisible and self.picker.IsShow():
+				self.picker.Hide()
+
+	def __IsTyping(self):
+		for index in xrange(len(FIELD_NAMES)):
+			editLine = self.__GetEditLine(index)
+			if editLine and editLine.IsFocus():
+				return True
+		return False
+
+	def __UpdateCardShift(self):
+		if not self.loginCard:
+			return
+		shift = False	# AKRAVON: yazarken giris paneli yerinde kalir (yukari kayma kaldirildi)
+		if shift == self.cardShifted:
+			return
+		self.cardShifted = shift
+		(cardX, cardY) = self.cardPosition
+		self.loginCard.SetPosition(cardX, TOP_MARGIN if shift else cardY)
+
+	def OnUpdate(self):
+		introLogin.LoginWindow.OnUpdate(self)
+		if not self.mobileLayoutReady:
+			return
+		self.__AutoConfirmServer()
+		if app.GetTime() < getattr(self, "releaseFocusUntil", 0.0):
+			self.__KillFieldFocus()
+		self.__UpdateCardShift()
+		self.__SyncVisibility()
+		now = app.GetTime()
+		if now >= self.nextRefreshTime:
+			self.nextRefreshTime = now + REFRESH_INTERVAL
+			self.__RefreshChannels()
+			self.__RefreshAccounts()
