@@ -728,7 +728,9 @@ bool RunMainScript(CPythonLauncher& pyLauncher, const char* lpCmdLine)
 		SplitLine(lpCmdLine," " ,&stVec);
 
 		if (stVec.size() != 0 && "--pause-before-create-window" == stVec[0])
+#ifndef __APPLE__
 			system("pause");
+#endif
 
 #ifdef ENABLE_DAEMONPROTECTION
 		DWORD dwCrc32, dwSize;
@@ -788,7 +790,9 @@ bool Main(HINSTANCE hInstance, LPSTR lpCmdLine)
 
 	if (_access("newpatch.exe", 0)==0)
 	{
+#ifndef __APPLE__
 		system("patchupdater.exe");
+#endif
 		return false;
 	}
 

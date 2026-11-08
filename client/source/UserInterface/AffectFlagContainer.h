@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef BYTE_SIZE
+#undef BYTE_SIZE	// Cynex: apple mach basliklari BYTE_SIZE=8 tanimliyor
+#endif
+
 class CAffectFlagContainer
 {
 	public:

@@ -1,6 +1,17 @@
 #ifndef __INCLUDE_HEADER_PYTHON_OFFLINESHO__
 #define __INCLUDE_HEADER_PYTHON_OFFLINESHO__
 
+#ifndef CYNEX_ALT_S64
+// Cynex: int64_t android'de long, apple'da long long - diger 64 bit tipi ayrica
+#if defined(__APPLE__)
+#define CYNEX_ALT_S64 long
+#define CYNEX_ALT_U64 unsigned long
+#else
+#define CYNEX_ALT_S64 long long
+#define CYNEX_ALT_U64 unsigned long long
+#endif
+#endif
+
 #ifdef ENABLE_IKASHOP_RENEWAL
 #include "PythonBackground.h"
 #include "Packet.h"
@@ -135,8 +146,8 @@ namespace ikashop
 			PyObject* makeInteger(int val) { return _Register(PyInt_FromLong(static_cast<LONG>(val))); }
 #ifdef CYNEX_MOBILE
 			// Cynex: android'de LONG = int, int64_t = long - long long ayrica lazim
-			PyObject* makeInteger(long long val) { return _Register(PyLong_FromLongLong(val)); }
-			PyObject* makeInteger(unsigned long long val) { return _Register(PyLong_FromUnsignedLongLong(val)); }
+			PyObject* makeInteger(CYNEX_ALT_S64 val) { return _Register(PyLong_FromLongLong(val)); }
+			PyObject* makeInteger(CYNEX_ALT_U64 val) { return _Register(PyLong_FromUnsignedLongLong(val)); }
 #else
 			PyObject* makeInteger(LONG val) { return _Register(PyInt_FromLong(val)); }
 #endif
@@ -187,8 +198,8 @@ namespace ikashop
 			void set(const std::string& key, bool value) { PyDict_SetItemString(dict, key.c_str(), collector.makeBool(value)); }
 			void set(const std::string& key, int value) { PyDict_SetItemString(dict, key.c_str(), collector.makeInteger(value)); }
 #ifdef CYNEX_MOBILE
-			void set(const std::string& key, long long value) { PyDict_SetItemString(dict, key.c_str(), collector.makeInteger(value)); }
-			void set(const std::string& key, unsigned long long value) { PyDict_SetItemString(dict, key.c_str(), collector.makeInteger(value)); }
+			void set(const std::string& key, CYNEX_ALT_S64 value) { PyDict_SetItemString(dict, key.c_str(), collector.makeInteger(value)); }
+			void set(const std::string& key, CYNEX_ALT_U64 value) { PyDict_SetItemString(dict, key.c_str(), collector.makeInteger(value)); }
 #else
 			void set(const std::string& key, LONG value) { PyDict_SetItemString(dict, key.c_str(), collector.makeInteger(value)); }
 #endif
@@ -226,8 +237,8 @@ namespace ikashop
 			void append(bool value) { PyList_Append(list, collector.makeBool(value)); }
 			void append(int value) { PyList_Append(list, collector.makeInteger(value)); }
 #ifdef CYNEX_MOBILE
-			void append(long long value) { PyList_Append(list, collector.makeInteger(value)); }
-			void append(unsigned long long value) { PyList_Append(list, collector.makeInteger(value)); }
+			void append(CYNEX_ALT_S64 value) { PyList_Append(list, collector.makeInteger(value)); }
+			void append(CYNEX_ALT_U64 value) { PyList_Append(list, collector.makeInteger(value)); }
 #else
 			void append(LONG value) { PyList_Append(list, collector.makeInteger(value)); }
 #endif
