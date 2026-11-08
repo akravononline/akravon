@@ -1,6 +1,10 @@
 # Cynex: cynex_mss - MSS32 (Miles 6.5) yerine miniaudio; android + windows test
 cmake_minimum_required(VERSION 3.22)
-project(cynex_mss C CXX)
+if (CYNEX_IOS)
+	project(cynex_mss C CXX OBJC)
+else()
+	project(cynex_mss C CXX)
+endif()
 
 option(CYNEX_MSS_BUILD_TESTS "windows test programi (mss_test)" OFF)
 option(CYNEX_MSS_BUILD_LINK_CHECK "android: --no-undefined ile test .so" OFF)

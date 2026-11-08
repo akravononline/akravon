@@ -1,6 +1,10 @@
 # Cynex: cynex_d3d8 - Direct3D 8 + D3DX8 -> OpenGL ES 3.0
 cmake_minimum_required(VERSION 3.22)
-project(cynex_d3d8 C CXX)
+if (CYNEX_IOS)
+	project(cynex_d3d8 C CXX OBJC OBJCXX)
+else()
+	project(cynex_d3d8 C CXX)
+endif()
 
 option(CYNEX_D3D8_BUILD_TEST "test apk icin libd3dtest.so" OFF)
 
@@ -20,7 +24,7 @@ add_library(cynex_d3d8 STATIC
 	${CYNEX_D3D8_DIR}/src/d3dx_mesh.cpp)
 if (CYNEX_IOS)
 	target_sources(cynex_d3d8 PRIVATE ${CYNEX_D3D8_DIR}/src/cd3d_eagl.mm)
-	set_source_files_properties(${CYNEX_D3D8_DIR}/src/cd3d_eagl.mm PROPERTIES COMPILE_FLAGS "-fobjc-arc -fms-extensions -fdeclspec")
+	set_source_files_properties(${CYNEX_D3D8_DIR}/src/cd3d_eagl.mm PROPERTIES LANGUAGE OBJCXX COMPILE_FLAGS "-fobjc-arc -fms-extensions -fdeclspec")
 else()
 	target_sources(cynex_d3d8 PRIVATE ${CYNEX_D3D8_DIR}/src/cd3d_egl.cpp)
 endif()
