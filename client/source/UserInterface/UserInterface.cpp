@@ -727,8 +727,8 @@ bool RunMainScript(CPythonLauncher& pyLauncher, const char* lpCmdLine)
 		std::vector<std::string> stVec;
 		SplitLine(lpCmdLine," " ,&stVec);
 
-		if (stVec.size() != 0 && "--pause-before-create-window" == stVec[0])
 #ifndef __APPLE__
+		if (stVec.size() != 0 && "--pause-before-create-window" == stVec[0])
 			system("pause");
 #endif
 
