@@ -1183,6 +1183,9 @@ bool CPythonApplication::Create(PyObject* poSelf, const char* c_szName, int widt
 		return false;
 	}
 
+#ifdef __APPLE__
+	fprintf(stderr, "[T] Create: pencere olustu\n"); fflush(stderr);
+#endif
 	if (m_pySystem.IsUseDefaultIME())
 		CPythonIME::Instance().UseDefaultIME();
 
@@ -1258,6 +1261,9 @@ bool CPythonApplication::Create(PyObject* poSelf, const char* c_szName, int widt
 		GRAPHICS_CAPS_SOFTWARE_TILING = m_pySystem.IsSoftwareTiling();
 
 	// Device
+#ifdef __APPLE__
+	fprintf(stderr, "[T] Create: CreateDevice cagriliyor\n"); fflush(stderr);
+#endif
 	if (!CreateDevice(m_pySystem.GetWidth(), m_pySystem.GetHeight(), Windowed, m_pySystem.GetBPP(), m_pySystem.GetFrequency()))
 		return false;
 

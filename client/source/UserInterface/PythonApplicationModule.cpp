@@ -432,15 +432,24 @@ PyObject* appCreate(PyObject* poSelf, PyObject* poArgs)
 	PyTuple_GetInteger(poArgs, 3, &Windowed);
 	#endif
 
+#ifdef __APPLE__
+	fprintf(stderr, "[T] appCreate basladi\n"); fflush(stderr);
+#endif
 	#ifdef ENABLE_DISCORD_STUFF
 	if (!CPythonApplication::Instance().Create(poSelf, szName, szMiniName, width, height, Windowed))
 	#else
 	if (!CPythonApplication::Instance().Create(poSelf, szName, width, height, Windowed))
 	#endif
 	{
+#ifdef __APPLE__
+		fprintf(stderr, "[T] appCreate BASARISIZ (Python hatasi firlatiliyor)\n"); fflush(stderr);
+#endif
 		return NULL;
 	}
 
+#ifdef __APPLE__
+	fprintf(stderr, "[T] appCreate tamam\n"); fflush(stderr);
+#endif
 	return Py_BuildNone();
 }
 
@@ -472,12 +481,18 @@ PyObject* appProcess(PyObject* poSelf, PyObject* poArgs)
 
 PyObject* appAbort(PyObject* poSelf, PyObject* poArgs)
 {
+#ifdef __APPLE__
+	fprintf(stderr, "[T] appAbort cagrildi\n"); fflush(stderr);
+#endif
 	CPythonApplication::Instance().Abort();
 	return Py_BuildNone();
 }
 
 PyObject* appExit(PyObject* poSelf, PyObject* poArgs)
 {
+#ifdef __APPLE__
+	fprintf(stderr, "[T] appExit cagrildi\n"); fflush(stderr);
+#endif
 	CPythonApplication::Instance().Exit();
 	return Py_BuildNone();
 }
