@@ -31,8 +31,7 @@ static void CrashHandler(int sig)
 static void ListDir(const char* path)
 {
 	DIR* d = opendir(path);
-	if (!d) { fprintf(stderr, "[D] %s: ACILAMADI
-", path); return; }
+	if (!d) { fprintf(stderr, "[D] %s: ACILAMADI\n", path); return; }
 	int n = 0;
 	for (dirent* e = readdir(d); e; e = readdir(d))
 	{
@@ -40,13 +39,11 @@ static void ListDir(const char* path)
 		std::string full = std::string(path) + "/" + e->d_name;
 		struct stat st;
 		stat(full.c_str(), &st);
-		fprintf(stderr, "[D]   %s%s (%lld)
-", e->d_name, S_ISDIR(st.st_mode) ? "/" : "", (long long)st.st_size);
+		fprintf(stderr, "[D]   %s%s (%lld)\n", e->d_name, S_ISDIR(st.st_mode) ? "/" : "", (long long)st.st_size);
 		++n;
 	}
 	closedir(d);
-	fprintf(stderr, "[D] %s: %d oge
-", path, n);
+	fprintf(stderr, "[D] %s: %d oge\n", path, n);
 }
 extern "C" int CynexIos_GameMain(void)
 {
