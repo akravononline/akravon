@@ -3,7 +3,11 @@
 #include <process.h>
 #include <sched.h>
 #include <sys/resource.h>
+#ifdef __APPLE__
+#include <pthread.h>
+#else
 #include <sys/syscall.h>
+#endif
 #include <time.h>
 #include <mutex>
 #include <condition_variable>
@@ -141,12 +145,25 @@ namespace cynex
 
 using namespace cynex;
 
+// Cynex: cekirdek thread kimligi (Linux gettid / Apple pthread_threadid_np)
+static inline pid_t CynexGetTid()
+{
+#ifdef __APPLE__
+	uint64_t id = 0;
+	pthread_threadid_np(nullptr, &id);
+	return (pid_t)id;
+#else
+	return (pid_t)syscall(SYS_gettid);
+#endif
+}
+
+
 namespace
 {
 	void* ThreadEntry(void* p)
 	{
 		SThread* t = (SThread*)p;
-		t->ltid = (pid_t)syscall(SYS_gettid);
+		t->ltid = CynexGetTid();
 		DWORD code = 0;
 		if (t->startEx)
 			code = t->startEx(t->arg);
@@ -379,8 +396,13 @@ BOOL SetThreadPriority(HANDLE hThread, int nPriority)
 	SThread* t = (SThread*)GetHandle(hThread, HANDLE_THREAD);
 	// Cynex: nice degeri - yuksek oncelik = dusuk nice
 	const int nice = nPriority >= THREAD_PRIORITY_TIME_CRITICAL ? -8 : -nPriority * 2;
-	const pid_t tid = t ? t->ltid : (pid_t)syscall(SYS_gettid);
+	const pid_t tid = t ? t->ltid : CynexGetTid();
+#ifdef __APPLE__
+	(void)tid; (void)nice;	// ios: thread basina nice yok
+	return TRUE;
+#else
 	return setpriority(PRIO_PROCESS, tid, nice) == 0;
+#endif
 }
 
 int GetThreadPriority(HANDLE)
@@ -420,7 +442,7 @@ HANDLE GetCurrentThread(void)
 
 DWORD GetCurrentThreadId(void)
 {
-	return (DWORD)syscall(SYS_gettid);
+	return (DWORD)CynexGetTid();
 }
 
 HANDLE GetCurrentProcess(void)
