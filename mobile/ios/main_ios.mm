@@ -19,8 +19,7 @@ static void CrashHandler(int sig)
 {
 	void* frames[48];
 	const int n = backtrace(frames, 48);
-	fprintf(stderr, "[F] CRASH sinyal=%d
-", sig);
+	fprintf(stderr, "[F] CRASH sinyal=%d\n", sig);
 	backtrace_symbols_fd(frames, n, fileno(stderr));
 	fflush(stderr);
 	signal(sig, SIG_DFL);
