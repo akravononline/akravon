@@ -231,7 +231,12 @@ bool CPythonLauncher::RunFile(const char* c_szFileName)
 
 		dwBufSize=file.Size();
 		if (dwBufSize==0)
+		{
+#ifdef __APPLE__
+			fprintf(stderr, "[T] RunFile: %s bulunamadi veya bos\n", c_szFileName); fflush(stderr);
+#endif
 			return false;
+		}
 
 		acBufData=new char[dwBufSize];
 		memcpy(acBufData, pvData, dwBufSize);
@@ -252,10 +257,16 @@ bool CPythonLauncher::RunLine(const char* c_szSrc)
 
 	if (!v)
 	{
+#ifdef __APPLE__
+		fprintf(stderr, "[T] RunLine: Python hatasi (Traceback)\n"); fflush(stderr);
+#endif
 		Traceback();
 		return false;
 	}
 
+#ifdef __APPLE__
+	fprintf(stderr, "[T] RunLine: tamam\n"); fflush(stderr);
+#endif
 	Py_DECREF(v);
 	return true;
 }
