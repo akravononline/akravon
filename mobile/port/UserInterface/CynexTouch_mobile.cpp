@@ -537,6 +537,13 @@ bool CynexTouch_FilterMouseButton(int iEvent, int x, int y)
 		ToRender(kTouch.downX, kTouch.downY, &rx, &ry);
 		if (abs(rx - x) > 2 || abs(ry - y) > 2)
 			continue;
+		// AKRAVON: parmak fare iletisinden once kalktiysa (iOS: dokunma ana is parcaciginda) dokunus zaten islendi
+		// (OnTouchTap / ReplayClick / dunya tiklamasi). Fare iletisi de islenirse ayni dokunus iki kez calisir: ac-kapa.
+		if (IsFinished(kTouch.id, kTouch.downTime))
+		{
+			g_mouseSwallow = true;
+			return true;
+		}
 		STrack* pTrack = FindTrack(kTouch.id, kTouch.downTime);
 		if (pTrack && pTrack->primary)
 			continue;
