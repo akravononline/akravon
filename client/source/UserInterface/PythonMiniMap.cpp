@@ -133,7 +133,7 @@ void CPythonMiniMap::Update(float fCenterX, float fCenterY)
 		pkInstEach->NEW_GetPixelPosition(&kInstancePosition);
 		float fDistanceFromCenterX = (kInstancePosition.x - m_fCenterX) * fooCellScale * m_fScale;
 		float fDistanceFromCenterY = (kInstancePosition.y - m_fCenterY) * fooCellScale * m_fScale;
-		if (fDistanceFromCenterX * fDistanceFromCenterX + fDistanceFromCenterY * fDistanceFromCenterY >= m_fMiniMapRadius * m_fMiniMapRadius)	// AKRAVON: yuvarlak harita - halka disindaki noktalar cizilmez
+		if (fabs(fDistanceFromCenterX) >= m_fMiniMapRadius || fabs(fDistanceFromCenterY) >= m_fMiniMapRadius)
 			continue;
 
 		float fDistanceFromCenter = sqrtf(fDistanceFromCenterX * fDistanceFromCenterX + fDistanceFromCenterY * fDistanceFromCenterY );
@@ -218,7 +218,7 @@ void CPythonMiniMap::Update(float fCenterX, float fCenterY)
 
 		float fDistanceFromCenterX = (pos.x - m_fCenterX) * fooCellScale * m_fScale;
 		float fDistanceFromCenterY = (pos.y - m_fCenterY) * fooCellScale * m_fScale;
-		if (fDistanceFromCenterX * fDistanceFromCenterX + fDistanceFromCenterY * fDistanceFromCenterY >= m_fMiniMapRadius * m_fMiniMapRadius)	// AKRAVON: yuvarlak harita - halka disindaki noktalar cizilmez
+		if (fabs(fDistanceFromCenterX) >= m_fMiniMapRadius || fabs(fDistanceFromCenterY) >= m_fMiniMapRadius)
 			continue;
 
 		float fDistanceFromCenter = sqrtf(fDistanceFromCenterX * fDistanceFromCenterX + fDistanceFromCenterY * fDistanceFromCenterY);
@@ -252,7 +252,7 @@ void CPythonMiniMap::Update(float fCenterX, float fCenterY)
 
 			float fDistanceFromCenterX = (kInstancePosition.x - m_fCenterX) * fooCellScale * m_fScale;
 			float fDistanceFromCenterY = (kInstancePosition.y - m_fCenterY) * fooCellScale * m_fScale;
-			if (fDistanceFromCenterX * fDistanceFromCenterX + fDistanceFromCenterY * fDistanceFromCenterY >= m_fMiniMapRadius * m_fMiniMapRadius)	// AKRAVON: yuvarlak harita - halka disindaki noktalar cizilmez
+			if (fabs(fDistanceFromCenterX) >= m_fMiniMapRadius || fabs(fDistanceFromCenterY) >= m_fMiniMapRadius)
 				continue;
 
 			float fDistanceFromCenter = sqrtf(fDistanceFromCenterX * fDistanceFromCenterX + fDistanceFromCenterY * fDistanceFromCenterY );
@@ -665,8 +665,8 @@ typedef struct _MINIMAPVERTEX
 bool CPythonMiniMap::Create()
 {
 	const std::string strImageRoot = "D:/ymir work/ui/";
-	#ifdef __ANDROID__
-	// AKRAVON: kare harita - tamamen opak filtre (yuvarlak maske yok)
+	#if defined(__ANDROID__) || defined(__APPLE__)
+	// AKRAVON: kare harita (Android + iOS) - tamamen opak filtre (yuvarlak maske yok)
 	const std::string strImageFilter = "mobile_ui/akravon/hud/minimap_filter.png";
 	#else
 	const std::string strImageFilter = strImageRoot + "minimap_image_filter.dds";
