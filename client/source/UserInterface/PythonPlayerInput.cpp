@@ -469,6 +469,7 @@ bool CPythonPlayer::NEW_MoveToDirection(float fDirRot)
 		return true;
 
 	__ClearReservedAction();
+	__ClearAutoAttackTargetActorID();	// AKRAVON: joystick / yon tusu otomatik saldiri hedefini birakir
 
 	CInstanceBase* pkInstMain=NEW_GetMainActorPtr();
 	if (!pkInstMain)
