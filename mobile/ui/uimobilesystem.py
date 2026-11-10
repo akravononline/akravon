@@ -9,36 +9,34 @@ import uiAkravon
 from _weakref import proxy
 
 # AKRAVON: oyun ici ayarlar menusu - login'deki kanal secicinin panel / satir / KAPAT dugmesi dili
-PANEL_WIDTH = 340
+PANEL_WIDTH = 440
 PADDING_X = 22
 TOP = 20
 TITLE_HEIGHT = 40
-ROW_HEIGHT = 38
+ROW_HEIGHT = 54
 ROW_GAP = 6
 CLOSE_GAP = 12
 CLOSE_HEIGHT = 48
 BOTTOM = 20
 DIM_ALPHA = 150
-ICON_SIZE = 26
+ICON_SIZE = 34
 ICON_X = 10
 TEXT_X = ICON_X + ICON_SIZE + 10
 CHEVRON_RIGHT = 18
 CHANNEL_COUNT = 6
 KIT_ICON = "mobile_ui/akravon/hud/btn_%s_normal_xs.png"
 KIT_ICON_SIZE = 34.0
-FONT_ROW = "Lato:17"
-FONT_VALUE = "LatoBd:15"
-FONT_TITLE = "Marcellus:24"
+FONT_ROW = "Lato:22"
+FONT_VALUE = "LatoBd:19"
+FONT_TITLE = "Marcellus:28"
 CURRENT_COLOR = uiAkravon.STATE_OPEN_COLOR
 
 # (anahtar, ikon, metin)
 MENU_ROWS = (
 	("option", "system", "Oyun Seçenekleri"),
 	("channel", "channel", "Kanal Değiştir"),
-	("shop", "itemshop", "Nesne Market"),
 	("character", "character", "Karakter Değiştir"),
 	("logout", "less", "Çıkış Yap"),
-	("exit", "quest", "Oyundan Çık"),
 )
 
 menu = None
@@ -98,8 +96,8 @@ class MenuRow(uiMobileStyle.Pressable):
 			self.icon.SetScale(ICON_SIZE / KIT_ICON_SIZE, ICON_SIZE / KIT_ICON_SIZE)
 			self.icon.SetPosition(ICON_X, (ROW_HEIGHT - ICON_SIZE) // 2)
 			self.icon.Show()
-		self.text = uiMobileStyle.CreateText(self, text, TEXT_X if iconName else 22, ROW_HEIGHT // 2 - 10, uiMobileStyle.BRIGHT_COLOR, FONT_ROW)
-		self.value = uiMobileStyle.CreateText(self, "", width - CHEVRON_RIGHT - 16, ROW_HEIGHT // 2 - 8, uiAkravon.HINT_COLOR, FONT_VALUE, "right")
+		self.text = uiMobileStyle.CreateText(self, text, TEXT_X if iconName else 22, ROW_HEIGHT // 2 - 13, uiMobileStyle.BRIGHT_COLOR, FONT_ROW)
+		self.value = uiMobileStyle.CreateText(self, "", width - CHEVRON_RIGHT - 16, ROW_HEIGHT // 2 - 11, uiAkravon.HINT_COLOR, FONT_VALUE, "right")
 		self.chevron = uiMobileStyle.CreateCenteredImage(self, "icon_chevron", width - CHEVRON_RIGHT, ROW_HEIGHT // 2)
 		self.selected = False
 

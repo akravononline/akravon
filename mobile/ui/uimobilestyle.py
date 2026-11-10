@@ -71,6 +71,19 @@ def Asset(name):
 	return ASSET_PATH % name
 
 
+def TrUpper(text):
+	# AKRAVON: dugme yazilari her yerde BUYUK harf; Turkce i -> I (noktali), dotless -> I kuralina gore
+	try:
+		converted = text.decode("cp1254")
+	except Exception:
+		return text
+	converted = converted.replace(u"i", u"\u0130").replace(u"\u0131", u"I").upper()
+	try:
+		return converted.encode("cp1254")
+	except Exception:
+		return text
+
+
 def RaceKey(job):
 	if 0 <= job < len(RACE_KEYS):
 		return RACE_KEYS[job]
@@ -652,6 +665,11 @@ class Pressable(ui.Window):
 		self.RefreshVisual()
 
 	def Run(self):
+		import app
+		now = app.GetTime()	# AKRAVON: cift tetiklenme (dokunma + fare) yutulur
+		if now - getattr(self, "lastRunTime", -10.0) < 0.35:
+			return
+		self.lastRunTime = now
 		if self.enabled and self.eventFunction:
 			self.eventFunction(*self.eventArguments)
 
@@ -1031,3 +1049,12 @@ class Field(ui.Window):
 		if self.editLine:
 			ui.Window.SetFocus(self.editLine)
 		return True
+
+# AKRAVON: eski pencereleri yuklenirken bizim tasarimla giydir (uiAkravonKit)
+try:
+	import uiAkravonKit
+	uiAkravonKit.Install()
+except Exception:
+	import dbg
+	import traceback
+	dbg.TraceError("uiAkravonKit.Install: " + traceback.format_exc())

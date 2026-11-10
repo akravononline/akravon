@@ -6,12 +6,13 @@ import ui
 import uiMobileStyle
 import uiAkravon
 import uiMobileHud
+import uiAkravonHudAlpha
 
 # AKRAVON: oyun secenekleri - sekmeli tek pencere (Grafik / Oyun / Ses / Kontroller); ayarlar menusu ile ayni dil
-PANEL_WIDTH = 700
-SIDE_WIDTH = 150		# AKRAVON: sekmeler solda (karakter penceresiyle ayni dil)
-SIDE_TAB_WIDTH = 122
-SIDE_TAB_STEP = 52
+PANEL_WIDTH = 800
+SIDE_WIDTH = 170		# AKRAVON: sekmeler solda (karakter penceresiyle ayni dil)
+SIDE_TAB_WIDTH = 142
+SIDE_TAB_STEP = 58
 PADDING_X = 22
 TOP = 18
 TITLE_HEIGHT = 36
@@ -19,22 +20,23 @@ TAB_TOP = TOP + TITLE_HEIGHT + 4
 TAB_HEIGHT = 44
 TAB_GAP = 4
 CONTENT_TOP = TOP + TITLE_HEIGHT + 14
-ROW_HEIGHT = 44
+ROW_HEIGHT = 50
 ROW_GAP = 4
 CLOSE_GAP = 12
 BOTTOM = 20
 DIM_ALPHA = 150
 CONTROL_RIGHT = 12
-STEP_SIZE = 30
-VALUE_WIDTH = 96
-CHOICE_HEIGHT = 30
+STEP_SIZE = 40
+STEP_W = 44
+VALUE_WIDTH = 110
+CHOICE_HEIGHT = 40
 CHOICE_GAP = 4
 FONT_TITLE = "Marcellus:24"
-FONT_TAB = "LatoBd:17"
-FONT_ROW = "Lato:17"
-FONT_VALUE = "LatoBd:16"
-FONT_CHOICE = "LatoBd:15"
-FONT_SIGN = "AlegreyaSansBold:24"
+FONT_TAB = "Marcellus:20"
+FONT_ROW = "Lato:19"
+FONT_VALUE = "LatoBd:18"
+FONT_CHOICE = "LatoBd:17"
+FONT_SIGN = "AlegreyaSansBold:28"
 TAB_COLOR = uiMobileStyle.Color(176, 160, 128)
 TAB_ACTIVE_COLOR = uiMobileStyle.Color(236, 206, 140)
 SAVE_KEY_SOUND = "SOUND_VOLUME"
@@ -150,6 +152,13 @@ def SetSystemFloat(setter, rebuild):
 	return Apply
 
 
+def SetHudAlpha(name):
+	def Apply(value):
+		uiAkravonHudAlpha.SetPercent(name, value)
+		uiMobileHud.RequestRefresh()
+	return Apply
+
+
 def Percent(value):
 	return "%%%d" % int(round(value * 100))
 
@@ -230,7 +239,19 @@ def ManualChange():
 		pass
 
 
+def ApplyFixedSettings():
+	# AKRAVON: gorus acisi 30 sabit, sis yok, kopek modu yok, canavar seviyesi hep gorunur
+	try:
+		Call("SetFOVLevel", None, 30.0)
+		SetFog(False)
+		Call("SetPolyDogMode", None, False)
+		Call("SetShowMobLevel", None, True)
+	except Exception:
+		pass
+
+
 def ApplyStartupQuality():
+	ApplyFixedSettings()
 	# oyun her acildiginda otomatik aciksa cihaza gore secilir; degilse kayitli kademe
 	if IsAuto():
 		ApplyQuality(AutoQuality())
@@ -334,12 +355,6 @@ def GraphicsRows():
 
 def GameRows():
 	rows = []
-	if Has("SetFOVLevel"):
-		rows.append(("step", "Görüş Açısı", lambda: float(Call("GetFOVLevel", 30.0)), lambda v: Call("SetFOVLevel", None, v), 30.0, 100.0, 5.0, lambda v: "%d" % int(round(v))))
-	if Has("SetFogMode"):
-		rows.append(("toggle", "Sis", lambda: bool(Call("IsFogMode", False)), SetFog))
-	if Has("SetNightMode"):
-		rows.append(("toggle", "Gece Modu", lambda: bool(Call("GetNightMode", False)), SetNight))
 	rows.append(("toggle", "Uzak Kamera", GetFarCamera, SetFarCamera))
 	rows.append(("toggle", "İsimleri Her Zaman Göster", lambda: bool(Call("IsAlwaysShowName", False)), lambda v: Call("SetAlwaysShowNameFlag", None, bool(v))))
 	rows.append(("toggle", "Hasarı Göster", lambda: bool(Call("IsShowDamage", True)), lambda v: Call("SetShowDamageFlag", None, bool(v))))
@@ -347,10 +362,6 @@ def GameRows():
 	if Has("SetHidePets"):
 		rows.append(("toggle", "Evcil Hayvanları Gizle", lambda: bool(Call("IsHidePets", False)), lambda v: Call("SetHidePets", None, bool(v))))
 		rows.append(("toggle", "Binekleri Gizle", lambda: bool(Call("IsHideMounts", False)), lambda v: Call("SetHideMounts", None, bool(v))))
-	if Has("SetPolyDogMode"):
-		rows.append(("toggle", "Köpek Modu", lambda: bool(Call("IsPolyDogMode", False)), SetDogMode))
-	if Has("SetShowMobLevel"):
-		rows.append(("toggle", "Canavar Seviyesi", lambda: bool(Call("IsShowMobLevel", False)), lambda v: Call("SetShowMobLevel", None, bool(v))))
 	return rows
 
 
@@ -375,6 +386,8 @@ def ControlRows():
 		("step", "Yakınlaştırma Hızı", lambda: float(Call("GetPinchZoomSens", 1.0)), SetSystemFloat("SetPinchZoomSens", False), 0.25, 3.0, 0.25, lambda v: "x%.2f" % v),
 		("step", "Joystick Boyu", lambda: float(Call("GetJoystickSize", 200.0)), SetSystemFloat("SetJoystickSize", True), 120.0, 320.0, 20.0, lambda v: "%d" % int(round(v))),
 		("step", "Saldırı Düğmesi", lambda: float(Call("GetAttackButtonSize", 140.0)), SetSystemFloat("SetAttackButtonSize", True), 100.0, 320.0, 20.0, lambda v: "%d" % int(round(v))),
+		("step", "Joystick Şeffaflığı", lambda: float(uiAkravonHudAlpha.GetPercent("joy")), SetHudAlpha("joy"), 20.0, 100.0, 10.0, lambda v: "%%%d" % int(round(v))),
+		("step", "Saldırı Şeffaflığı", lambda: float(uiAkravonHudAlpha.GetPercent("atk")), SetHudAlpha("atk"), 20.0, 100.0, 10.0, lambda v: "%%%d" % int(round(v))),
 		("toggle", "Kamera Eğime Dönsün", lambda: bool(Call("IsCameraReturn", 1)), lambda v: Call("SetCameraReturn", None, 1 if v else 0)),
 		("toggle", "Joystick Dokunulan Yere Gelsin", uiMobileHud.IsDynamicJoystick, SetDynamicJoystick),
 		("action", "HUD Düzenle (taşı / boyutlandır)", None, OpenHudEditor, "Düzenle"),
@@ -385,6 +398,52 @@ TABS = (("Grafik", GraphicsRows), ("Oyun", GameRows), ("Ses", SoundRows), ("Kont
 
 
 # ---------------------------------------------------------------- bilesenler
+
+BUTTON_IMAGE = "d:/ymir work/ui/akravon_legacy/sb_btn230_%d.png"
+BUTTON_SIZE = (230.0, 44.0)
+BUTTON_TEXT = uiMobileStyle.Color(250, 236, 210)
+BUTTON_TEXT_ACTIVE = uiMobileStyle.Color(255, 214, 120)
+
+
+class SkinButton(uiMobileStyle.Pressable):
+	# AKRAVON: diger pencerelerle ayni yatay depo dugmesi + Marcellus buyuk harf
+	# (iki gorsel onceden yuklenir, basis sirasinda gorsel yuklenmez: dokunma kaybolmasin)
+	def __init__(self, width, height, text, font):
+		uiMobileStyle.Pressable.__init__(self, width, height)
+		self.skins = []
+		for index in (1, 2):
+			skin = ui.ExpandedImageBox()
+			skin.SetParent(self)
+			skin.AddFlag("not_pick")
+			skin.LoadImage(BUTTON_IMAGE % index)
+			skin.SetScale(width / BUTTON_SIZE[0], height / BUTTON_SIZE[1])
+			skin.SetPosition(0, 0)
+			self.skins.append(skin)
+		self.skins[0].Show()
+		size = int(font.split(":")[1])
+		self.label = uiMobileStyle.CreateText(self, uiMobileStyle.TrUpper(text), width // 2, max(0, (height - size) // 2 - 1), BUTTON_TEXT, font, "center")
+		self.selected = False
+
+	def Destroy(self):
+		uiMobileStyle.Pressable.Destroy(self)
+		self.skins = []
+		self.label = None
+
+	def SetSelected(self, selected):
+		self.selected = selected
+		self.RefreshVisual()
+
+	def RefreshVisual(self):
+		if not getattr(self, "skins", None):
+			return
+		if self.selected:
+			self.skins[0].Hide()
+			self.skins[1].Show()
+		else:
+			self.skins[1].Hide()
+			self.skins[0].Show()
+		self.label.SetPackedFontColor(BUTTON_TEXT_ACTIVE if self.selected else BUTTON_TEXT)
+
 
 class SmallBox(uiMobileStyle.Pressable):
 	# kucuk kutu dugme (+ / - / secenek): koyu zemin + ince bronz cizgi, secili / basili halde parlar
@@ -449,7 +508,7 @@ class OptionRow(ui.Window):
 			x = right
 			self.choiceBoxes = []
 			for (text, value) in reversed(self.choices):
-				width = uiMobileStyle.TextWidth(text, FONT_CHOICE) + 20
+				width = uiMobileStyle.TextWidth(text, FONT_CHOICE) + 28
 				x -= width
 				box = SmallBox(width, CHOICE_HEIGHT, text, FONT_CHOICE)
 				box.SetParent(self)
@@ -461,21 +520,21 @@ class OptionRow(ui.Window):
 				x -= CHOICE_GAP
 		elif self.kind == "step":
 			(self.low, self.high, self.step, self.format) = spec[4:8]
-			self.plus = SmallBox(STEP_SIZE, CHOICE_HEIGHT, "+", FONT_SIGN)
+			self.plus = SmallBox(STEP_W, CHOICE_HEIGHT, "+", FONT_SIGN)
 			self.plus.SetParent(self)
-			self.plus.SetPosition(right - STEP_SIZE, top)
+			self.plus.SetPosition(right - STEP_W, top)
 			self.plus.SetEvent(ui.__mem_func__(self.__OnStep), 1)
 			self.plus.Show()
-			self.value = uiMobileStyle.CreateText(self, "", right - STEP_SIZE - VALUE_WIDTH // 2, ROW_HEIGHT // 2 - 9, uiMobileStyle.GOLD_COLOR, FONT_VALUE, "center")
-			self.minus = SmallBox(STEP_SIZE, CHOICE_HEIGHT, "-", FONT_SIGN)
+			self.value = uiMobileStyle.CreateText(self, "", right - STEP_W - VALUE_WIDTH // 2, ROW_HEIGHT // 2 - 9, uiMobileStyle.GOLD_COLOR, FONT_VALUE, "center")
+			self.minus = SmallBox(STEP_W, CHOICE_HEIGHT, "-", FONT_SIGN)
 			self.minus.SetParent(self)
-			self.minus.SetPosition(right - STEP_SIZE * 2 - VALUE_WIDTH, top)
+			self.minus.SetPosition(right - STEP_W * 2 - VALUE_WIDTH, top)
 			self.minus.SetEvent(ui.__mem_func__(self.__OnStep), -1)
 			self.minus.Show()
 			self.widgets += [self.plus, self.minus]
 		elif self.kind == "action":
 			text = spec[4] if len(spec) > 4 else "Aç"
-			actionWidth = uiMobileStyle.TextWidth(text, FONT_CHOICE) + 36
+			actionWidth = uiMobileStyle.TextWidth(text, FONT_CHOICE) + 40
 			self.actionBox = SmallBox(actionWidth, CHOICE_HEIGHT, text, FONT_CHOICE)
 			self.actionBox.SetParent(self)
 			self.actionBox.SetPosition(right - actionWidth, top)
@@ -535,32 +594,9 @@ class OptionRow(ui.Window):
 			self.value.SetText(self.format(current))
 
 
-class TabButton(uiMobileStyle.Pressable):
+class TabButton(SkinButton):
 	def __init__(self, width, text):
-		uiMobileStyle.Pressable.__init__(self, width, TAB_HEIGHT)
-		self.box = uiAkravon.Box()
-		self.box.SetParent(self)
-		self.box.SetSize(width, TAB_HEIGHT)
-		self.box.Show()
-		uiAkravon.SkinBox(self.box, "picker_row_normal", "plate_gold_normal")
-		self.label = uiMobileStyle.CreateText(self, text, width // 2, TAB_HEIGHT // 2 - 10, TAB_COLOR, FONT_TAB, "center")
-		self.selected = False
-
-	def Destroy(self):
-		uiMobileStyle.Pressable.Destroy(self)
-		self.box = None
-		self.label = None
-
-	def SetSelected(self, selected):
-		self.selected = selected
-		self.RefreshVisual()
-
-	def RefreshVisual(self):
-		if not getattr(self, "box", None):
-			return
-		active = self.selected
-		uiAkravon.SetSkinState(self.box, active)
-		self.label.SetPackedFontColor(uiAkravon.DARK_TEXT if active else uiMobileStyle.Color(232, 226, 210))
+		SkinButton.__init__(self, width, TAB_HEIGHT, text, FONT_TAB)
 
 
 class OptionsWindow(uiMobileStyle.Pressable):
@@ -582,6 +618,14 @@ class OptionsWindow(uiMobileStyle.Pressable):
 		self.sideLine = uiMobileStyle.CreateBar(self.panel, uiMobileStyle.Color(96, 74, 42, 255), SIDE_WIDTH, CONTENT_TOP, 1, 10)
 		self.tabs = []
 		self.pages = []
+		# AKRAVON: satirlar ekrana sigacak sekilde (en fazla 54 px) otomatik kisilir
+		global ROW_HEIGHT, CHOICE_HEIGHT, STEP_SIZE
+		mostRows = max([len(factory()) for (name, factory) in TABS] + [1])
+		available = screenHeight - 16 - CONTENT_TOP - CLOSE_GAP - 64 - BOTTOM
+		stepHeight = max(40, min(54, available // mostRows))
+		ROW_HEIGHT = stepHeight - ROW_GAP
+		CHOICE_HEIGHT = min(40, ROW_HEIGHT - 6)
+		STEP_SIZE = CHOICE_HEIGHT
 		maxRows = 0
 		for (index, (name, factory)) in enumerate(TABS):
 			tab = TabButton(tabWidth, name)

@@ -26,7 +26,7 @@ DEFAULT_CAMERA_PITCH = 14.0
 
 JOYSTICK_DEFAULT_SIZE = 200
 ATTACK_DEFAULT_SIZE = 140
-ATTACK_GROWTH = 1.15
+ATTACK_GROWTH = 1.15 * 1.3	# AKRAVON: varsayilan saldiri eskisinin %130u (kullanici ayari); ayarda %100 gorunur
 
 LEFT_MARGIN = 60
 RIGHT_MARGIN = 56
@@ -44,10 +44,28 @@ ROUND_ICON_RATIO = 0.66	# kare ikonun koseleri diskin icinde kalsin (maske orter
 SLOT_RING_GAP = 14
 SLOT_RING_STEP = 8
 # AKRAVON: saldiri butonunun etrafinda tek yay - ilk halkada 6 konum (5 beceri + "+"), disarida 2 konum daha
-RING_ANGLES = (180.0, 202.5, 225.0, 247.5, 270.0, 292.5)	# AKRAVON: 5 slot saldirinin tam solundan tam ustune esit aralikla
-OUTER_RING_ANGLES = (206.0, 256.0)
-PAGE_BUTTON_ANGLE = 150.0	# dondur: saldirinin sol alti; ayar ondan hemen asagida (ayni yay)
-EDIT_BUTTON_ANGLE = 124.0
+# AKRAVON: varsayilan - saldirinin etrafinda tek yay, 5 slot sol alttan (160) sag uste (292) esit aralikli.
+# yaricap slot boyuna oranli: her ekranda (iPhone 8 Plus .. Pro Max, Android) ayni gorunur. P plakasi komsuya degmez.
+# 6-8. konumlar yalniz slot sayisi artirilinca (dis yay).
+RING_ANGLES = (160.0, 193.0, 226.0, 259.0, 292.0)
+OUTER_RING_ANGLES = (176.5, 209.5, 242.5)
+RING_LAYOUT_SPOTS = 5	# saldiri konumu varsayilan 5 slota gore hesaplanir
+INNER_RADIUS_RATIO = 2.16	# yay yaricapi / slot (P plakasi dahil cakismasiz en yakin: 2.12)
+OUTER_RADIUS_RATIO = 3.1
+# AKRAVON: sag taraf varsayilanlari (kullanici yerlestirdi 2026-11-09): merkez = sag sinirdan (SCREEN_EDGE) uzaklik, y = ekran yuksekligi orani
+UTILITY_SCALE = 1.2	# topla / oto av / at eskisinin %120'si (ayarda %100)
+PAGE_SCALE = 1.3	# dondur %130
+EDIT_SCALE = 1.2	# ayar %120
+UTILITY_RIGHT_INSET = 26
+UTILITY_FIRST_CENTER_Y = 0.345	# topla merkezi; oto av / at altinda boy + UTILITY_GAP araliklarla (buyuyunce ust uste binmez)
+RIGHT_SAFE_SHARE = 0.5	# sag sutun / saldiri: centik payinin yarisi (tam pay sagda gereksiz bosluk birakiyordu)
+PAGE_RIGHT_INSET = 84
+PAGE_CENTER_Y = 0.655
+EDIT_RIGHT_INSET = 23
+EDIT_CENTER_Y = 0.809
+RING_DROP_RATIO = 0.12	# alttaki bosluk kalksin: sinir en alttaki slotun P plakasi (ekran kenarindan SCREEN_EDGE)
+PAGE_BUTTON_ANGLE = 140.0	# dondur: saldirinin sol alti; ayar ondan hemen asagida (ic halka)
+EDIT_BUTTON_ANGLE = 115.0
 SKILL_SLOT_MAX = 8
 SKILL_SLOT_DEFAULT = 5
 
@@ -57,13 +75,13 @@ UTILITY_COUNT = 3
 MINIMAP_RESERVED_WIDTH = 160
 MINIMAP_RESERVED_HEIGHT = 214
 
-STATUS_BAR_HEIGHT = 70
+STATUS_BAR_HEIGHT = 78	# panel 70 + orijinal EXP plakasi
 NOTIFICATION_GAP = 12
 NOTIFICATION_HEIGHT = 48
 MENU_BUTTON_SIZE = 52
 MENU_BUTTON_GAP = 8
 MENU_BUTTON_COUNT = 4
-STATUS_BAR_WIDTH = 262
+STATUS_BAR_WIDTH = 228
 AFFECT_GAP = 6
 AFFECT_ROW_HEIGHT = 44	# uiAffectShower MOBILE_IMAGE_STEP: 40 px ikon + 4 aralik
 
@@ -83,10 +101,26 @@ ICON_MASK_TEXTURE = "mobile_ui/akravon/hud/hud_icon_mask.png"
 HD_ICON_RATIO = 0.84	# HD ikon capi / yuva capi (disk kenarina kadar doldurur)
 HD_ICON_TEXTURE_SIZE = 64.0
 COOL_FRAMES = 36
-COOL_FONT = "LatoBd:24"	# AKRAVON: tum arayuzle ayni aile (Lato)
-COOL_FONT_HALF = 13
-COOL_COLOR = grp.GenerateColor(0.98, 0.84, 0.50, 1.0)	# kabartmali altin
-COOL_SHADOW = grp.GenerateColor(0.16, 0.05, 0.02, 0.85)
+PRESS_EFFECT_SECONDS = 0.42	# AKRAVON: beceri slotu basma efekti suresi (ikon cokmesi ilk %50)
+PRESS_RING_TEXTURE = "mobile_ui/akravon/hud/hud_press_ring.png"
+PRESS_DOT_TEXTURE = "mobile_ui/akravon/hud/hud_press_dot.png"
+PRESS_RING_COUNT = 2
+PRESS_DOT_COUNT = 8
+# AKRAVON: geri sayim = oto av geri sayimiyla ayni (Marcellus, krem, cerceveli; yuva capinin %40'i)
+COOL_COLOR = grp.GenerateColor(1.0, 0.922, 0.902, 1.0)
+COOL_SHADOW = grp.GenerateColor(0.0, 0.0, 0.0, 0.0)
+
+
+def CoolFontSize(size):
+	return max(20, int(size * 0.4))
+
+
+def CoolFont(size):
+	return "Marcellus:%d" % CoolFontSize(size)
+
+
+def CoolHalf(size):
+	return int(CoolFontSize(size) * 0.55)
 PAGE_TEXTURE = "mobile_ui/akravon/hud/hud_page_%d.png"
 PAGE_TEXTURE_SIZE = 256.0
 
@@ -101,6 +135,7 @@ PLUS_TEXTURE = "mobile_ui/akravon/hud/hud_plus.png"
 QUICK_PAGE_COUNT = 4
 MOBILE_QUICK_PAGE_COUNT = 2
 PAGE_TRANSITION_SECONDS = 0.20
+PAGE_ROTATE_DEGREES = 40.0	# AKRAVON: sayfa degisirken yay saldirinin etrafinda bu kadar doner (yarida icerik degisir)
 
 supportCache = None
 enabledState = False
@@ -431,11 +466,12 @@ def GetTouchLayout(screenWidth, screenHeight, useOverrides = True):
 	smallBase = int(round(utilityBase * 0.8))	# donder / ayar dugmeleri bir kademe kucuk
 	pageOverride = Override("page")
 	editOverride = Override("edit")
-	pageSize = int(round(smallBase * (pageOverride[2] / 100.0 if pageOverride else 1.0)))
-	editSize = int(round(smallBase * (editOverride[2] / 100.0 if editOverride else 1.0)))
+	pageSize = int(round(smallBase * PAGE_SCALE * (pageOverride[2] / 100.0 if pageOverride else 1.0)))
+	editSize = int(round(smallBase * EDIT_SCALE * (editOverride[2] / 100.0 if editOverride else 1.0)))
 	# AKRAVON: kenarlardan telefonda rahat tutulacak kadar uzak (ekran oraninda)
 	leftMargin = max(int(round(LEFT_MARGIN * factor)), int(screenWidth * 0.10)) + SAFE_LEFT	# joystick biraz saga
-	rightMargin = max(int(round(RIGHT_MARGIN * factor)), int(screenWidth * 0.075)) + SAFE_RIGHT	# saldiri sag kenara yakin; beceriler onun solunda yay seklinde
+	rightMargin = max(int(round(RIGHT_MARGIN * factor)), int(screenWidth * 0.075)) + int(SAFE_RIGHT * RIGHT_SAFE_SHARE)	# saldiri sag kenara yakin; beceriler onun solunda yay seklinde
+	rightEdge = BASE_SCREEN_EDGE + int(SAFE_RIGHT * RIGHT_SAFE_SHARE)	# sag sutun / saldiri icin kenar payi
 	bottomMargin = max(int(round(BOTTOM_MARGIN * factor)), int(screenHeight * 0.11)) + SAFE_BOTTOM	# joystick ve saldiri biraz yukarida
 
 	joystickX = leftMargin
@@ -449,16 +485,18 @@ def GetTouchLayout(screenWidth, screenHeight, useOverrides = True):
 	# varsayilan saldiri merkezi = beceri halkasinin merkezi
 	ringCenterX = screenWidth - rightMargin - ringAttackSize / 2.0
 	ringCenterY = screenHeight - bottomMargin - ringAttackSize / 2.0
-	innerRadius = ringAttackSize / 2.0 + slotSize / 2.0 + SLOT_RING_GAP * ringFactor * skillScale
-	# Reserve space for the attached plaque, including diagonal neighbours.
-	innerRadius = max(innerRadius, slotSize * 1.22 / (2.0 * math.sin(math.radians(11.25))))
-	outerRadius = innerRadius + slotSize + SLOT_RING_STEP * ringFactor * skillScale
-	rightExtent = max([innerRadius * math.cos(math.radians(a)) for a in RING_ANGLES] +
-		[outerRadius * math.cos(math.radians(a)) for a in OUTER_RING_ANGLES]) + slotSize / 2.0
-	bottomExtent = max([innerRadius * math.sin(math.radians(a)) for a in RING_ANGLES] +
-		[outerRadius * math.sin(math.radians(a)) for a in OUTER_RING_ANGLES]) + slotSize * 0.61
-	ringCenterX = min(ringCenterX, screenWidth - SCREEN_EDGE - rightExtent)
-	ringCenterY = min(ringCenterY, screenHeight - SCREEN_EDGE - bottomExtent - int(slotSize * 0.45))
+	# ic halka saldirinin gorunen kenarina yakin (gorsel ~%80), slotlar birbirine ve plakalara degmez
+	innerRadius = max(ringAttackSize * 0.4 + slotSize / 2.0 + 4, slotSize * INNER_RADIUS_RATIO)
+	outerRadius = max(innerRadius + slotSize * 0.9, slotSize * OUTER_RADIUS_RATIO)
+	ringSpots = ([(innerRadius, a) for a in RING_ANGLES] + [(outerRadius, a) for a in OUTER_RING_ANGLES])[:RING_LAYOUT_SPOTS]
+	rightExtent = max([r * math.cos(math.radians(a)) for (r, a) in ringSpots]) + slotSize / 2.0
+	bottomExtent = max([r * math.sin(math.radians(a)) for (r, a) in ringSpots]) + slotSize * 0.61
+	ringCenterX = min(ringCenterX, screenWidth - rightEdge - rightExtent)
+	# AKRAVON: yay + saldiri asagida; en alttaki slotun P plakasi ve saldiri ekrandan tasmaz.
+	# SCREEN_EDGE yan centigi da icerir: dikeyde yalniz taban pay + alt guvenli alan (cift sayilinca yay yukarida kaliyordu)
+	bottomEdge = BASE_SCREEN_EDGE + SAFE_BOTTOM
+	bottomExtent = max(bottomExtent, ringAttackSize * 0.45)
+	ringCenterY = min(ringCenterY + int(screenHeight * RING_DROP_RATIO), screenHeight - bottomEdge - bottomExtent)
 
 	centerX = ringCenterX
 	centerY = ringCenterY
@@ -477,28 +515,30 @@ def GetTouchLayout(screenWidth, screenHeight, useOverrides = True):
 	utilityTop = int(MINIMAP_RESERVED_HEIGHT * min(1.0, factor + 0.1))
 	utilities = []
 	utilitySizes = {}
-	nextY = utilityTop
+	nextCenterY = screenHeight * UTILITY_FIRST_CENTER_Y
 	for name in UTILITY_NAMES:
 		override = Override(name)
-		size = int(round(utilityBase * (override[2] / 100.0 if override else 1.0)))
+		size = int(round(utilityBase * UTILITY_SCALE * (override[2] / 100.0 if override else 1.0)))
 		utilitySizes[name] = size
-		position = (screenWidth - SCREEN_EDGE - size, nextY)
-		nextY += size + UTILITY_GAP
+		position = (int(round(screenWidth - rightEdge - UTILITY_RIGHT_INSET - size / 2.0)), int(round(nextCenterY - size / 2.0)))
+		position = (min(screenWidth - rightEdge - size, position[0]), position[1])
+		nextCenterY += size + UTILITY_GAP
 		if override:
 			position = (int(round(override[0] * screenWidth / 1000.0 - size / 2.0)), int(round(override[1] * screenHeight / 1000.0 - size / 2.0)))
-			position = (max(SCREEN_EDGE, min(screenWidth - SCREEN_EDGE - size, position[0])), max(SCREEN_EDGE, min(screenHeight - SCREEN_EDGE - size, position[1])))
+			position = (max(SCREEN_EDGE, min(screenWidth - rightEdge - size, position[0])), max(SCREEN_EDGE, min(screenHeight - SCREEN_EDGE - size, position[1])))
 		utilities.append(position)
 
-	pagePosition = PlaceOnRing(ringCenterX, ringCenterY, innerRadius, PAGE_BUTTON_ANGLE, pageSize)
-	pagePosition = (max(SCREEN_EDGE, min(screenWidth - SCREEN_EDGE - pageSize, pagePosition[0])), max(SCREEN_EDGE, min(screenHeight - SCREEN_EDGE - pageSize, pagePosition[1])))	# ekran disina tasmasin
+	# AKRAVON: dondur / ayar sag sutunda, topla / oto av / at dugmelerinin altinda ayni hizada (saldiriya binmez)
+	pagePosition = (int(round(screenWidth - rightEdge - PAGE_RIGHT_INSET - pageSize / 2.0)), int(round(screenHeight * PAGE_CENTER_Y - pageSize / 2.0)))
+	pagePosition = (max(SCREEN_EDGE, min(screenWidth - rightEdge - pageSize, pagePosition[0])), max(SCREEN_EDGE, min(screenHeight - SCREEN_EDGE - pageSize, pagePosition[1])))	# ekran disina tasmasin
 	if pageOverride:
 		pagePosition = (int(round(pageOverride[0] * screenWidth / 1000.0 - pageSize / 2.0)), int(round(pageOverride[1] * screenHeight / 1000.0 - pageSize / 2.0)))
-		pagePosition = (max(SCREEN_EDGE, min(screenWidth - SCREEN_EDGE - pageSize, pagePosition[0])), max(SCREEN_EDGE, min(screenHeight - SCREEN_EDGE - pageSize, pagePosition[1])))
-	editPosition = PlaceOnRing(ringCenterX, ringCenterY, innerRadius, EDIT_BUTTON_ANGLE, editSize)
-	editPosition = (max(SCREEN_EDGE, min(screenWidth - SCREEN_EDGE - editSize, editPosition[0])), max(SCREEN_EDGE, min(screenHeight - SCREEN_EDGE - editSize, editPosition[1])))
+		pagePosition = (max(SCREEN_EDGE, min(screenWidth - rightEdge - pageSize, pagePosition[0])), max(SCREEN_EDGE, min(screenHeight - SCREEN_EDGE - pageSize, pagePosition[1])))
+	editPosition = (int(round(screenWidth - rightEdge - EDIT_RIGHT_INSET - editSize / 2.0)), int(round(screenHeight * EDIT_CENTER_Y - editSize / 2.0)))
+	editPosition = (max(SCREEN_EDGE, min(screenWidth - rightEdge - editSize, editPosition[0])), max(SCREEN_EDGE, min(screenHeight - SCREEN_EDGE - editSize, editPosition[1])))
 	if editOverride:
 		editPosition = (int(round(editOverride[0] * screenWidth / 1000.0 - editSize / 2.0)), int(round(editOverride[1] * screenHeight / 1000.0 - editSize / 2.0)))
-		editPosition = (max(SCREEN_EDGE, min(screenWidth - SCREEN_EDGE - editSize, editPosition[0])), max(SCREEN_EDGE, min(screenHeight - SCREEN_EDGE - editSize, editPosition[1])))
+		editPosition = (max(SCREEN_EDGE, min(screenWidth - rightEdge - editSize, editPosition[0])), max(SCREEN_EDGE, min(screenHeight - SCREEN_EDGE - editSize, editPosition[1])))
 
 	affectY = TOP_MARGIN + STATUS_BAR_HEIGHT + AFFECT_GAP
 	notificationY = affectY + AFFECT_ROW_HEIGHT + NOTIFICATION_GAP
@@ -514,6 +554,7 @@ def GetTouchLayout(screenWidth, screenHeight, useOverrides = True):
 		"joystick" : (joystickX, joystickY, joystickSize),
 		"attack" : (attackX, attackY, attackSize),
 		"slots" : slotPositions,
+		"ringCenter" : (ringCenterX, ringCenterY),
 		"slotSize" : slotSize,
 		"slotSizes" : slotSizes,
 		"pageButton" : (pagePosition, pageSize),
@@ -523,8 +564,8 @@ def GetTouchLayout(screenWidth, screenHeight, useOverrides = True):
 		"runLock" : (RUN_LOCK_SIZE, RUN_LOCK_GAP),
 		"statusBar" : (SCREEN_EDGE, TOP_MARGIN),
 		"notificationY" : notificationY,
-		"menuBar" : (screenWidth - SAFE_RIGHT - MINIMAP_RESERVED_WIDTH - WINDOW_GAP - menuWidth, TOP_MARGIN, MENU_BUTTON_SIZE, MENU_BUTTON_GAP),
-		"eventRow" : (screenWidth - SAFE_RIGHT - MINIMAP_RESERVED_WIDTH - WINDOW_GAP, TOP_MARGIN + (MENU_BUTTON_SIZE + MENU_BUTTON_GAP) * 3),
+		"menuBar" : (screenWidth - int(SAFE_RIGHT * RIGHT_SAFE_SHARE) - MINIMAP_RESERVED_WIDTH - WINDOW_GAP - menuWidth - 8, TOP_MARGIN + 18, MENU_BUTTON_SIZE, MENU_BUTTON_GAP),
+		"eventRow" : (screenWidth - int(SAFE_RIGHT * RIGHT_SAFE_SHARE) - MINIMAP_RESERVED_WIDTH - WINDOW_GAP, TOP_MARGIN + (MENU_BUTTON_SIZE + MENU_BUTTON_GAP) * 3),
 		"affectToggle" : (SCREEN_EDGE + STATUS_BAR_WIDTH + WINDOW_GAP, TOP_MARGIN + 4),
 		"affectShower" : (SCREEN_EDGE, affectY),
 		"chatPill" : (pillX, pillY, pillWidth, CHAT_PILL_HEIGHT),
@@ -608,6 +649,10 @@ class SkillSlot(ui.Window):
 			bar.Hide()
 			self.ripples.append((k, bar))
 		self.ring = self.__CreateImage(RING_TEXTURE, size)
+		# AKRAVON: basma efekti - disa yayilan altin parilti (ikonun ustunde)
+		self.pressGlow = self.__CreateImage(GLOW_TEXTURE, size, 128)
+		if self.pressGlow:
+			self.pressGlow.Hide()
 
 		# dolan daire (mobile_ui/akravon/cool/cool_<px>_<kare>.png, skin/build_akravon_skillicons.py)
 		self.coolPx = max(44, min(100, int(round(self.hdSize * GetUIScale() / 4.0)) * 4))
@@ -622,25 +667,25 @@ class SkillSlot(ui.Window):
 		self.cooldownShadow.SetParent(self)
 		self.cooldownShadow.AddFlag("not_pick")
 		try:
-			self.cooldownShadow.SetFontName(COOL_FONT)
+			self.cooldownShadow.SetFontName(CoolFont(size))
 		except Exception:
 			pass
 		self.cooldownShadow.SetPackedFontColor(COOL_SHADOW)
 		self.cooldownShadow.SetHorizontalAlignCenter()
-		self.cooldownShadow.SetPosition(size // 2 + 1, size // 2 - COOL_FONT_HALF + 2)
+		self.cooldownShadow.SetPosition(size // 2 + 1, size // 2 - CoolHalf(size) + 2)
 		self.cooldownShadow.Hide()
 
 		self.cooldownText = ui.TextLine()
 		self.cooldownText.SetParent(self)
 		self.cooldownText.AddFlag("not_pick")
 		try:
-			self.cooldownText.SetFontName(COOL_FONT)
+			self.cooldownText.SetFontName(CoolFont(size))
 		except Exception:
 			pass
 		self.cooldownText.SetOutline()
 		self.cooldownText.SetPackedFontColor(COOL_COLOR)
 		self.cooldownText.SetHorizontalAlignCenter()
-		self.cooldownText.SetPosition(size // 2, size // 2 - COOL_FONT_HALF)
+		self.cooldownText.SetPosition(size // 2, size // 2 - CoolHalf(size))
 		self.cooldownText.Hide()
 		self.cooldownValue = ""
 		self.hasCooldownQuery = hasattr(self.slot, "GetSlotCoolTime")
@@ -679,6 +724,11 @@ class SkillSlot(ui.Window):
 		self.slot = None
 		self.ring = None
 		self.activeGlow = None
+		self.pressGlow = None
+		for image in getattr(self, "pressRings", []) + getattr(self, "pressDots", []):
+			image.Hide()
+		self.pressRings = []
+		self.pressDots = []
 		self.ripples = []
 		self.iconMask = None
 		self.hdIcon = None
@@ -698,16 +748,100 @@ class SkillSlot(ui.Window):
 			return None
 
 	def Flash(self):
-		# AKRAVON: basildi efekti - halka kisa sure parlar
-		self.flashUntil = app.GetTime() + 0.2
+		# AKRAVON: basildi efekti - ikon icine coker ve kararir, halka altin yanar, altin parilti disa yayilip soner
+		now = app.GetTime()
+		self.flashStart = now
+		self.flashUntil = now + PRESS_EFFECT_SECONDS
 		if self.ring:
-			wndMgr.SetDiffuseColor(self.ring.hWnd, 1.0, 0.9, 0.45, 1.0)
+			wndMgr.SetDiffuseColor(self.ring.hWnd, 1.0, 0.85, 0.4, 1.0)
+		self.__ApplyPress(0.0)
+
+	def __PressImage(self, fileName):
+		image = ui.ExpandedImageBox()
+		image.AddFlag("not_pick")
+		image.AddFlag("float")	# ust katman: slotun disina tasan dalga kirpilmaz
+		image.LoadImage(fileName)
+		image.Hide()
+		return image
+
+	def __ApplyRipple(self, progress):
+		if not hasattr(self, "pressRings"):
+			try:
+				self.pressRings = [self.__PressImage(PRESS_RING_TEXTURE) for i in range(PRESS_RING_COUNT)]
+				self.pressDots = [self.__PressImage(PRESS_DOT_TEXTURE) for i in range(PRESS_DOT_COUNT)]
+			except Exception:
+				self.pressRings = []
+				self.pressDots = []
+		size = self.slotSize
+		(gx, gy) = self.GetGlobalPosition()
+		cx = gx + size / 2.0
+		cy = gy + size / 2.0
+		visible = progress < 1.0 and self.IsShow()
+		for (i, ring) in enumerate(self.pressRings):
+			p = (progress - i * 0.18) / 0.82
+			if not visible or p <= 0.0 or p >= 1.0:
+				ring.Hide()
+				continue
+			drawn = size * (0.92 + 1.05 * p)
+			ring.SetScale(drawn / 256.0, drawn / 256.0)
+			ring.SetPosition(int(round(cx - drawn / 2.0)), int(round(cy - drawn / 2.0)))
+			wndMgr.SetDiffuseColor(ring.hWnd, 1.0, 0.9, 0.6, 1.0 - p * 0.85)
+			ring.Show()
+			ring.SetTop()
+		for (k, dot) in enumerate(self.pressDots):
+			if not visible:
+				dot.Hide()
+				continue
+			angle = math.radians(k * (360.0 / max(1, PRESS_DOT_COUNT)) + 20.0 * (k % 2))
+			distance = size * (0.42 + (0.55 + 0.12 * (k % 3)) * progress)
+			dotSize = size * (0.21 - 0.09 * progress) * (0.8 + 0.2 * (k % 2))
+			x = cx + math.cos(angle) * distance - dotSize / 2.0
+			y = cy + math.sin(angle) * distance - dotSize / 2.0 - size * 0.12 * progress	# kabarcik hafif yukari suzulur
+			dot.SetScale(dotSize / 64.0, dotSize / 64.0)
+			dot.SetPosition(int(round(x)), int(round(y)))
+			wndMgr.SetDiffuseColor(dot.hWnd, 1.0, 0.92, 0.7, 1.0 - progress * 0.9)
+			dot.Show()
+			dot.SetTop()
+
+	def __ApplyPress(self, progress):
+		self.__ApplyRipple(progress)
+		size = self.slotSize
+		wave = math.sin(math.pi * min(1.0, progress * 2.0))
+		if self.hdIcon and self.hdIcon.IsShow():
+			factor = 1.0 - 0.17 * wave
+			drawn = self.hdSize * factor
+			self.hdIcon.SetScale(drawn / HD_ICON_TEXTURE_SIZE, drawn / HD_ICON_TEXTURE_SIZE)
+			self.hdIcon.SetPosition(int(round((size - drawn) / 2.0)), int(round((size - drawn) / 2.0)))
+			shade = 1.0 - 0.3 * wave
+			wndMgr.SetDiffuseColor(self.hdIcon.hWnd, shade, shade, shade, 1.0)
+		glow = getattr(self, "pressGlow", None)
+		if glow:
+			if progress >= 1.0:
+				glow.Hide()
+			else:
+				glowSize = size * (0.7 + 0.3 * min(1.0, progress * 2.0))
+				glow.SetScale(glowSize / 128.0, glowSize / 128.0)
+				glow.SetPosition(int(round((size - glowSize) / 2.0)), int(round((size - glowSize) / 2.0)))
+				wndMgr.SetDiffuseColor(glow.hWnd, 1.0, 0.86, 0.45, max(0.0, 1.0 - progress * 2.0))
+				glow.Show()
+				glow.SetTop()
 
 	def UpdateFlash(self):
-		if getattr(self, "flashUntil", 0.0) and app.GetTime() >= self.flashUntil:
+		until = getattr(self, "flashUntil", 0.0)
+		if not until:
+			return
+		now = app.GetTime()
+		if now >= until:
 			self.flashUntil = 0.0
+			self.__ApplyPress(1.0)
+			if self.hdIcon:
+				self.hdIcon.SetScale(self.hdSize / HD_ICON_TEXTURE_SIZE, self.hdSize / HD_ICON_TEXTURE_SIZE)
+				self.hdIcon.SetPosition((self.slotSize - self.hdSize) // 2, (self.slotSize - self.hdSize) // 2)
+				wndMgr.SetDiffuseColor(self.hdIcon.hWnd, 1.0, 1.0, 1.0, 1.0)
 			if self.ring:
 				wndMgr.SetDiffuseColor(self.ring.hWnd, 1.0, 1.0, 1.0, 1.0)
+			return
+		self.__ApplyPress((now - self.flashStart) / PRESS_EFFECT_SECONDS)
 
 	def __Use(self):
 		if self.pageTransition is not None:
@@ -1018,7 +1152,28 @@ class QuickPageButton(ui.Window):
 		self.transitionStart = app.GetTime()
 		self.transitionSwitched = False
 		self.targetPage = (player.GetQuickPage() + 1) % MOBILE_QUICK_PAGE_COUNT
+		self.basePositions = [slot.GetLocalPosition() for slot in self.arc.slots]
 		self.OnUpdate()
+
+	def __RotateArc(self, degrees):
+		# gorunen slotlar saldiri merkezinin etrafinda birlikte doner (kullanici tasidiysa kendi konumlari etrafinda)
+		center = getattr(self.arc, "ringCenter", None)
+		positions = getattr(self, "basePositions", None)
+		if not center or not positions:
+			return
+		(cx, cy) = center
+		radians = math.radians(degrees)
+		(cosA, sinA) = (math.cos(radians), math.sin(radians))
+		for (index, slot) in enumerate(self.arc.slots):
+			if index >= len(positions):
+				break
+			size = slot.GetWidth()
+			(x, y) = positions[index]
+			dx = x + size / 2.0 - cx
+			dy = y + size / 2.0 - cy
+			nx = cx + dx * cosA - dy * sinA - size / 2.0
+			ny = cy + dx * sinA + dy * cosA - size / 2.0
+			slot.SetPosition(int(round(nx)), int(round(ny)))
 
 	def OnUpdate(self):
 		if self.transitionStart is None:
@@ -1032,16 +1187,22 @@ class QuickPageButton(ui.Window):
 		if progress >= 1.0:
 			self.CancelTransition()
 			return
-		angle = progress * 180.0 if progress < 0.5 else (progress - 1.0) * 180.0
-		alpha = abs(1.0 - 2.0 * progress)
-		for slot in self.arc.slots:
-			slot.SetPageTransition(angle, alpha)
+		# ilk yari: yay saat yonunde doner ve gider; yarida yeni sayfa; ikinci yari: diger yandan gelip yerine oturur
+		if progress < 0.5:
+			phase = progress / 0.5
+			degrees = PAGE_ROTATE_DEGREES * phase * phase
+		else:
+			phase = (progress - 0.5) / 0.5
+			degrees = -PAGE_ROTATE_DEGREES * (1.0 - phase) * (1.0 - phase)
+		self.__RotateArc(degrees)
 
 	def CancelTransition(self):
 		if self.transitionStart is None:
 			return
 		self.transitionStart = None
 		self.face.SetRotation(0)
+		self.__RotateArc(0.0)
+		self.basePositions = None
 		for slot in self.arc.slots:
 			slot.EndPageTransition()
 		self.Refresh()
@@ -1113,6 +1274,7 @@ class SkillArc(object):
 		self.shown = False
 		self.positions = layout["slots"]
 		self.defaultPositions = list(self.positions)
+		self.ringCenter = layout.get("ringCenter")
 		self.slotSize = layout["slotSize"]
 		slotSize = layout["slotSize"]
 		weakTaskBar = proxy(taskBar)

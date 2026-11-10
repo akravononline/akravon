@@ -276,7 +276,13 @@ def ChoiceFlow(dialog, keep):
 		dialog.akrCancelLabel.SetText("GERİ")
 		Resize(buttonY + 44 + 24, "sb_pw_board_%d.png" % (count + 0))
 		try:
+			dialog.passwordValue.Show()
+			dialog.passwordValue.SetTop()
+			dialog.passwordValue.KillFocus()	# odak zaten varsa klavye yeniden acilmaz: once birak, sonra al
 			dialog.passwordValue.SetFocus()
+			import app
+			if hasattr(app, "ShowKeyboard"):
+				app.ShowKeyboard(1)
 		except Exception:
 			pass
 

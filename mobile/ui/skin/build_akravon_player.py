@@ -19,9 +19,9 @@ FILL_X = 62	# dolgularin gorunen baslangici (halkanin hemen sagi)
 
 # x0: yuvanin sol ucu (halkanin arkasinda), x1: ust sag kose, y/h: yuva, slant: sag ucun egimi
 BARS = {
-	'hp': {'x0': 44, 'x1': 252, 'y': 23, 'h': 15, 'slant': 9, 'top': (212, 62, 62), 'bottom': (122, 24, 34)},
-	'sp': {'x0': 44, 'x1': 234, 'y': 41, 'h': 11, 'slant': 7, 'top': (76, 124, 222), 'bottom': (30, 58, 146)},
-	'exp': {'x0': 44, 'x1': 216, 'y': 55, 'h': 8, 'slant': 5, 'top': (244, 184, 72), 'bottom': (196, 122, 30)},
+	'hp': {'x0': 44, 'x1': 252, 'y': 22, 'h': 12, 'slant': 8, 'top': (212, 62, 62), 'bottom': (122, 24, 34)},
+	'sp': {'x0': 44, 'x1': 252, 'y': 36, 'h': 12, 'slant': 8, 'top': (76, 124, 222), 'bottom': (30, 58, 146)},
+	'st': {'x0': 44, 'x1': 252, 'y': 50, 'h': 12, 'slant': 8, 'top': (244, 184, 72), 'bottom': (196, 122, 30)},
 }
 BRONZE_LIGHT = (178, 142, 88)
 BRONZE_MID = (126, 96, 54)

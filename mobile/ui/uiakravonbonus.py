@@ -5,6 +5,7 @@ import ui
 import player
 import grp
 import wndMgr
+import uiMobileStyle
 
 IMG = "d:/ymir work/ui/akravon_legacy/"
 C_HEAD = grp.GenerateColor(0.89, 0.76, 0.50, 1.0)
@@ -16,7 +17,7 @@ TAB_W, TAB_H, TAB_GAP = 66, 36, 4	# sagdaki kapat (X) dugmesine degmesin
 ROW_H, ROW_GAP = 30, 2	# AKRAVON: telefonda okunakli; sigmayan satirlar parmakla kaydirilir
 NAME_MAX = 250
 FONT_ROW = "Lato:19"
-FONT_TAB = "Lato:17"
+FONT_TAB = "Marcellus:17"
 
 
 def _BonusName(applyType):
@@ -66,6 +67,31 @@ def _Image(parent, x, y, name):
 	return img
 
 
+class CategoryTab(uiMobileStyle.Pressable):
+	# karakter penceresi sekme gorseli, dugme genisligine gore uzatilir; secili = altin
+	def __init__(self, width, height, text):
+		uiMobileStyle.Pressable.__init__(self, width, height)
+		self.images = []
+		for name in ("cw_tab_normal.png", "cw_tab_down.png"):
+			image = ui.ExpandedImageBox()
+			image.SetParent(self)
+			image.AddFlag("not_pick")
+			image.LoadImage(IMG + name)
+			image.SetScale(width / 66.0, height / 34.0)
+			self.images.append(image)
+		self.images[0].Show()
+		self.label = _Text(self, width // 2, (height - 17) // 2 - 1, text, FONT_TAB, C_TEXT, "center")
+
+	def SetSelected(self, selected):
+		if selected:
+			self.images[0].Hide()
+			self.images[1].Show()
+		else:
+			self.images[1].Hide()
+			self.images[0].Show()
+		self.label.SetPackedFontColor(C_DARK if selected else C_TEXT)
+
+
 class BonusPanel(ui.Window):
 	def __init__(self, width, height):
 		ui.Window.__init__(self)
@@ -86,18 +112,17 @@ class BonusPanel(ui.Window):
 
 
 		# kategori plakalari (PvM / PvP / Saldiri / Savunma)
-		names = ["PvM", "PvP", "Sald\xfdr\xfd", "Savunma"]
+		names = ["PVM", "PVP", "SALDIRI", "SAVUNMA"]
+		count = max(1, len(self.data))
+		gap = 8
+		tabWidth = (width - gap * (count - 1)) // count
 		for i in xrange(len(self.data)):
-			btn = ui.Button()
+			btn = CategoryTab(tabWidth, TAB_H, names[i] if i < len(names) else str(i + 1))
 			btn.SetParent(self)
-			btn.SetUpVisual(IMG + "cw_tab_normal.png")
-			btn.SetOverVisual(IMG + "cw_tab_over.png")
-			btn.SetDownVisual(IMG + "cw_tab_down.png")
-			btn.SetPosition(i * (TAB_W + TAB_GAP), 0)
+			btn.SetPosition(i * (tabWidth + gap), 0)
 			btn.SetEvent(ui.__mem_func__(self.SelectCategory), i)
 			btn.Show()
-			label = _Text(btn, TAB_W // 2, 7, names[i] if i < len(names) else str(i + 1), FONT_TAB, C_TEXT, "center")
-			self.tabs.append((btn, label))
+			self.tabs.append((btn, btn.label))
 
 		# tek sutun satir: solda bonus adi, sagda deger (tam genislik, tasma yok)
 		self.top = TAB_H + 10
@@ -150,12 +175,7 @@ class BonusPanel(ui.Window):
 		self.category = index
 		self.scroll = 0
 		for (i, (btn, label)) in enumerate(self.tabs):
-			if i == index:
-				btn.SetUpVisual(IMG + "cw_tab_down.png")
-				label.SetPackedFontColor(C_DARK)
-			else:
-				btn.SetUpVisual(IMG + "cw_tab_normal.png")
-				label.SetPackedFontColor(C_TEXT)
+			btn.SetSelected(i == index)
 		self.Refresh()
 
 	def Refresh(self):
@@ -175,13 +195,20 @@ class BonusPanel(ui.Window):
 				card.Hide()
 				continue
 			(applyType, pointType) = bonuses[index]
-			text = _BonusName(applyType)
-			name.SetText(text)
-			while name.GetTextSize()[0] > NAME_MAX and len(text) > 4:
-				text = text[:-1]
-				name.SetText(text + "...")
+			text = _BonusName(applyType).replace("\n", " ").strip()
 			try:
 				value.SetText(str(player.GetStatus(pointType)))
 			except Exception:
 				value.SetText("0")
+			limit = self.width - 24 - value.GetTextSize()[0] - 12
+			# kesmek yerine once yazi tipi kuculur (19 -> 17 -> 15 -> 13), en son care kisaltma
+			for fontSize in (19, 17, 15, 13):
+				name.SetFontName("Lato:%d" % fontSize)
+				name.SetText(text)
+				if name.GetTextSize()[0] <= limit:
+					break
+			else:
+				while name.GetTextSize()[0] > limit and len(text) > 4:
+					text = text[:-1]
+					name.SetText(text + "..")
 			card.Show()

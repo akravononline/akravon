@@ -17,3 +17,11 @@ __pycache__/
 mobile/ui/skin/yedek_*/
 mobile/ui/skin/ikonlar/
 mobile/ui/skin/src/
+# ozel: parola / yerel ag adresi iceren betikler, gorseller ve sanat kaynaklari (GitHub'a KOYMA)
+mobile/gorseller/
+mobile/araclar/yama_betikleri/
+mobile/araclar/fwd_lan.py
+mobile/ui/skin/ref_menu/
+*.panel_yedek*
+*.tablo_v1
+mobile/ui/orijinalden_degisen/

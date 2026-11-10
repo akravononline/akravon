@@ -33,25 +33,87 @@ AFFECT_DESKTOP_LABEL_COLOR = 0xFFFFFFFF
 MINIMAP_HIDDEN_BUTTONS = ()
 # AKRAVON: kare harita - masaustu halka dugmeleri gizlenir; yerine ortak kitten kucuk yuvarlak zoom dugmeleri (haritanin
 # sag alt kosesi) ve haritanin altinda kisayol sirasi. Hepsi pencerenin icinde (ebeveyn disi secilmez).
-MINIMAP_DESKTOP_BUTTONS = ("AtlasShowButton", "MiniMapHideButton", "ScaleUpButton", "ScaleDownButton", "MiniMapShowButton")
+MINIMAP_DESKTOP_BUTTONS = ("btnMucadele", "AtlasShowButton", "MiniMapHideButton", "ScaleUpButton", "ScaleDownButton", "MiniMapShowButton")
 MINIMAP_FRAME_ASSET = "map_frame"
 MINIMAP_BACKGROUND_NAME = "OpenWindowBGI"
 MINIMAP_SIZE = (136, 137)
 MINIMAP_ZOOM_SIZE = 30	# AKRAVON: mobil dokunma (24 kucuktu)
 # (kit adi, mini harita metodu, x, y)
-MINIMAP_ZOOM_BUTTONS = (("zoomout", "ScaleDown", 60, 94), ("zoomin", "ScaleUp", 94, 94))
+MINIMAP_ZOOM_BUTTONS = (("zoomout", "ScaleDown", 3, 104), ("zoomin", "ScaleUp", 103, 104))	# kare cercevenin sol alt / sag alt kosesi
 # (mini harita ozniteligi, kit adi): sol -> sag
 MENU_TILE_COLUMNS = 4
 
 
-class MenuTile(ui.Window):
-	def __init__(self, kitName, size):
+MENU_BASE_TILES = 3	# ok tablosundaki sabit karolar (mesaj, ayar, oto av); ustteki dortlu tablonun ilk satiri
+MENU_SHORTCUT_LABELS = {"ranking" : "Sıralama", "biolog" : "Biyolog", "market" : "Pazar", "swords" : "Mücadele"}
+MENU_TILE_LABEL_COLOR = uiMobileStyle.Color(250, 228, 176)
+MENU_TILE_LABEL_HEIGHT = 24
+MENU_TILE_CELL_WIDTH = 78
+MENU_ROW_LABELS = ("Envanter", "Market", "Karakter", "Kapat")
+MENU_BOARD_ENABLED = False	# tablo tahtasi (kapali: yuvarlak ikon + alt metin)
+MENU_FLAT_ICONS = False	# tablo acikken yuvarlaksiz ikonlar
+MENU_BOARD_PADDING = 16
+MENU_BOARD_PATH = "mobile_ui/akravon/hud/menu_board_%s.png"
+MENU_BOARD_CORNER = 12
+
+
+class MenuBoard(ui.Window):
+	# AKRAVON: envanter/ekipman penceresindeki tahta ile ayni cizim (9 parca, kose 12 px)
+	def __init__(self):
 		ui.Window.__init__(self)
-		self.SetSize(size, size)
-		self.button = uiMobileChrome.HudButton(size, kitName)
+		self.pieces = {}
+		for key in ("c", "t", "b", "l", "r", "tl", "tr", "bl", "br"):
+			image = ui.ExpandedImageBox()
+			image.SetParent(self)
+			image.AddFlag("not_pick")
+			image.LoadImage(MENU_BOARD_PATH % key)
+			image.Show()
+			self.pieces[key] = image
+		self.boardSizes = {}
+		for (key, image) in self.pieces.items():
+			self.boardSizes[key] = (max(1, image.GetWidth()), max(1, image.GetHeight()))
+
+	def __del__(self):
+		ui.Window.__del__(self)
+
+	def Show(self):
+		if MENU_BOARD_ENABLED:
+			ui.Window.Show(self)
+
+	def SetSize(self, width, height):
+		ui.Window.SetSize(self, width, height)
+		corner = MENU_BOARD_CORNER
+		middleWidth = max(1, width - corner * 2)
+		middleHeight = max(1, height - corner * 2)
+		self.__Place("c", corner, corner, middleWidth, middleHeight)
+		self.__Place("t", corner, 0, middleWidth, corner)
+		self.__Place("b", corner, height - corner, middleWidth, corner)
+		self.__Place("l", 0, corner, corner, middleHeight)
+		self.__Place("r", width - corner, corner, corner, middleHeight)
+		self.__Place("tl", 0, 0, corner, corner)
+		self.__Place("tr", width - corner, 0, corner, corner)
+		self.__Place("bl", 0, height - corner, corner, corner)
+		self.__Place("br", width - corner, height - corner, corner, corner)
+
+	def __Place(self, key, x, y, width, height):
+		image = self.pieces[key]
+		(assetWidth, assetHeight) = self.boardSizes[key]
+		image.SetPosition(x, y)
+		image.SetScale(float(width) / assetWidth, float(height) / assetHeight)
+
+
+class MenuTile(ui.Window):
+	# AKRAVON: acilir tablodaki hucre - yuvarlak ikon + altinda isim
+	def __init__(self, kitName, size, label = ""):
+		ui.Window.__init__(self)
+		self.SetSize(MENU_TILE_CELL_WIDTH, size + MENU_TILE_LABEL_HEIGHT)
+		self.button = uiMobileChrome.HudButton(size, kitName + ("_flat" if MENU_FLAT_ICONS else ""))
 		self.button.SetParent(self)
-		self.button.SetPosition(0, 0)
+		self.button.SetPosition((MENU_TILE_CELL_WIDTH - size) // 2, 0)
 		self.button.Show()
+		self.label = None
+		if label:
+			self.label = uiMobileStyle.CreateText(self, label, MENU_TILE_CELL_WIDTH // 2, size + 3, MENU_TILE_LABEL_COLOR, "LatoBd:15", "center", True)
 
 	def SetEvent(self, event):
 		self.button.SetEvent(event)
@@ -59,10 +121,37 @@ class MenuTile(ui.Window):
 	def Destroy(self):
 		self.button.Destroy()
 		self.button = None
+		self.label = None
 
 
-MINIMAP_SHORTCUTS = (("btnRank", "ranking"), ("btnBiyolog", "biolog"), ("btnUM", "market"), ("btnMucadele", "swords"))
-MINIMAP_MARGIN = (14, 12)
+marketPopup = [None]
+
+
+def InMarketZone():
+	# pazar yalniz Carsi haritasinda (metin2_map_privateshop) kurulur / acilir
+	try:
+		import background
+		return "privateshop" in str(background.GetCurrentMapName()).lower()
+	except Exception:
+		return True
+
+
+def MarketGuard(original):
+	def Run():
+		if InMarketZone():
+			original()
+			return
+		import uiCommon
+		if marketPopup[0] is None:
+			marketPopup[0] = uiCommon.PopupDialog()
+		marketPopup[0].SetText("Pazar yaln\xfdzca \xc7ar\xfd\xfe'ta kurulabilir. \xc7ar\xfd\xfe G\xf6revlisi ile gidebilirsin.")
+		marketPopup[0].accceptButton.SetText("Tamam")
+		marketPopup[0].Open()
+	return Run
+
+
+MINIMAP_SHORTCUTS = (("btnRank", "ranking"), ("btnBiyolog", "biolog"), ("btnUM", "market"))
+MINIMAP_MARGIN = (14, 24)	# ust kenardan uzak; ustteki dugme satiriyla ayni hizada
 # Canli Yayin afisi (publisher_live.png 175x150, afis y 35-110): mobilde olcekli, masaustu X yerine yuvarlak X
 PUBLISHER_BUTTON_NAME = "publisherShowButton"
 PUBLISHER_CLOSE_NAME = "publisherCloseButton"
@@ -126,6 +215,9 @@ class MobileHudController(object):
 		self.utilities = uiMobileChrome.ButtonRow(uiMobileChrome.UTILITY_BUTTONS, utilitySize, layout.get("utilitySizes"))
 		self.utilities.SetEvent("pickup", uiMobileChrome.RunPickup)
 		self.utilities.SetEvent("autohunt", self.__ToggleAutoHunt)	# AKRAVON: yeni mobil oto av paneli
+		autoHuntButton = self.utilities.GetButton("autohunt")
+		if autoHuntButton and hasattr(autoHuntButton, "EnablePressRipple"):
+			autoHuntButton.EnablePressRipple((0.45, 1.0, 0.45))	# beceri slotlariyla ayni basma efekti, yesil
 		self.utilities.SetEvent("mount", uiMobileChrome.RunMount)
 		self.utilities.PlaceVertical(utilityPositions)
 		self.utilityOrigin = utilityPositions[0]
@@ -141,22 +233,32 @@ class MobileHudController(object):
 		uiMobileOptions.ApplyStartupQuality()	# AKRAVON: cihaza gore otomatik grafik kalitesi
 		self.menuExtra = []
 		self.menuGeometry = (menuX, menuY, menuSize, menuGap, len(uiMobileChrome.MENU_BUTTONS))
+		self.menuBoard = MenuBoard()
+		self.menuBoard.AddFlag("not_pick")
+		self.menuBoard.Hide()
 		self.menuBar = uiMobileChrome.ButtonRow(uiMobileChrome.MENU_BUTTONS, menuSize)
 		self.menuBar.SetEvent("inventory", self.__GetInterfaceEvent("ToggleInventoryWindow"))
 		self.menuBar.SetEvent("itemshop", self.__GetInterfaceEvent("ItemShopSendOpen"))
 		self.menuBar.SetEvent("character", self.__GetInterfaceEvent("ToggleCharacterWindowStatusPage"))
 		self.menuBar.SetEvent("more", self.__ToggleMenuMore)
 		self.menuBar.PlaceHorizontal(menuX, menuY, menuSize, menuGap)
+		self.guildTile = None
+		self.guildShown = False
 
 		import uiAkravon
 		self.menuMore = ui.Window("UI")
 		self.menuMore.AddFlag("float")
 		self.menuMore.AddFlag("not_pick")
 		self.menuMore.Hide()
+		self.menuBoard.Hide()
+		self.menuRowLabels = []
+		for (index, text) in enumerate(MENU_ROW_LABELS):
+			self.menuRowLabels.append(uiMobileStyle.CreateText(self.menuMore, text, index * (menuSize + menuGap) + menuSize // 2, menuSize + 3, MENU_TILE_LABEL_COLOR, "LatoBd:15", "center", True))
 		self.menuTiles = []
-		self.__AddMenuTile("messenger", self.__GetInterfaceEvent("ToggleMessenger"))
-		self.__AddMenuTile("system", self.__ToggleSystemMenu)
-		self.__AddMenuTile("autohunt", self.__OpenAutoHuntSettings)
+		# AKRAVON: ok'a basinca acilan tablo - ustteki dortlu dahil tum butonlar isimleriyle
+		self.__AddMenuTile("messenger", self.__GetInterfaceEvent("ToggleMessenger"), "Mesajlar")
+		self.__AddMenuTile("system", self.__ToggleSystemMenu, "Ayarlar")
+		self.__AddMenuTile("autohunt", self.__OpenAutoHuntSettings, "Oto Av")
 
 		(pillX, pillY, pillWidth, pillHeight) = layout["chatPill"]
 		self.chatToggle = uiMobileChrome.ChatToggle(pillWidth, pillHeight)
@@ -180,6 +282,8 @@ class MobileHudController(object):
 			affectShower.SetPosition(*layout["affectShower"])
 
 		self.__ArrangeFloatingWindows()
+		import uiAkravonQuest
+		uiAkravonQuest.Install(interface)	# AKRAVON: soldaki gorev mektuplari yerine gorev dugmesi + tablo
 
 	def __HookTaskBar(self, taskBar):
 		if not taskBar:
@@ -254,8 +358,8 @@ class MobileHudController(object):
 		except (ReferenceError, AttributeError):
 			pass
 
-	def __AddMenuTile(self, kitName, event):
-		tile = MenuTile(kitName, self.menuGeometry[2])
+	def __AddMenuTile(self, kitName, event, label = ""):
+		tile = MenuTile(kitName, self.menuGeometry[2], label)
 		tile.SetParent(self.menuMore)
 		if event:
 			tile.SetEvent(event)
@@ -267,24 +371,51 @@ class MobileHudController(object):
 	def __LayoutMenuTiles(self):
 		(menuX, menuY, menuSize, menuGap, count) = self.menuGeometry
 		cols = MENU_TILE_COLUMNS
-		rows = max(1, (len(self.menuTiles) + cols - 1) // cols)
 		step = menuSize + menuGap
-		w = cols * step - menuGap
-		h = rows * step - menuGap
-		for (i, tile) in enumerate(self.menuTiles):
-			tile.SetPosition((i % cols) * step, (i // cols) * step)
-		self.menuMore.SetSize(w, h)
-		self.menuMore.SetPosition(menuX, menuY + step)
+		rowHeight = menuSize + MENU_TILE_LABEL_HEIGHT + 4
+		shownTiles = [tile for tile in self.menuTiles if tile is not self.guildTile or self.guildShown]
+		for tile in self.menuTiles:
+			if tile is self.guildTile and not self.guildShown:
+				tile.Hide()
+		extraRows = (len(shownTiles) + cols - 1) // cols
+		barWidth = cols * step - menuGap
+		pad = MENU_BOARD_PADDING
+		for (i, tile) in enumerate(shownTiles):
+			if tile is self.guildTile:
+				tile.Show()
+			tile.SetPosition((i % cols) * step + menuSize // 2 - MENU_TILE_CELL_WIDTH // 2, (1 + i // cols) * rowHeight)
+		height = (1 + extraRows) * rowHeight
+		self.menuMore.SetSize(barWidth, height)
+		self.menuMore.SetPosition(menuX, menuY)
+		self.menuBoard.SetPosition(menuX - pad, menuY - pad)
+		self.menuBoard.SetSize(barWidth + pad * 2, height + pad * 2 - 4)
+
+	def __OpenGuildWindow(self):
+		# AKRAVON: lonca penceresi ekranin ortasinda acilir (eskiden sol ust kosede kaliyordu)
+		toggle = getattr(self.interface, "ToggleGuildWindow", None)
+		if toggle:
+			toggle()
+		window = getattr(self.interface, "wndGuild", None)
+		if window and window.IsShow():
+			window.SetPosition(max(0, (wndMgr.GetScreenWidth() - window.GetWidth()) // 2), max(0, (wndMgr.GetScreenHeight() - window.GetHeight()) // 2))
+			window.SetTop()
 
 	def __ToggleMenuMore(self):
 		self.menuMoreOpen = not self.menuMoreOpen
 		button = self.menuBar.GetButton("more")
 		if button:
-			button.SetIcon("less" if self.menuMoreOpen else "more")
+			button.SetIcon(("less_flat" if MENU_FLAT_ICONS else "less") if self.menuMoreOpen else "more")
+		for name in ("inventory", "itemshop", "character"):
+			flatButton = self.menuBar.GetButton(name)
+			if flatButton:
+				flatButton.SetIcon(name + "_flat" if (self.menuMoreOpen and MENU_FLAT_ICONS) else name)
 		if self.menuMoreOpen and self.state != STATE_HIDDEN:
 			self.menuMore.Show()
+			self.menuBoard.Show()
+			self.menuMore.SetTop()	# tablo beceri slotlarinin ustunde
 		else:
 			self.menuMore.Hide()
+			self.menuBoard.Hide()
 		for extra in self.menuExtra:
 			if self.menuMoreOpen and self.state != STATE_HIDDEN:
 				extra.Show()
@@ -313,16 +444,20 @@ class MobileHudController(object):
 		self.joystick.Destroy()
 		import uiMobileSystem
 		uiMobileSystem.Destroy()
-		import uiMobileOptions
-		uiMobileOptions.Destroy()
+		if not restoreDesktop:	# AKRAVON: joystick / saldiri boyutu degisince HUD yeniden kurulur; ayar penceresi acik kalsin
+			import uiMobileOptions
+			uiMobileOptions.Destroy()
 		import uiAkravonAutoHunt
 		uiAkravonAutoHunt.Destroy()
+		import uiAkravonQuest
+		uiAkravonQuest.Destroy()
 		self.utilities.Destroy()
 		self.menuBar.Destroy()
 		for tile in self.menuTiles:
 			tile.Destroy()
 		self.menuTiles = []
 		self.menuMore.Hide()
+		self.menuBoard.Hide()
 		self.menuMore = None
 		self.statusBar.Destroy()
 		self.chatController.Destroy()
@@ -522,7 +657,7 @@ class MobileHudController(object):
 
 		# kenarlara yapismasin: sag ve ustten bosluk
 		self.minimapOrigin = (miniMap, tuple(miniMap.GetLocalPosition()))
-		miniMap.SetPosition(wndMgr.GetScreenWidth() - width - MINIMAP_MARGIN[0] - uiMobileHud.SAFE_RIGHT, MINIMAP_MARGIN[1] + uiMobileHud.SAFE_TOP)	# AKRAVON: guvenli alan
+		miniMap.SetPosition(wndMgr.GetScreenWidth() - width - MINIMAP_MARGIN[0] - int(uiMobileHud.SAFE_RIGHT * uiMobileHud.RIGHT_SAFE_SHARE), MINIMAP_MARGIN[1] + uiMobileHud.SAFE_TOP)	# AKRAVON: guvenli alan
 
 		for (kitName, methodName, x, y) in MINIMAP_ZOOM_BUTTONS:
 			method = getattr(miniMap, methodName, None)
@@ -537,7 +672,7 @@ class MobileHudController(object):
 
 		# haritayi gizle / goster
 		closeWindow = getattr(miniMap, "CloseWindow", None)
-		for (parent, kitName, methodName, x, y) in ((openWindow, "less", "HideMiniMap", 4, 94), (closeWindow, "more", "ShowMiniMap", width - MINIMAP_ZOOM_SIZE - 6, 6)):
+		for (parent, kitName, methodName, x, y) in ((openWindow, "close", "HideMiniMap", 103, 3), (closeWindow, "more", "ShowMiniMap", width - MINIMAP_ZOOM_SIZE - 6, 6)):
 			method = getattr(miniMap, methodName, None)
 			if not parent or not method:
 				continue
@@ -552,17 +687,24 @@ class MobileHudController(object):
 		(menuX, menuY, menuSize, menuGap, count) = self.menuGeometry
 		shortcuts = [(attribute, kitName) for (attribute, kitName) in MINIMAP_SHORTCUTS if getattr(miniMap, attribute, None)]
 		for (attribute, kitName) in shortcuts:
-			self.__AddMenuTile(kitName, ui.__mem_func__(getattr(miniMap, attribute).CallEvent))
+			callback = ui.__mem_func__(getattr(miniMap, attribute).CallEvent)
+			if kitName == "market":
+				callback = MarketGuard(callback)
+			self.__AddMenuTile(kitName, callback, MENU_SHORTCUT_LABELS.get(kitName, ""))
+		# AKRAVON: Lonca - Pazar'in yaninda; yalniz bir loncadaysan gorunur
+		self.guildTile = self.__AddMenuTile("guild", self.__OpenGuildWindow, "Lonca")
+		self.__LayoutMenuTiles()
 
 	def __RestoreMinimapButtons(self):
 		for button in self.minimapButtons:
 			button.Hide()
 			button.Destroy()
 		self.minimapButtons = []
-		for tile in self.menuTiles[3:]:
+		for tile in self.menuTiles[MENU_BASE_TILES:]:
 			tile.Hide()
 			tile.Destroy()
-		self.menuTiles = self.menuTiles[:3]
+		self.menuTiles = self.menuTiles[:MENU_BASE_TILES]
+		self.guildTile = None
 		self.__LayoutMenuTiles()
 		frame = getattr(self, "minimapFrame", None)
 		if frame:
@@ -667,10 +809,15 @@ class MobileHudController(object):
 			self.statusBar.Hide()
 			self.menuBar.Hide()
 			self.menuMore.Hide()
+			self.menuBoard.Hide()
 			for extra in self.menuExtra:
 				extra.Hide()
 			self.chatController.Hide()
+			import uiAkravonQuest
+			uiAkravonQuest.SetVisible(False)
 		else:
+			import uiAkravonQuest
+			uiAkravonQuest.SetVisible(True)
 			self.joystick.Show()
 			self.statusBar.Show()
 			self.menuBar.Show()
@@ -681,8 +828,10 @@ class MobileHudController(object):
 					extra.Hide()
 			if self.menuMoreOpen:
 				self.menuMore.Show()
+				self.menuBoard.Show()
 			else:
 				self.menuMore.Hide()
+				self.menuBoard.Hide()
 			self.chatController.Show()
 
 		if state == STATE_FULL:
@@ -715,6 +864,14 @@ class MobileHudController(object):
 				self.skillArc.Hide()
 		if raiseArc:
 			self.skillArc.SetTop()
+			# AKRAVON: acik pencereler beceri yuvalarinin ustunde kalsin (yuvalar ust katmana cikinca pencerelerin onune geciyordu)
+			for name in ("wndInventory", "wndCharacter", "wndSafebox", "wndMall", "wndGuild", "wndMessenger", "wndDragonSoul"):
+				try:
+					window = getattr(self.interface, name, None)
+					if window and window.IsShow():
+						window.SetTop()
+				except Exception:
+					pass
 
 	def __HideTaskBar(self):
 		taskBar = self.interface.wndTaskBar
@@ -814,6 +971,66 @@ class MobileHudController(object):
 		self.skillArc.SavePositions()
 
 	def Update(self):
+		import uiAkravonQuest
+		uiAkravonQuest.Update()
+		# AKRAVON: lonca dugmesi - loncaya girince / ayrilinca kendiliginden belirir / kaybolur
+		try:
+			wantGuild = player.GetGuildID() != 0
+			if wantGuild != self.guildShown:
+				self.guildShown = wantGuild
+				self.__LayoutMenuTiles()
+		except Exception:
+			pass
+		# AKRAVON: dokunmatikte "fare cikti" olayi gelmedigi icin takili kalan esya / beceri ipuclari 3 sn sonra kapanir
+		try:
+			now = app.GetTime()
+			if not hasattr(self, "tipSince"):
+				self.tipSince = {}
+			# 3 sn sonra kapanir; parmak ayni yerde kaldigi icin motor her karede yeniden acar -> parmak kalkip baska yere
+			# dokunulana kadar ShowToolTip engellenir (tekrar acilma hatasi)
+			import wndMgr
+			mouse = wndMgr.GetMousePosition()
+			block = getattr(self, "tipBlock", None)
+			if block and (abs(block[0] - mouse[0]) > 6 or abs(block[1] - mouse[1]) > 6):
+				self.tipBlock = None
+			for name in ("tooltipItem", "tooltipSkill"):
+				tip = getattr(self.interface, name, None)
+				if tip and not getattr(tip, "akrGuard", False):
+					tip.akrGuard = True
+					tip.akrShow = tip.ShowToolTip
+					def Guarded(tip = tip, owner = self):
+						if getattr(owner, "tipBlock", None):
+							return
+						tip.akrShow()
+					tip.ShowToolTip = Guarded
+				if tip and tip.IsShow():
+					started = self.tipSince.setdefault(name, now)
+					if now - started > 3.0:
+						self.tipBlock = mouse
+						tip.HideToolTip()
+						self.tipSince.pop(name, None)
+				else:
+					self.tipSince.pop(name, None)
+		except Exception:
+			pass
+		import uiAkravonSlotFx
+		uiAkravonSlotFx.Install(self.interface)
+		# AKRAVON: orijinal Metin2 gibi - saldiri tusu basiliyken yon verirsen karakter olarak (ata binikken de) oldugu yerde
+		# o yone doner ve saldirmaya devam eder. Motor bunu yalniz yon TUSU bayragi kurulunca yapar; joystick bayragi kurmadigi
+		# icin saldiri yone donmuyordu. Saldiri basiliyken joystick yonu sekiz yone yuvarlanip motorun yon tuslarina verilir.
+		attackHeld = bool(getattr(self.attackButton, "isActive", False))
+		wanted = {}
+		if attackHeld and self.joystick.isActive:
+			limit = max(1.0, self.joystick.radius * 0.35)
+			offsetX = self.joystick.knobOffsetX
+			offsetY = self.joystick.knobOffsetY
+			wanted = {app.DIK_LEFT : offsetX < -limit, app.DIK_RIGHT : offsetX > limit, app.DIK_UP : offsetY < -limit, app.DIK_DOWN : offsetY > limit}
+		held = getattr(self, "attackDirKeys", {})
+		for key in (app.DIK_LEFT, app.DIK_RIGHT, app.DIK_UP, app.DIK_DOWN):
+			state = bool(wanted.get(key, False))
+			if state != bool(held.get(key, False)):
+				player.SetSingleDIKKeyState(key, state)
+		self.attackDirKeys = dict((key, bool(wanted.get(key, False))) for key in (app.DIK_LEFT, app.DIK_RIGHT, app.DIK_UP, app.DIK_DOWN))
 		self.skillArc.UpdateFlash()
 		import uiAkravonAutoHunt
 		uiAkravonAutoHunt.Update(bool(self.joystick.isActive), self.utilities.GetButton("autohunt") if self.utilities else None)

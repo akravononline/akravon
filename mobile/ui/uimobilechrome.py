@@ -13,14 +13,19 @@ import uiMobileChat
 
 from _weakref import proxy
 
-STATUS_WIDTH = 262
-STATUS_HEIGHT = 70
+STATUS_WIDTH = 228
+STATUS_HEIGHT = 80
 # AKRAVON: konumlar durum panelinin (skin/build_akravon_player.py) 262x70 mantiksal olcegindedir
-FACE_CENTER = (34, 35)
-FACE_SIZE = 56
-NAME_X = 72
-NAME_CENTER_Y = 9
-BAR_LAYOUT = {"hp" : (62, 23, 190, 15), "sp" : (62, 41, 172, 11), "exp" : (62, 55, 154, 8)}	# x, y, genislik, yukseklik
+FACE_CENTER = (35, 42)
+FACE_SIZE = 52
+NAME_X = 78
+NAME_CENTER_Y = 6
+BAR_LAYOUT = {"hp" : (70, 20, 154, 17), "sp" : (70, 39, 154, 16), "st" : (70, 58, 154, 10)}	# orijinal Metin2 gauge.sub yuvalari (x1.5)
+EXP_PLATE_POSITION = (87, 73)
+EXP_PLATE_SCALE = 0.8	# orijinal Metin2 EXP plakasi (4 kure), mantiksal olcek
+EXP_ORB_CENTERS = (15, 39, 64, 90)
+EXP_ORB_Y = 17
+EXP_ORB_SIZE = 19	# x, y, genislik, yukseklik
 def PhoneFont(name, size):
 	# AKRAVON: telefonda mantiksal ekran ~600 yuksek; kucuk HUD yazilari ayni fiziksel boyutta kalsin diye buyutulur
 	height = wndMgr.GetScreenHeight()
@@ -29,7 +34,7 @@ def PhoneFont(name, size):
 	return "%s:%d" % (name, size)
 
 
-BAR_FONTS = {"hp" : PhoneFont("LatoBd", 14), "sp" : PhoneFont("LatoBd", 13)}
+BAR_FONTS = {"hp" : PhoneFont("LatoBd", 13), "sp" : PhoneFont("LatoBd", 13)}
 # AKRAVON: HD HUD gorselleri (2 kat, yarim olcekle cizilir)
 HUD_PATH = "mobile_ui/akravon/hud/%s.png"
 HUD_BUTTON_ASSET = 136.0
@@ -37,6 +42,8 @@ HUD_SMALL_LIMIT = 44
 HUD_MID_LIMIT = 70
 STATUS_REFRESH_INTERVAL = 0.2
 LOW_HP_RATIO = 0.3
+GAUGE_FRAMES = {"hp" : 7, "sp" : 7, "st" : 7}	# orijinal Metin2 hareketli cubuk kareleri
+GAUGE_FRAME_SECONDS = 0.11
 
 LOW_HP_TEXT_COLOR = uiMobileStyle.Color(255, 176, 150)
 BAR_TEXT_COLOR = uiMobileStyle.Color(246, 236, 214)
@@ -73,6 +80,71 @@ def FormatNumber(value):
 
 def HudButtonSize(size):
 	return min(HUD_BUTTON_SIZES, key=lambda candidate: abs(candidate - size))
+
+
+PRESS_SECONDS = 0.42
+PRESS_RING_TEXTURE = HUD_PATH % "hud_press_ring"
+PRESS_DOT_TEXTURE = HUD_PATH % "hud_press_dot"
+PRESS_DOT_COUNT = 8
+
+
+class PressRipple(object):
+	# AKRAVON: beceri slotlariyla ayni basma efekti - disa yayilan iki halka + etrafa sacilan kabarciklar (ust katman)
+	def __init__(self, color = (1.0, 0.9, 0.6)):
+		self.color = color	# halka / kabarcik rengi (varsayilan altin; oto av yesil)
+		self.rings = [self.__Image(PRESS_RING_TEXTURE) for i in range(2)]
+		self.dots = [self.__Image(PRESS_DOT_TEXTURE) for i in range(PRESS_DOT_COUNT)]
+		self.start = None
+
+	def __Image(self, fileName):
+		image = ui.ExpandedImageBox()
+		image.AddFlag("not_pick")
+		image.AddFlag("float")
+		image.LoadImage(fileName)
+		image.Hide()
+		return image
+
+	def Start(self):
+		self.start = app.GetTime()
+
+	def Update(self, owner):
+		if self.start is None:
+			return
+		progress = (app.GetTime() - self.start) / PRESS_SECONDS
+		if progress >= 1.0 or not owner.IsShow():
+			self.start = None
+			self.Hide()
+			return
+		size = owner.GetWidth()
+		(gx, gy) = owner.GetGlobalPosition()
+		cx = gx + size / 2.0
+		cy = gy + size / 2.0
+		for (i, ring) in enumerate(self.rings):
+			p = (progress - i * 0.18) / 0.82
+			if p <= 0.0 or p >= 1.0:
+				ring.Hide()
+				continue
+			drawn = size * (0.92 + 1.05 * p)
+			ring.SetScale(drawn / 256.0, drawn / 256.0)
+			ring.SetPosition(int(round(cx - drawn / 2.0)), int(round(cy - drawn / 2.0)))
+			(r, g, b) = self.color
+			wndMgr.SetDiffuseColor(ring.hWnd, r, g, b, 1.0 - p * 0.85)
+			ring.Show()
+			ring.SetTop()
+		for (k, dot) in enumerate(self.dots):
+			angle = math.radians(k * (360.0 / PRESS_DOT_COUNT) + 20.0 * (k % 2))
+			distance = size * (0.42 + (0.55 + 0.12 * (k % 3)) * progress)
+			dotSize = size * (0.21 - 0.09 * progress) * (0.8 + 0.2 * (k % 2))
+			dot.SetScale(dotSize / 64.0, dotSize / 64.0)
+			dot.SetPosition(int(round(cx + math.cos(angle) * distance - dotSize / 2.0)), int(round(cy + math.sin(angle) * distance - dotSize / 2.0 - size * 0.12 * progress)))
+			(r, g, b) = self.color
+			wndMgr.SetDiffuseColor(dot.hWnd, r, g, b, 1.0 - progress * 0.9)
+			dot.Show()
+			dot.SetTop()
+
+	def Hide(self):
+		for image in self.rings + self.dots:
+			image.Hide()
 
 
 class HudButton(ui.Window):
@@ -112,6 +184,10 @@ class HudButton(ui.Window):
 		ui.Window.__del__(self)
 
 	def Destroy(self):
+		ripple = getattr(self, "ripple", None)
+		if ripple:
+			ripple.Hide()
+		self.ripple = None
 		self.event = None
 		self.longPressEvent = None
 		self.eventTouchTap = None
@@ -183,7 +259,14 @@ class HudButton(ui.Window):
 		else:
 			self.alert.Hide()
 
+	def EnablePressRipple(self, color = (1.0, 0.9, 0.6)):
+		if not getattr(self, "ripple", None):
+			self.ripple = PressRipple(color)
+
 	def OnUpdate(self):
+		ripple = getattr(self, "ripple", None)
+		if ripple:
+			ripple.Update(self)
 		if not self.alert:
 			return
 		kind = self.__RingKind()
@@ -222,10 +305,20 @@ class HudButton(ui.Window):
 		self.image.SetScale(self.assetScale, self.assetScale)
 
 	def __Run(self):
+		# AKRAVON: iPhone'da tek dokunus hem dokunma hem fare tiklamasi olarak gelebiliyor: 0.35 sn icinde ikinci calisma yutulur (ac-kapa hatasi)
+		now = app.GetTime()
+		import dbg
+		if now - getattr(self, "lastRunTime", -10.0) < 0.35:
+			return
+		self.lastRunTime = now
+		ripple = getattr(self, "ripple", None)
+		if ripple:
+			ripple.Start()
 		if self.event:
 			self.event()
 
 	def __OnTap(self, x, y):
+		import dbg
 		self.__Run()
 
 	def OnMouseLeftButtonDown(self):
@@ -238,6 +331,7 @@ class HudButton(ui.Window):
 		self.pressed = False
 		self.__Refresh()
 		if wasPressed and self.IsIn():
+			import dbg
 			self.__Run()
 		return True
 
@@ -267,9 +361,25 @@ class Gauge(object):
 		if not self.enabled:
 			return
 		x, y, width, height = BAR_LAYOUT[kind]
+		self.kind = kind
+		self.frame = 0
+		self.bg = HudImage(parent, "status_%s_bg" % kind, x, y)	# bos kisim: koyu oluk
 		self.fill = HudImage(parent, "status_%s" % kind, x, y)
 		if showText:
 			self.text = uiMobileStyle.CreateText(parent, "", x + width // 2, y + height // 2 - 6, BAR_TEXT_COLOR, BAR_FONTS[kind], "center", True)
+
+	def Animate(self, now):
+		# orijinal Metin2 cubugu: kareler sirayla doner (isiltili akis); doluluk korunur
+		frames = GAUGE_FRAMES.get(getattr(self, "kind", None), 0)
+		if not self.enabled or frames <= 1 or self.ratio <= 0.0:
+			return
+		frame = int(now / GAUGE_FRAME_SECONDS) % frames + 1
+		if frame == self.frame:
+			return
+		self.frame = frame
+		self.fill.LoadImage(HUD_PATH % ("status_%s_%d" % (self.kind, frame)))
+		self.fill.SetScale(0.5, 0.5)
+		self.fill.SetRenderingRect(0.0, 0.0, self.ratio - 1.0, 0.0)
 
 	def SetValue(self, current, maximum):
 		ratio = 0.0
@@ -282,6 +392,35 @@ class Gauge(object):
 			self.fill.SetRenderingRect(0.0, 0.0, ratio - 1.0, 0.0)
 		if self.text:
 			self.text.SetText("%s / %s" % (FormatNumber(min(current, maximum)), FormatNumber(maximum)))
+		return ratio
+
+
+class ExpOrbs(object):
+	# AKRAVON: orijinal Metin2 EXP gostergesi - 4 kure, her biri deneyimin %25'ini doldurur
+	def __init__(self, parent):
+		(px, py) = EXP_PLATE_POSITION
+		scale = EXP_PLATE_SCALE / 2.0
+		self.plate = HudImage(parent, "exp_plate", px, py, scale, scale)
+		self.orbs = []
+		self.ratio = -1.0
+		for center in EXP_ORB_CENTERS:
+			size = EXP_ORB_SIZE * EXP_PLATE_SCALE
+			orb = HudImage(parent, "exp_orb", int(round(px + center * EXP_PLATE_SCALE - size / 2.0)), int(round(py + EXP_ORB_Y * EXP_PLATE_SCALE - size / 2.0)), scale, scale)
+			orb.Hide()
+			self.orbs.append(orb)
+
+	def SetValue(self, current, maximum):
+		ratio = max(0.0, min(1.0, float(current) / maximum)) if maximum > 0 else 1.0	# azami seviye: tam dolu
+		if ratio == self.ratio:
+			return ratio
+		self.ratio = ratio
+		for (index, orb) in enumerate(self.orbs):
+			part = max(0.0, min(1.0, ratio * len(self.orbs) - index))
+			if part <= 0.0:
+				orb.Hide()
+				continue
+			orb.SetRenderingRect(0.0, 0.0, part - 1.0, 0.0)
+			orb.Show()
 		return ratio
 
 
@@ -304,12 +443,12 @@ class StatusBar(ui.Window):
 		self.face.SetPosition(FACE_CENTER[0] - FACE_SIZE // 2, FACE_CENTER[1] - FACE_SIZE // 2)
 		self.face.Show()
 
-		self.nameText = uiMobileStyle.CreateText(self, "", NAME_X, NAME_CENTER_Y - 9, uiMobileStyle.BRIGHT_COLOR, PhoneFont("LatoBd", 19), "left", True)
+		self.nameText = uiMobileStyle.CreateText(self, "", NAME_X, NAME_CENTER_Y - 9, uiMobileStyle.BRIGHT_COLOR, PhoneFont("LatoBd", 16), "left", True)
 
-		self.hpGauge = Gauge(self, "hp", True)
-		self.spGauge = Gauge(self, "sp", True)
-		self.stGauge = Gauge(self, None, False)
-		self.expGauge = Gauge(self, "exp", False)
+		self.hpGauge = Gauge(self, "hp", False)	# AKRAVON: cubuklarin ustunde yazi yok (orijinal Metin2 gibi)
+		self.spGauge = Gauge(self, "sp", False)
+		self.stGauge = Gauge(self, "st", False)
+		self.expGauge = Gauge(self, None, False)	# AKRAVON: EXP gostergesi kaldirildi (yeri yok)
 
 		self.SetTouchTapEvent(ui.__mem_func__(self.__OnTap))
 		self.RefreshStatus()
@@ -380,12 +519,16 @@ class StatusBar(ui.Window):
 		lowHealth = maximumHP > 0 and healthRatio < LOW_HP_RATIO
 		if lowHealth != self.lowHealth:
 			self.lowHealth = lowHealth
-			self.hpGauge.text.SetPackedFontColor(LOW_HP_TEXT_COLOR if lowHealth else BAR_TEXT_COLOR)
+			if self.hpGauge.text:
+				self.hpGauge.text.SetPackedFontColor(LOW_HP_TEXT_COLOR if lowHealth else BAR_TEXT_COLOR)
 
 		self.nameText.SetText(player.GetName())
 
 	def OnUpdate(self):
 		now = app.GetTime()
+		for gauge in (self.hpGauge, self.spGauge, self.stGauge):
+			if gauge:
+				gauge.Animate(now)
 		if now < self.nextRefreshTime:
 			return
 		self.nextRefreshTime = now + STATUS_REFRESH_INTERVAL

@@ -32,9 +32,10 @@ def GetQuickSlotChoices(category):
 			skillIndex = player.GetSkillIndex(source)
 			if not skillIndex:
 				continue
-			if (category == "skills" and skill.GetSkillType(skillIndex) == skill.SKILL_TYPE_ACTIVE
+			if (category == "skills" and skill.GetSkillType(skillIndex) in (skill.SKILL_TYPE_ACTIVE, getattr(skill, "SKILL_TYPE_HORSE", 4))
 					and player.GetSkillLevel(source) > 0) or (
-					category == "support" and skillIndex in uiAkravonActionIcon.SUPPORT_IDS):
+					category == "support" and skillIndex in uiAkravonActionIcon.SUPPORT_IDS and skill.CanUseSkill(skillIndex)
+					and skillIndex not in (163, 164, 165, 166, 167, 178, 179, 180)):
 				grade = player.GetSkillGrade(source)
 				label = skill.GetSkillName(skillIndex)
 				choices.append((source, skillIndex, label, uiAkravonSkillIcon.GetIcon(skillIndex, grade)))
@@ -230,6 +231,10 @@ class LayoutEditor(object):
 		self.toggle.SetPosition(*buttonPosition)
 
 	def OpenPanel(self):
+		if self.arc.picker.IsShow():	# AKRAVON: ayar dugmesi ac / kapa
+			self.arc.picker.Hide()
+			self.Refresh()
+			return
 		self.arc.CancelPageTransition()
 		index = self.arc.picker.target
 		self.arc.picker.Open(min(index if index is not None else 0, self.arc.count - 1))
@@ -525,7 +530,7 @@ class QuickSlotPicker(ui.Window):
 			slotType = player.SLOT_TYPE_INVENTORY
 		else:
 			if player.GetSkillIndex(source) != expected \
-					or (self.category == "skills" and skill.GetSkillType(expected) != skill.SKILL_TYPE_ACTIVE) \
+					or (self.category == "skills" and skill.GetSkillType(expected) not in (skill.SKILL_TYPE_ACTIVE, getattr(skill, "SKILL_TYPE_HORSE", 4))) \
 					or (self.category == "support" and expected not in uiAkravonActionIcon.SUPPORT_IDS):
 				dbg.TraceError("uiMobileHud: selected quickslot skill changed")
 				self.SelectCategory(self.category)

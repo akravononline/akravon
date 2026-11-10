@@ -159,8 +159,45 @@ class Skin(object):
 		# AKRAVON: kostum dugmesi simdilik kaldirildi (kostum penceresi ekrana sigmiyor); depo dugmesi silah yuvasinin altina,
 		# ayakkabi hizasina alindi
 		try:
-			window.GetChild("CostumeButton").Hide()
-			window.GetChild("MallButton").SetPosition(20, 242)
+			for (buttonName, art, x) in (("MallButton", "depo", 74), ("CostumeButton", "kostum", 142)):
+				button = window.GetChild(buttonName)
+				kind = "depo" if art == "depo" else "kost"
+				button.SetUpVisual(IMG + "inv_%s_up.png" % kind)
+				button.SetOverVisual(IMG + "inv_%s_over.png" % kind)
+				button.SetDownVisual(IMG + "inv_%s_down.png" % kind)
+				button.SetPosition(x, 315)
+				button.Show()
+		except Exception:
+			pass
+		# uiInventory.RefreshBagSlotWindow wndItemDelete'i bayraksiz okur; esya silme sistemi kapaliyken ozellik hic olusmaz -> varsayilan None
+		if not hasattr(window, "wndItemDelete"):
+			window.wndItemDelete = None
+		# Ruzgarin Ayakkabisi acikken: envanterde gizlenir, ekipmandaki ozel (seker) yuvada mavi donen efektle gorunur, yuvaya dokununca kapanir
+		self.ruzgarSlot = None
+		self.ruzgarFx = None
+		self.ruzgarTap = None
+		try:
+			base = window.GetChild("Equipment_Base")
+			fx = ui.ExpandedImageBox()
+			fx.SetParent(base)
+			fx.AddFlag("not_pick")
+			fx.LoadImage("mobile_ui/akravon/hud/akrfx_blue_1_00.png")
+			fx.SetScale(50 / 64.0, 50 / 64.0)
+			fx.Hide()
+			self.ruzgarFx = fx
+			tap = uiMobileStyle.Pressable(50, 50)
+			tap.SetParent(base)
+			tap.SetEvent(self.RuzgarKapat)
+			tap.Hide()
+			self.ruzgarTap = tap
+			original = window.RefreshBagSlotWindow
+			skin = self
+
+			def RefreshBagSlotWindow(*args):
+				result = original(*args)
+				skin.HideRuzgarInInventory()
+				return result
+			window.RefreshBagSlotWindow = RefreshBagSlotWindow
 		except Exception:
 			pass
 
@@ -210,6 +247,35 @@ class Skin(object):
 			pass
 		self.Layout()
 
+	def RuzgarInventorySlot(self):
+		import player
+		for slot in range(player.INVENTORY_PAGE_SIZE * 5):
+			if player.GetItemIndex(slot) == 72701:
+				return slot
+		return -1
+
+	def HideRuzgarInInventory(self):
+		# Ruzgar acikken envanter yuvasinda gorunmez (ekipmanda gorunur)
+		try:
+			import constInfo
+			import player
+			if not getattr(constInfo, "AKRAVON_RUZGAR_ACTIVE", 0):
+				return
+			slot = self.RuzgarInventorySlot()
+			page = self.window.inventoryPageIndex
+			local = slot - player.INVENTORY_PAGE_SIZE * page
+			if slot >= 0 and 0 <= local < player.INVENTORY_PAGE_SIZE:
+				self.window.wndItem.ClearSlot(local)
+				self.window.wndItem.RefreshSlot()
+		except Exception:
+			pass
+
+	def RuzgarKapat(self):
+		import net
+		slot = self.RuzgarInventorySlot()
+		if slot >= 0:
+			net.SendItemUsePacket(slot)
+
 	def RefreshTabs(self, page):
 		self.activeTab = page
 		for (i, label) in enumerate(getattr(self, "tabLabels", [])):
@@ -252,13 +318,54 @@ class Skin(object):
 		cape = getattr(self.window, "wndBraveCape", None)
 		if cape and cape.IsShow():
 			cape.Hide()
+		try:
+			import constInfo
+			import player
+			now = app.GetTime(); equip = self.window.GetChild("EquipmentSlot")
+			slots = (player.EQUIPMENT_SLOT_START + 7, player.EQUIPMENT_SLOT_START + 8)
+			wanted = None
+			if getattr(constInfo, "AKRAVON_RUZGAR_ACTIVE", 0) and self.equipBoard.IsShow():
+				for slot in slots:
+					if player.GetItemIndex(slot) == 0 or slot == self.ruzgarSlot:
+						wanted = slot
+						break
+			if wanted is not None:
+				if self.ruzgarSlot != wanted or now - getattr(self, "ruzgarTime", 0.0) > 0.3:
+					equip.SetItemSlot(wanted, 72701, 0)
+					equip.RefreshSlot()
+					self.ruzgarSlot = wanted
+					self.ruzgarTime = now
+			elif self.ruzgarSlot is not None:
+				if player.GetItemIndex(self.ruzgarSlot) == 0:
+					equip.ClearSlot(self.ruzgarSlot)
+					equip.RefreshSlot()
+				self.ruzgarSlot = None
+				self.ruzgarSet = False
+			# mavi donen efekt + dokunma alani
+			if self.ruzgarFx and self.ruzgarTap:
+				if self.ruzgarSlot is not None:
+					x = 120 if self.ruzgarSlot == player.EQUIPMENT_SLOT_START + 7 else 180
+					self.ruzgarFx.LoadImage("mobile_ui/akravon/hud/akrfx_blue_1_%02d.png" % (int(now * 14) % 13))
+					self.ruzgarFx.SetScale(50 / 64.0, 50 / 64.0)
+					self.ruzgarFx.SetPosition(x, 180)
+					self.ruzgarFx.Show()
+					self.ruzgarTap.SetPosition(x, 180)
+					self.ruzgarTap.Show()
+				else:
+					self.ruzgarFx.Hide()
+					self.ruzgarTap.Hide()
+		except Exception:
+			pass
 		# AKRAVON: kostum acikken ekipmanin yerine gecer (ust uste binmez)
 		costume = getattr(self.window, "wndCostume", None)
 		if costume and costume.IsShow():
-			# kostum paneli ekipmanin ALTINDA acilir (ekipmanin yerine gecmez)
-			(bx, by) = self.board.GetGlobalPosition()
-			offset = self.equipBoard.GetHeight() + GAP if self.equipBoard.IsShow() else 0
-			costume.SetPosition(bx - EW - GAP, by + offset)
+			# AKRAVON: kostum paneli ekipmanin SOLUNDA, ayni hizada acilir (sigmazsa ekipmanin onunde)
+			(ex, ey) = self.equipBoard.GetGlobalPosition()
+			if not self.equipBoard.IsShow():
+				(bx, by) = self.board.GetGlobalPosition()
+				(ex, ey) = (bx - EW - GAP, by)
+			left = ex - costume.GetWidth() - GAP
+			costume.SetPosition(left if left >= 0 else ex, ey)
 			self.costumeShown = True
 		target = 1.0 if self.opened else 0.0
 		if self.ratio == target:

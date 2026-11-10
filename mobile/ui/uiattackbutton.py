@@ -70,6 +70,13 @@ class AttackButton(ui.Window):
 				self.pressedIconImage.SetPosition(iconOffset, iconOffset)
 				self.pressedIconImage.Hide()
 		self.visualActive = False
+		# oyuncunun sectigi seffaflik (ayarlar > kontroller)
+		import uiAkravonHudAlpha
+		fixedAlpha = uiAkravonHudAlpha.Get("atk")
+		if self.usesMobileArt and fixedAlpha < 0.999:
+			for image in (self.baseImage, self.pressedImage):
+				if image:
+					wndMgr.SetDiffuseColor(image.hWnd, 1.0, 1.0, 1.0, fixedAlpha)
 
 	def __del__(self):
 		ui.Window.__del__(self)

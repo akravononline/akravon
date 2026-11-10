@@ -12,10 +12,10 @@ FONT = "Lato:23"
 class Label(object):
 	# dugme yazisi: ui.Button'in kucuk varsayilan yazisi yerine bizim yazi tipi
 	def __init__(self, button):
-		self.line = uiMobileStyle.CreateText(button, "", 95, 12, TEXT, "Marcellus:22", "center")
+		self.line = uiMobileStyle.CreateText(button, "", 95, 12, TEXT, "Marcellus:19", "center")
 
 	def Set(self, text):
-		self.line.SetText(text)
+		self.line.SetText(uiMobileStyle.TrUpper(text))	# dugme yazilari BUYUK harf
 
 
 def Style(dialog, count):
@@ -56,8 +56,12 @@ def Style(dialog, count):
 		button = getattr(dialog, attr, None)
 		if not button:
 			continue
+		initial = button.GetText()	# betikten gelen ilk yazi (EVET / HAYIR) yeni etikete tasinir
+		if not initial:	# betikte yazi yoksa (yere atma onayi gibi) varsayilan etiket
+			initial = {"acceptButton" : "Evet", "accceptButton" : "Tamam", "cancelButton" : "Hay\xfdr"}.get(attr, "")
 		label = Label(button)
 		keep.append(label)
+		label.Set(initial)
 		button.SetText = label.Set
 	dialog.SetAcceptText = lambda text: dialog.acceptButton.SetText(text)
 	dialog.SetCancelText = lambda text: dialog.cancelButton.SetText(text)

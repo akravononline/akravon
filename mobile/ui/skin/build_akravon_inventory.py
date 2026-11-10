@@ -131,6 +131,44 @@ def TabGlow(w, h):
 	return im.resize((w, h), Image.LANCZOS)
 
 
+def TabBtn(w, h, pressed):
+	# her sayfa kendi dugmesi: normal = kabarik (ust isik, alt golge), secili = gomulu (koyu ic golge + altin kenar)
+	big = Image.new('RGBA', (w * SS, h * SS), (0, 0, 0, 0))
+	d = ImageDraw.Draw(big)
+	box = (0, 0, w * SS - 1, h * SS - 1)
+	if pressed:
+		d.rounded_rectangle(box, 7 * SS, fill = (14, 20, 36, 255), outline = GOLD, width = int(1.5 * SS))
+		shade = Image.new('L', big.size, 0)
+		ImageDraw.Draw(shade).rounded_rectangle((SS, SS, w * SS - SS, h * SS - SS), 6 * SS, outline = 255, width = 6 * SS)
+		shade = shade.filter(ImageFilter.GaussianBlur(4 * SS))
+		big.alpha_composite(Image.composite(Image.new('RGBA', big.size, (0, 0, 0, 200)), Image.new('RGBA', big.size, (0, 0, 0, 0)), shade))
+	else:
+		d.rounded_rectangle(box, 7 * SS, fill = (44, 58, 92, 255), outline = (120, 96, 56, 255), width = SS)
+		d.rounded_rectangle((2 * SS, 2 * SS, w * SS - 2 * SS, h * SS // 2), 6 * SS, fill = (62, 80, 122, 255))
+		d.line((8 * SS, 2 * SS, w * SS - 8 * SS, 2 * SS), fill = (190, 205, 240, 120), width = SS)
+		d.line((8 * SS, h * SS - 3 * SS, w * SS - 8 * SS, h * SS - 3 * SS), fill = (0, 0, 0, 140), width = 2 * SS)
+	return big.resize((w, h), Image.LANCZOS)
+
+
+def TabPressed(w, h):
+	# secili sayfa: seridin icine gomulu mavi cukur (koyu ic golge ustte, ince acik alt kenar) + acik mavi cerceve
+	big = Image.new('RGBA', (w * SS, h * SS), (0, 0, 0, 0))
+	d = ImageDraw.Draw(big)
+	box = (3 * SS, 3 * SS, (w - 3) * SS, (h - 3) * SS)
+	d.rounded_rectangle(box, 7 * SS, fill = (34, 78, 160, 255))
+	shade = Image.new('L', big.size, 0)
+	ImageDraw.Draw(shade).rounded_rectangle(box, 7 * SS, outline = 255, width = 7 * SS)
+	shade = shade.filter(ImageFilter.GaussianBlur(3 * SS))
+	mask = Image.new('L', big.size, 0)
+	ImageDraw.Draw(mask).rounded_rectangle(box, 7 * SS, fill = 255)
+	dark = Image.new('RGBA', big.size, (0, 0, 20, 190))
+	big.alpha_composite(Image.composite(dark, Image.new('RGBA', big.size, (0, 0, 0, 0)), Image.composite(shade, Image.new('L', big.size, 0), mask)))
+	d = ImageDraw.Draw(big)
+	d.rounded_rectangle(box, 7 * SS, outline = (150, 196, 255, 255), width = int(1.5 * SS))
+	d.line((10 * SS, (h - 5) * SS, (w - 10) * SS, (h - 5) * SS), fill = (190, 220, 255, 120), width = SS)
+	return big.resize((w, h), Image.LANCZOS)
+
+
 def TabStrip(w, h, count):
 	im = Slot(w, h)
 	d = ImageDraw.Draw(im)
@@ -210,10 +248,9 @@ def Layout():
 	for i in range(PAGES):
 		tabs.append('''			{
 				"name" : "Inventory_Tab_%02d", "type" : "radio_button", "x" : %d, "y" : %d,
-				"tooltip_text" : "Sayfa %d",
 				"default_image" : IMG + "inv_tab_empty.png", "over_image" : IMG + "inv_tab_empty.png", "down_image" : IMG + "inv_tab_on.png",
 				"children" : ({ "name" : "Inventory_Tab_%02d_Print", "type" : "text", "x" : 0, "y" : -2, "all_align" : "center", "text" : "%s" },),
-			},''' % (i + 1, 20 + i * tw, TABS_Y, i + 1, i + 1, names[i]))
+			},''' % (i + 1, 20 + i * tw, TABS_Y, i + 1, names[i]))
 	return '''# -*- coding: utf-8 -*-
 # AKRAVON: uretildi (skin/build_akravon_inventory.py) - elle duzenleme
 import uiScriptLocale
@@ -305,9 +342,9 @@ def Build(out):
 		'inv_equip_board': cw.Board(EW, EH),
 		'inv_equip_base': EquipBase(icons),
 		'inv_cell': Slot(CELL, CELL),
-		'inv_tab_strip': TabStrip(IW - 40, 42, PAGES),
+				'inv_tab_strip': TabStrip(IW - 40, 42, PAGES),
 		'inv_tab_empty': Image.new('RGBA', (tw, 42), (0, 0, 0, 0)),
-		'inv_tab_on': TabGlow(tw, 42),
+		'inv_tab_on': TabPressed(tw, 42),
 		'inv_money': Slot(IW - 40, 40),
 		'inv_coin': Coin(),
 		'inv_depo_up': IconButton('depo', 'up'), 'inv_depo_over': IconButton('depo', 'over'), 'inv_depo_down': IconButton('depo', 'down'),

@@ -10,6 +10,7 @@ import uiMobileStyle
 
 from _weakref import proxy
 PANEL_WIDTH = 600
+PHONE_PANEL_WIDTH = 760	# AKRAVON: telefonda genis panel (uzun satirlar tasmasin)
 PANEL_HEIGHT = 250
 HEADER_HEIGHT = 44
 INPUT_ROW_HEIGHT = 46
@@ -36,7 +37,7 @@ MOBILE_CHAT_SET = 2
 FLOAT_CHAT_SET = 3
 FLOAT_WIDTH = 560
 CHAT_MAX = 512
-CHAT_USER_MAX = 200	# AKRAVON: esya baglantisi (~80 karakter) sigsin
+CHAT_USER_MAX = 120	# AKRAVON: esya baglantisi (~80 karakter) sigsin
 LINK_SUPPRESS_SECONDS = 0.6
 TAP_SLOP = 14
 TOP_ASSET = "mobile_ui/akravon/hud/chat_dock_top.png"
@@ -45,7 +46,15 @@ TOP_ASSET_SIZE = (1200.0, 88.0)
 TOP_HEIGHT = 44
 BODY_ASSET_HEIGHT = 200.0
 GRIP_HEIGHT = 14
-KEYBOARD_BOTTOM_RATIO = 0.46	# klavye acikken panelin alt kenari (ekran yuksekliginin orani)
+def _DetectIOS():
+	# iOS Python da "linux2" der; uygulama klasoru /var/mobile/Containers altinda
+	try:
+		import os
+		return "/Containers/" in os.getcwd() or "/var/mobile/" in os.getcwd()
+	except Exception:
+		return False
+IS_IOS = _DetectIOS()
+KEYBOARD_BOTTOM_RATIO = 0.575 if IS_IOS else 0.46	# klavye acikken panelin alt kenari (ekran yuksekliginin orani)
 MAX_BOTTOM_GAP = 70
 
 DIVIDER_COLOR = uiMobileStyle.Color(110, 86, 44)
@@ -56,20 +65,23 @@ FIELD_BORDER = uiMobileStyle.Color(112, 88, 50)
 FIELD_BORDER_FOCUS = uiMobileStyle.Color(206, 166, 98)
 
 # AKRAVON: kanal renkleri belirgin ayrilir (satirlar ve sekme yazilari ayni rengi kullanir)
+# AKRAVON: orijinal Metin2 sohbet renkleri (PythonChat.cpp varsayilanlari): normal konusma isim + mesaj beyaz
 LINE_COLORS = (
-	("CHAT_TYPE_TALKING", (238, 234, 224)),
-	("CHAT_TYPE_INFO", (244, 214, 110)),
-	("CHAT_TYPE_PARTY", (104, 184, 255)),
-	("CHAT_TYPE_GUILD", (255, 150, 56)),
-	("CHAT_TYPE_SHOUT", (92, 226, 92)),
+	("CHAT_TYPE_TALKING", (255, 255, 255)),
+	("CHAT_TYPE_INFO", (255, 200, 200)),
+	("CHAT_TYPE_NOTICE", (255, 230, 186)),
+	("CHAT_TYPE_PARTY", (138, 255, 242)),
+	("CHAT_TYPE_GUILD", (231, 216, 255)),
+	("CHAT_TYPE_SHOUT", (168, 255, 213)),
+	("CHAT_TYPE_WHISPER", (74, 225, 74)),
 )
 
 TABS = (
 	("MOBILE_CHAT_ALL", None, "", (226, 212, 180)),
-	("MOBILE_CHAT_NORMAL", "CHAT_TYPE_TALKING", "", (238, 234, 224)),
-	("MOBILE_CHAT_PARTY", "CHAT_TYPE_PARTY", "#", (104, 184, 255)),
-	("MOBILE_CHAT_GUILD", "CHAT_TYPE_GUILD", "%", (255, 150, 56)),
-	("MOBILE_CHAT_SHOUT", "CHAT_TYPE_SHOUT", "!", (92, 226, 92)),
+	("MOBILE_CHAT_NORMAL", "CHAT_TYPE_TALKING", "", (255, 255, 255)),
+	("MOBILE_CHAT_PARTY", "CHAT_TYPE_PARTY", "#", (138, 255, 242)),
+	("MOBILE_CHAT_GUILD", "CHAT_TYPE_GUILD", "%", (231, 216, 255)),
+	("MOBILE_CHAT_SHOUT", "CHAT_TYPE_SHOUT", "!", (168, 255, 213)),
 )
 COMMAND_MARKS = "#%!/"
 
@@ -133,7 +145,10 @@ class ChatInput(uiChat.ChatLine):
 		text = self.GetText()
 		if self.prefix and text.strip() and text[0] not in COMMAND_MARKS:
 			self.SetText(self.prefix + text)
-		return uiChat.ChatLine.OnIMEReturn(self)
+		result = uiChat.ChatLine.OnIMEReturn(self)
+		if IS_IOS and self.IsFocus():
+			self.KillFocus()	# AKRAVON: iPhone klavyesi gonderince kapaniyor; panel de hemen yerine insin
+		return result
 
 
 class ChatTab(uiMobileStyle.Pressable):
@@ -347,11 +362,12 @@ class ChatPanel(ui.Window):
 		import uiMobileChrome
 		ui.Window.__init__(self, "UI")
 		# AKRAVON: telefonda (kucuk mantiksal ekran) sohbet yazisi buyuk, acikken yalniz ~4 satir gorunur (goz yorgunlugu)
-		global PANEL_HEIGHT, HEADER_HEIGHT, INPUT_ROW_HEIGHT, FIELD_HEIGHT, BUTTON_SIZE, TAB_HEIGHT, TAB_FONT, TAB_PADDING, TAB_GAP, INPUT_FONT, COLLAPSE_SIZE
+		global PANEL_WIDTH, PANEL_HEIGHT, HEADER_HEIGHT, INPUT_ROW_HEIGHT, FIELD_HEIGHT, BUTTON_SIZE, TAB_HEIGHT, TAB_FONT, TAB_PADDING, TAB_GAP, INPUT_FONT, COLLAPSE_SIZE
 		self.chatStep = 15
 		if wndMgr.GetScreenHeight() <= 700:
-			chat.SetFontSize(21)
-			self.chatStep = 28
+			PANEL_WIDTH = PHONE_PANEL_WIDTH
+			chat.SetFontSize(18)
+			self.chatStep = 24
 			# AKRAVON: telefonda dokunmatik boyutlar - yazi alani, gonder / baglanti dugmeleri ve sekmeler buyuk
 			HEADER_HEIGHT = 58
 			INPUT_ROW_HEIGHT = 62
@@ -359,10 +375,10 @@ class ChatPanel(ui.Window):
 			BUTTON_SIZE = 48
 			COLLAPSE_SIZE = 36
 			TAB_HEIGHT = 40
-			TAB_FONT = "LatoBd:21"
+			TAB_FONT = "LatoBd:19"
 			TAB_PADDING = 20
 			TAB_GAP = 10
-			INPUT_FONT = "Lato:21"
+			INPUT_FONT = "Lato:19"
 			PANEL_HEIGHT = HEADER_HEIGHT + LINE_PADDING_Y + 4 * self.chatStep + INPUT_ROW_HEIGHT + 2
 		self.SetSize(PANEL_WIDTH, PANEL_HEIGHT)
 		ui.EnableSingleTap(self)
@@ -670,6 +686,8 @@ class ChatPanel(ui.Window):
 		self.lines.ResetScroll()
 
 	def FocusInput(self):
+		import dbg
+		dbg.TraceError("[TIK] FocusInput t=%.3f odak=%d" % (app.GetTime(), 1 if (self.input and self.input.IsFocus()) else 0))	# GECICI IZ
 		if self.animation and self.animation[2]:
 			self.pendingFocus = True
 			return
@@ -677,6 +695,8 @@ class ChatPanel(ui.Window):
 			self.input.SetFocus()
 
 	def KillInputFocus(self):
+		import dbg
+		dbg.TraceError("[TIK] KillInputFocus t=%.3f" % app.GetTime())	# GECICI IZ
 		if self.input and self.input.IsFocus():
 			self.input.KillFocus()
 
@@ -704,12 +724,36 @@ class ChatPanel(ui.Window):
 		self.__OnCollapse()
 		return True
 
+	def __ClampInputWidth(self):
+		# AKRAVON: yazi kutunun disina tasmasin - kutu dolunca fazlasi kesilir (yazma siniri = kutu genisligi)
+		try:
+			limit = self.input.GetWidth()
+			width = self.input.GetTextSize()[0]
+		except Exception:
+			return
+		if width <= limit:
+			return
+		text = self.input.GetText()
+		guard = 0
+		while text and width > limit and guard < 64:
+			text = text[:-1]
+			self.input.SetText(text)
+			width = self.input.GetTextSize()[0]
+			guard += 1
+
 	def OnUpdate(self):
 		self.__UpdateAnimation()
+		# AKRAVON: acik sohbet sag alttaki beceri / saldiri dugmelerinin altinda kalmasin
+		now = app.GetTime()
+		if self.IsShow() and now - getattr(self, "lastRaise", 0.0) > 0.5:
+			self.lastRaise = now
+			self.SetTop()
 		if not self.input:
 			return
 		self.fieldPanel.SetFocused(self.input.IsFocus())
-		shift = False	# AKRAVON: yazarken panel yerinde kalir (kullanici istegi)
+		if self.input.IsFocus():
+			self.__ClampInputWidth()
+		shift = IS_IOS and self.input.IsFocus()	# iOS: klavye paneli kapatir, yazarken panel klavyenin ustune oturur (Android: yerinde kalir)
 		if shift != self.keyboardShift:
 			self.keyboardShift = shift
 			if shift:

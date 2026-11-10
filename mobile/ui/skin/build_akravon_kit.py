@@ -369,6 +369,7 @@ APPROVED_HUD_ICONS = {
 	'pickup': 'pickup', 'mount': 'mount',
 	'collapse': 'less', 'link': 'link', 'send': 'send',
 	'zoomin': 'zoomin', 'zoomout': 'zoomout',
+	'guild': 'guild',
 }
 
 

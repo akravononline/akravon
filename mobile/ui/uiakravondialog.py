@@ -63,9 +63,9 @@ def Style(dialog):
 		button.SetDownVisual(IMG + "dlg_btn_3.png")
 		button.SetWindowHorizontalAlignLeft()
 		button.SetPosition(x, 116)
-		label = button.GetText()
+		label = uiMobileStyle.TrUpper(button.GetText())	# dugme yazilari BUYUK harf
 		button.SetText("")
-		text = uiMobileStyle.CreateText(button, label, 70, 11, uiMobileStyle.Color(250, 236, 210), "LatoBd:17", "center")
+		text = uiMobileStyle.CreateText(button, label, 70, 11, uiMobileStyle.Color(250, 236, 210), "Marcellus:19", "center")
 		keep.append(text)
 	# zemin panonun ustune eklendi: giris / dugmeler zeminden sonra eklenen katmana tasinir
 	holder = ui.Window()

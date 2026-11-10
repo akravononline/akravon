@@ -9,19 +9,25 @@ import ui
 import uiMobileStyle
 
 IMG = "d:/ymir work/ui/akravon_legacy/"
-W, H = 540, 476
+W, H = 620, 500
 SIDE = 150
 X0 = 170
-RW = 346
+RW = 424
+TRACK = RW - 28
 GOLD = uiMobileStyle.Color(222, 184, 110)
 TEXT = uiMobileStyle.Color(232, 226, 210)
 DIM = uiMobileStyle.Color(140, 132, 116)
 DARK = uiMobileStyle.Color(24, 16, 6)
+TEXT_ON = uiMobileStyle.Color(255, 255, 255)
 GREEN = uiMobileStyle.Color(120, 220, 120)
 RED = uiMobileStyle.Color(200, 110, 96)
 CFG = "akravon_otoav.cfg"
-TABS = ("Av", "İksir", "Şebnem")
+TABS = ("Av", "İksir", "Şebnem", "Sular")
 DEWS = ((50821, "Kırmızı"), (50822, "Pembe"), (50823, "Sarı"), (50824, "Yeşil"), (50825, "Mavi"), (50826, "Beyaz"))
+# AKRAVON: 2008-2011 sular (hepsi 3 dk = 180 sn etkili); oto av her 180 sn'de bir yeniden icer (orijinal kullanim suresi)
+WATERS = ((50801, "Şeftali Çiçeği Suyu", "Fiziksel gücü artırır"), (50802, "Çanıçiçeği Suyu", "Gücü +5 artırır"), (50813, "Sim Suyu", "%10 isabet şansı"), (50814, "Dok Suyu", "%10 kritik vuruş şansı"),
+	(50817, "Zin Suyu", "Saldırı değeri +50"), (50818, "Sambo Suyu", "Savunma +70"), (50819, "Mong Suyu", "Büyü savunması %5"), (50820, "Hwal Suyu", "Saldırı hızı +3"))
+WATER_SECONDS = 180
 FREQS = ((0, "Süre bitince"), (300, "Her 5 dk"), (600, "Her 10 dk"), (900, "Her 15 dk"))
 DEATH_SECONDS = 60
 
@@ -81,11 +87,13 @@ class CountdownOverlay(ui.Window):
 		self.disc.SetScale(size / 128.0, size / 128.0)
 		self.disc.Show()
 		wndMgr.SetDiffuseColor(self.disc.hWnd, 0.85, 0.05, 0.05, 0.78)
-		self.count = uiMobileStyle.CreateText(self, "4", size // 2, size // 2 - int(size * 0.28), uiMobileStyle.Color(255, 235, 230), "Marcellus:%d" % max(26, int(size * 0.55)), "center", True)
+		fontSize = max(20, int(size * 0.4))	# "3.9" sigsin
+		self.count = uiMobileStyle.CreateText(self, "4.0", size // 2, size // 2 - int(fontSize * 0.55), uiMobileStyle.Color(255, 235, 230), "Marcellus:%d" % fontSize, "center", True)
 		self.Show()
 
 	def SetNumber(self, number):
-		self.count.SetText(str(number))
+		# AKRAVON: saniye.salise (beceri bekleme suresiyle ayni: 3.9)
+		self.count.SetText("%.1f" % max(0.0, number))
 
 
 def __Overlay(button):
@@ -113,24 +121,19 @@ def Update(joystickActive, button = None):
 	if joystickActive and IsRunning():
 		player.AkravonAutoHuntStop()
 		interrupted = True
-		countStart = None
+		countStart = now	# AKRAVON: sayim hareket ederken de akar (4'te takili kalmaz)
 		if panel is not None:
 			panel.Refresh()
 	if not interrupted or button is None:
 		return
 	box = __Overlay(button)
-	if joystickActive:
-		countStart = None
-		box.SetNumber(int(COUNTDOWN))
-		box.Show()
-		return
 	if countStart is None:
 		countStart = now
 	remaining = COUNTDOWN - (now - countStart)
 	if remaining <= 0.0:
 		CancelInterrupt()	# oto av kapali kalir; yeniden dokunarak acilir
 		return
-	box.SetNumber(int(remaining) + 1 if remaining > int(remaining) else int(remaining))
+	box.SetNumber(remaining)
 	box.Show()
 
 
@@ -176,7 +179,9 @@ def Image(parent, name, x, y):
 class Settings(object):
 	def __init__(self):
 		self.hpOn, self.hp, self.spOn, self.sp = 1, 40, 1, 30
-		self.dews = dict((vnum, [0, 0]) for (vnum, name) in DEWS)	# vnum -> [acik, siklik sirasi]
+		self.dews = dict((vnum, [0, 0]) for (vnum, name) in DEWS)
+		for (vnum, name, desc) in WATERS:
+			self.dews[vnum] = [0, 0]	# vnum -> [acik, siklik sirasi]
 		try:
 			(head, tail) = open(CFG).read().strip().split("|")
 			(self.hpOn, self.hp, self.spOn, self.sp) = [int(v) for v in head.split()]
@@ -189,13 +194,15 @@ class Settings(object):
 
 	def Save(self):
 		try:
-			tail = ",".join("%d:%d:%d" % (vnum, self.dews[vnum][0], self.dews[vnum][1]) for (vnum, name) in DEWS)
+			tail = ",".join("%d:%d:%d" % (vnum, self.dews[vnum][0], self.dews[vnum][1]) for vnum in [d[0] for d in DEWS] + [w[0] for w in WATERS])
 			open(CFG, "w").write("%d %d %d %d|%s" % (self.hpOn, self.hp, self.spOn, self.sp, tail))
 		except Exception:
 			pass
 
 	def DewArgument(self):
-		return ",".join("%d:%d" % (vnum, FREQS[self.dews[vnum][1]][0]) for (vnum, name) in DEWS if self.dews[vnum][0])
+		parts = ["%d:0" % vnum for (vnum, name) in DEWS if self.dews[vnum][0]]
+		parts += ["%d:%d" % (vnum, WATER_SECONDS) for (vnum, name, desc) in WATERS if self.dews[vnum][0]]
+		return ",".join(parts)
 
 
 class Button(uiMobileStyle.Pressable):
@@ -222,13 +229,81 @@ class Button(uiMobileStyle.Pressable):
 		self.image = None
 
 
+VISIBLE_ROWS = 5
+
+
+ROW_STEP = 68
+
+
+class Scroller(ui.Window):
+	# AKRAVON: karakter penceresindeki bonus listesi gibi dogrudan kaydirma - listeye basip parmagi surukle; kisa dokunus = secim
+	def __init__(self, page, count, relayout, ontap):
+		ui.Window.__init__(self)
+		self.SetParent(page)
+		self.SetPosition(0, 24)
+		self.SetSize(RW, VISIBLE_ROWS * ROW_STEP)
+		KEEP.append(self)
+		self.offset = 0
+		self.count = count
+		self.relayout = relayout
+		self.ontap = ontap
+		self.dragging = False
+		self.moved = False
+		self.dragY = 0
+		self.dragOffset = 0
+		self.label = Text(page, "", RW // 2, 24 + VISIBLE_ROWS * ROW_STEP + 6, DIM, "Lato:15", "center")
+		self.Refresh()
+		self.Show()
+
+	def Visible(self, index):
+		return self.offset <= index < self.offset + VISIBLE_ROWS
+
+	def Refresh(self):
+		last = min(self.count, self.offset + VISIBLE_ROWS)
+		self.label.SetText("%d - %d / %d   (parmakla kaydır)" % (self.offset + 1, last, self.count))
+
+	def OnMouseLeftButtonDown(self):
+		self.dragging = True
+		self.moved = False
+		self.dragY = wndMgr.GetMousePosition()[1]
+		self.dragOffset = self.offset
+		return True
+
+	def OnUpdate(self):
+		if not self.dragging:
+			return
+		delta = self.dragY - wndMgr.GetMousePosition()[1]
+		if abs(delta) > 12:
+			self.moved = True
+		offset = max(0, min(max(0, self.count - VISIBLE_ROWS), self.dragOffset + int(round(delta / float(ROW_STEP)))))
+		if offset != self.offset:
+			self.offset = offset
+			self.Refresh()
+			self.relayout()
+
+	def OnMouseLeftButtonUp(self):
+		if self.dragging and not self.moved:
+			(mouseX, mouseY) = wndMgr.GetMousePosition()
+			(left, top) = self.GetGlobalPosition()
+			index = self.offset + int((mouseY - top) // ROW_STEP)
+			if 0 <= index < self.count and (mouseY - top) % ROW_STEP < 62:
+				self.ontap(index, mouseX - left)
+		self.dragging = False
+		return True
+
+	def Destroy(self):
+		self.relayout = None
+		self.ontap = None
+		self.Hide()
+
+
 class Slider(ui.Window):
 	# dokunulan yere gore %10..%90 (10'ar adim); surukleme de calisir
 	def __init__(self, parent, x, y, onChange):
 		ui.Window.__init__(self)
 		self.SetParent(parent)
 		self.SetPosition(x, y)
-		self.SetSize(318, 30)
+		self.SetSize(TRACK, 30)
 		self.onChange = onChange
 		self.dragging = False
 		self.value = 50
@@ -241,12 +316,12 @@ class Slider(ui.Window):
 		self.value = max(10, min(90, value))
 		ratio = (self.value - 10) / 80.0
 		self.fill.SetRenderingRect(0.0, 0.0, ratio - 1.0, 0.0)
-		self.knob.SetPosition(int(ratio * 296), 4)
+		self.knob.SetPosition(int(ratio * (TRACK - 22)), 4)
 
 	def __FromMouse(self):
 		(mouseX, mouseY) = wndMgr.GetMousePosition()
 		(left, top) = self.GetGlobalPosition()
-		ratio = max(0.0, min(1.0, (mouseX - left - 11) / 296.0))
+		ratio = max(0.0, min(1.0, (mouseX - left - 11) / float(TRACK - 22)))
 		value = 10 + int(round(ratio * 8)) * 10
 		if value != self.value:
 			self.SetValue(value)
@@ -278,22 +353,22 @@ class AutoHuntPanel(ui.Window):
 		self.SetPosition((wndMgr.GetScreenWidth() - W) // 2, (wndMgr.GetScreenHeight() - H) // 2)
 		self.settings = Settings()
 		self.children = []
-		self.board = Image(self, "cw_board", 0, 0)
-		Text(self, "Otomatik Av", W // 2, 16, GOLD, "Marcellus:24", "center")
-		self.close = Button(self, W - 44, 10, 36, 36)
-		Image(self.close, "close_1", 5, 5)
-		self.close.SetEvent(self.Close)
-		uiMobileStyle.CreateBar(self, uiMobileStyle.Color(96, 74, 42), SIDE, 46, 1, H - 66)
+		self.board = Image(self, "oa_board", 0, 0)
+		Text(self, "Otomatik Av", W // 2, 13, GOLD, "Marcellus:22", "center")
+		KEEP.append(uiMobileStyle.CreateBar(self, uiMobileStyle.Color(96, 74, 42), 16, 52, W - 32, 1))
+		import uiAkravonInventory
+		self.close = uiAkravonInventory.CloseButton(self, W - 46, 12, self.Close)	# kare X (diger pencerelerle ayni)
+		KEEP.append(self.close)
+		KEEP.append(uiMobileStyle.CreateBar(self, uiMobileStyle.Color(96, 74, 42), SIDE, 66, 1, H - 90))
 
 		self.tabs = []
 		for (index, name) in enumerate(TABS):
 			# AKRAVON: karakter penceresi kenar sekmesi (altin dolgu / lacivert), ok yok
-			tab = Button(self, 14, 60 + index * 52, 122, 42, "oa_tab_off")
-			tab.label = Text(tab, name, 61, 11, TEXT, "LatoBd:17", "center")
+			tab = Button(self, 14, 70 + index * 44, 122, 40, "oa_tab%d_off" % index)
 			tab.SetEvent(self.SelectTab, index)
 			self.tabs.append(tab)
 
-		self.pages = [self.__BuildHunt(), self.__BuildPotion(), self.__BuildDew()]
+		self.pages = [self.__BuildHunt(), self.__BuildPotion(), self.__BuildDew(), self.__BuildWater()]
 		self.SelectTab(0)
 		self.Refresh()
 
@@ -302,15 +377,15 @@ class AutoHuntPanel(ui.Window):
 		page = ui.Window()
 		page.SetParent(self)
 		page.AddFlag("not_pick")
-		page.SetPosition(X0, 52)
-		page.SetSize(RW, 320)
+		page.SetPosition(X0, 66)
+		page.SetSize(RW, H - 90)
 		return page
 
 	def __Row(self, page, y, title, sub, onTap):
 		row = Button(page, 0, y, RW, 50, "oa_row")
 		Text(row, title, 14, 5, TEXT, "Lato:17")
 		Text(row, sub, 14, 27, DIM, "Lato:15")
-		row.toggle = Image(row, "oa_toggle_off", RW - 60, 12)
+		row.toggle = Image(row, "oa_toggle_off", RW - 62, 12)
 		row.SetEvent(onTap)
 		return row
 
@@ -343,21 +418,64 @@ class AutoHuntPanel(ui.Window):
 
 	def __BuildDew(self):
 		page = self.__Page()
-		Text(page, "Kullanmak istediğine dokun", 0, 2, GOLD, "LatoBd:15")
+		Text(page, "İşaretli olanlar süresi bitince kendiliğinden kullanılır", 0, 2, GOLD, "LatoBd:15")
 		self.dewCards = []
+		self.dewScroll = Scroller(page, len(DEWS), self.__LayoutDews, self.__TapDew)
 		for (index, (vnum, name)) in enumerate(DEWS):
 			# AKRAVON: tek sutun satir - satira dokun = aktif / pasif, sagdaki kutu = siklik
-			y = 24 + index * 48
-			card = Button(page, 0, y, RW, 44, "oa_dew_off")
-			icon = Image(card, "icon/item/%d.tga" % vnum, 8, 6)
-			check = Image(card, "oa_check", 30, 2)
-			title = Text(card, name + " Şebnem", 50, 4, TEXT, "Lato:16")
-			state = Text(card, "", 50, 23, GREEN, "LatoBd:15")
-			card.SetEvent(self.__ToggleDew, vnum)
-			chip = Button(page, RW - 118, y + 8, 110, 28, "oa_chip")
-			chipText = Text(chip, "", 55, 5, GOLD, "Lato:15", "center")
-			chip.SetEvent(self.__NextFreq, vnum)
+			y = index * 68
+			card = Button(self.dewScroll, 0, y, RW, 62, "oa_dew_off")
+			card.AddFlag("not_pick")
+			icon = Image(card, "icon/item/%d.tga" % vnum, 12, 15)
+			check = Image(card, "oa_check", 36, 9)
+			title = Text(card, name + " Şebnem", 62, 8, TEXT, "Lato:19")
+			state = Text(card, "", 62, 34, GREEN, "LatoBd:16")
+			Text(card, "Süresi bitince yeniden kullanılır", RW - 16, 20, DIM, "Lato:16", "right")
+			chipText = None
 			self.dewCards.append((vnum, card, icon, check, title, state, chipText))
+		self.__LayoutDews()
+		return page
+
+	def __LayoutDews(self):
+		for (i, entry) in enumerate(self.dewCards):
+			card = entry[1]
+			shown = self.dewScroll.Visible(i)
+			(card.Show if shown else card.Hide)()
+			if shown:
+				y = (i - self.dewScroll.offset) * 68
+				card.SetPosition(0, y)
+
+	def __TapDew(self, index, x):
+		vnum = DEWS[index][0]
+		self.__ToggleDew(vnum)
+
+	def __TapWater(self, index, x):
+		self.__ToggleDew(WATERS[index][0])
+
+	def __LayoutWaters(self):
+		for (i, entry) in enumerate(self.waterCards):
+			card = entry[1]
+			shown = self.waterScroll.Visible(i)
+			(card.Show if shown else card.Hide)()
+			if shown:
+				card.SetPosition(0, (i - self.waterScroll.offset) * 68)
+
+	def __BuildWater(self):
+		page = self.__Page()
+		Text(page, "Kullanmak istediğine dokun  ·  etki süresi 3 dk, bitince yeniden içilir", 0, 2, GOLD, "LatoBd:15")
+		self.waterCards = []
+		self.waterScroll = Scroller(page, len(WATERS), self.__LayoutWaters, self.__TapWater)
+		for (index, (vnum, name, desc)) in enumerate(WATERS):
+			y = index * 68
+			card = Button(self.waterScroll, 0, y, RW, 62, "oa_dew_off")
+			card.AddFlag("not_pick")
+			icon = Image(card, "icon/item/%d.tga" % vnum, 12, 15)
+			check = Image(card, "oa_check", 36, 9)
+			title = Text(card, name, 62, 8, TEXT, "Lato:19")
+			state = Text(card, "", 62, 34, GREEN, "LatoBd:16")
+			Text(card, desc + "  ·  3 dk", RW - 16, 20, DIM, "Lato:16", "right")
+			self.waterCards.append((vnum, card, icon, check, title, state))
+		self.__LayoutWaters()
 		return page
 
 	# --- olaylar ---
@@ -365,8 +483,7 @@ class AutoHuntPanel(ui.Window):
 		self.tab = index
 		for (i, tab) in enumerate(self.tabs):
 			active = i == index
-			tab.SetImages("oa_tab_on" if active else "oa_tab_off")
-			tab.label.SetPackedFontColor(DARK if active else TEXT)
+			tab.SetImages("oa_tab%d_on" % i if active else "oa_tab%d_off" % i)
 		for (i, page) in enumerate(self.pages):
 			if i == index:
 				page.Show()
@@ -423,12 +540,21 @@ class AutoHuntPanel(ui.Window):
 			title.SetPackedFontColor(TEXT if on else DIM)
 			state.SetText("AKTİF" if on else "PASİF")
 			state.SetPackedFontColor(GREEN if on else RED)
-			chipText.SetText("< %s >" % FREQS[freq][1])
-			chipText.SetPackedFontColor(GOLD if on else DIM)
+		for (vnum, card, icon, check, title, state) in self.waterCards:
+			on = s.dews[vnum][0]
+			card.SetImages("oa_dew_on" if on else "oa_dew_off")
+			icon.SetDiffuseColor(*((1.0, 1.0, 1.0, 1.0) if on else (0.45, 0.45, 0.45, 0.7)))
+			if on:
+				check.Show()
+			else:
+				check.Hide()
+			title.SetPackedFontColor(TEXT if on else DIM)
+			state.SetText("AKTİF" if on else "PASİF")
+			state.SetPackedFontColor(GREEN if on else RED)
 		parts = []
 		parts.append("HP %%%d" % s.hp if s.hpOn else "HP kapalı")
 		parts.append("SP %%%d" % s.sp if s.spOn else "SP kapalı")
-		parts.append("%d şebnem" % sum(1 for v in s.dews.values() if v[0]))
+		parts.append("%d şebnem/su" % sum(1 for v in s.dews.values() if v[0]))
 		self.summary.SetText("  ·  ".join(parts))
 		running = IsRunning()
 		self.status.SetText("Oto Av çalışıyor - HUD düğmesinden durdurabilirsin" if running else "Başlatmak için ekrandaki Oto Av düğmesine bas")

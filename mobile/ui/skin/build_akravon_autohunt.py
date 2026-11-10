@@ -3,6 +3,7 @@
 import os
 import sys
 from PIL import Image, ImageDraw, ImageFilter
+import build_akravon_charwin as cw
 
 SS = 4
 GOLD = (222, 184, 110, 255)
@@ -76,19 +77,27 @@ def Build(out):
 	folder = os.path.join(out, 'ymir work', 'ui', 'akravon_legacy')
 	os.makedirs(folder, exist_ok = True)
 	images = {
-		'oa_row': RoundBox(346, 50, 5, ROW, ROW_LINE),
-		'oa_row_tall': RoundBox(346, 62, 5, ROW, ROW_LINE),
+		'oa_board': cw.Board(620, 500),
+		'oa_row': cw.Box(424, 50),
+		'oa_row_tall': cw.Box(424, 62),
 		'oa_toggle_on': Toggle(True), 'oa_toggle_off': Toggle(False),
-		'oa_start': Start(346, 56, False, False), 'oa_start_down': Start(346, 56, False, True),
-		'oa_stop': Start(346, 56, True, False), 'oa_stop_down': Start(346, 56, True, True),
+		
 		'oa_card_on': Card(106, 140, True), 'oa_card_off': Card(106, 140, False),
-		'oa_chip': RoundBox(110, 28, 5, NAVY, (96, 74, 42, 255)),
-		'oa_dew_on': RoundBox(346, 44, 6, (34, 26, 12, 235), GOLD, 2), 'oa_dew_off': RoundBox(346, 44, 6, ROW, ROW_LINE),
-		'oa_tab_on': RoundBox(122, 42, 6, GOLD_FILL, GOLD), 'oa_tab_off': RoundBox(122, 42, 6, NAVY, GOLD),
+		'oa_chip': cw.Box(134, 34),
+		'oa_dew_on': cw.Box(424, 62, cw.GOLD, (40, 30, 12, 240)), 'oa_dew_off': cw.Box(424, 62),
+		'oa_tab_on': cw.Box(122, 40), 'oa_tab_off': cw.Box(122, 40),
 		'oa_check': Check(), 'oa_knob': Knob(),
-		'oa_track': RoundBox(318, 8, 4, (40, 44, 60, 255), (40, 44, 60, 255)),
-		'oa_fill': RoundBox(318, 8, 4, GOLD_FILL, GOLD_FILL),
+		'oa_track': RoundBox(396, 8, 4, (40, 44, 60, 255), (40, 44, 60, 255)),
+		'oa_fill': RoundBox(396, 8, 4, GOLD_FILL, GOLD_FILL),
 	}
+	cw.OUT_DIR = out
+	for (i, label) in enumerate((u'AV', u'İKSİR', u'ŞEBNEM', u'SULAR')):
+		for on in (True, False):
+			skin = Image.open(os.path.join(out, 'mobile_ui', 'akravon', 'plate_gold_normal.png' if on else 'picker_row_normal.png')).convert('RGBA')
+			big = Image.new('RGBA', (122 * SS, 40 * SS), (0, 0, 0, 0))
+			big.alpha_composite(skin.resize((122 * SS, 40 * SS), Image.LANCZOS))
+			ImageDraw.Draw(big).text((61 * SS, 20 * SS), label, font = cw.Font('marcellus.ttf', 17), fill = cw.DARK if on else cw.TEXTC, anchor = 'mm')
+			images['oa_tab%d_%s' % (i, 'on' if on else 'off')] = Done(big, 122, 40)
 	for (name, im) in images.items():
 		im.save(os.path.join(folder, name + '.png'))
 	print('oto av gorselleri: %d' % len(images))

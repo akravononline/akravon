@@ -13,8 +13,9 @@ from PIL import Image, ImageDraw, ImageFont
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT_ZIP = os.path.join(HERE, '..', '..', '..', '..', '2_Oyun_Dosyalari', 'files', 'mobile', '10_root_1.zip')
 FONTS = os.path.join(HERE, '..', '..', 'data', 'fonts')
-W, H = 540, 476
-SKILL_STEP = 62
+DY = 44				# AKRAVON: ust baslik (Karakter) + ayirici cizgi
+W, H = 620, 476 + DY
+SKILL_STEP = 54
 SB = 150				# kenar cubugu genisligi
 X0 = SB + 20			# sag alan
 RW = W - 24 - X0		# sag alan genisligi
@@ -35,7 +36,7 @@ C_VALUE = (0.96, 0.94, 0.88)
 C_WHITE = (1.0, 1.0, 1.0)
 
 NAV = (u'Durum', u'Yetenekler', u'Hareketler', u'Görevler', u'Bonuslar')
-NAV_H, NAV_STEP = 42, 48	# mobil: parmakla rahat dokunma
+NAV_H, NAV_STEP = 40, 44	# mobil: parmakla rahat dokunma
 
 
 # ------------------------------------------------------------------ gorseller
@@ -78,6 +79,16 @@ def Plus(state):
 	c = 15 * SS
 	d.line([(c - 6 * SS, c), (c + 6 * SS, c)], fill = GOLD if state != 'down' else DARK, width = 2 * SS)
 	d.line([(c, c - 6 * SS), (c, c + 6 * SS)], fill = GOLD if state != 'down' else DARK, width = 2 * SS)
+	return Done(big, 30, 30)
+
+
+def Minus(state):
+	big = Canvas(30, 30)
+	d = ImageDraw.Draw(big)
+	fill = {'up': (20, 26, 44, 255), 'over': (40, 46, 70, 255), 'down': (150, 112, 56, 255)}[state]
+	d.ellipse((SS, SS, 29 * SS, 29 * SS), fill = fill, outline = GOLD, width = SS + SS // 2)
+	c = 15 * SS
+	d.line([(c - 6 * SS, c), (c + 6 * SS, c)], fill = GOLD if state != 'down' else DARK, width = 2 * SS)
 	return Done(big, 30, 30)
 
 
@@ -127,13 +138,13 @@ def Group(out, state):
 def Nav(out, active):
 	big = Canvas(122, NAV_STEP * (len(NAV) - 1) + NAV_H)
 	assets = os.path.join(out, 'mobile_ui', 'akravon')
-	font = Font('latobd.ttf', 14)
+	font = Font('marcellus.ttf', 17)
 	d = ImageDraw.Draw(big)
 	for (i, label) in enumerate(NAV):
 		on = i == active
 		skin = Image.open(os.path.join(assets, 'plate_gold_normal.png' if on else 'picker_row_normal.png')).convert('RGBA')
 		big.alpha_composite(skin.resize((122 * SS, NAV_H * SS), Image.LANCZOS), (0, i * NAV_STEP * SS))
-		d.text((61 * SS, (i * NAV_STEP + NAV_H / 2.0) * SS), label, font = font, fill = DARK if on else TEXTC, anchor = 'mm')
+		d.text((61 * SS, (i * NAV_STEP + NAV_H / 2.0) * SS), label.upper(), font = font, fill = DARK if on else TEXTC, anchor = 'mm')
 	return Done(big, 122, NAV_STEP * (len(NAV) - 1) + NAV_H)
 
 
@@ -145,25 +156,32 @@ def BuildImages(out):
 	images = {
 		'cw_face': Box(94, 94, GOLD, (20, 18, 18, 255), 6),
 		'cw_slot40': Box(40, 40, GOLD_DARK, (6, 9, 20, 240), 5),
-		'cw_skillcard': Box(CW, 56),
+		'cw_skillcard': Box(167, 56),	# eski boyut: hizli erisim penceresi (uiakravonskilllayout) 167 px'e gore olcekler
+		'cw_skillcard2': Box(CW, 50),
+		'cw_supportcard': Box(CW, 40),
 		'cw_skillring': Ring(48),
 		'cw_ring44': Ring(44),
 		'cw_bonuscard': Box(CW, 34),
 		'cw_bonusrow': Box(RW, 22, (52, 46, 34, 255), (6, 9, 20, 220), 3),
 		'cw_clear32': Image.new('RGBA', (32, 32), (0, 0, 0, 0)),
 		'cw_wide': Box(RW, 50),
-		'cw_board': Board(W, H),
+		'cw_board': Board(540, 476),	# eski boyut: oto av / hizli erisim pencereleri
+		'cw_board2': Board(W, H),
 		'cw_menu': Board(312, 180),	# AKRAVON: HUD acilir menu
 		'align_board': Board(380, 520), 'align_row': Box(344, 44), 'align_row_on': Box(344, 44, GOLD, (40, 30, 12, 240)),
 		'close_1': Close('up'), 'close_2': Close('over'), 'close_3': Close('down'),
 		'cw_card': Box(CW, 58),
+		'cw_statrow': Box(RW, 50),
+		'cw_aligncard': Box(122, 56),
+		'cw_minus_up': Minus('up'), 'cw_minus_over': Minus('over'), 'cw_minus_down': Minus('down'),
 		'cw_track': Box(RW, 14, GOLD_DARK, (4, 6, 14, 240), 7),
 		'cw_fill_exp': Fill(RW - 4, 10, (236, 198, 120), (176, 132, 62)),
 		'cw_bar': Box(RW - 34, 16, GOLD_DARK, (4, 6, 14, 240), 8),
 		'cw_fill_hp': Fill(RW - 38, 12, (230, 86, 74), (150, 34, 30)),
 		'cw_fill_sp': Fill(RW - 38, 12, (96, 150, 240), (36, 72, 160)),
 		'cw_clear': Image.new('RGBA', (122, 22), (0, 0, 0, 0)),
-		'cw_vline': Box(1, H - 48, (96, 74, 42, 255), (96, 74, 42, 255), 0),
+		'cw_vline': Box(1, H - 48 - DY, (96, 74, 42, 255), (96, 74, 42, 255), 0),
+		'cw_hline': Box(W - 32, 1, (96, 74, 42, 255), (96, 74, 42, 255), 0),
 		'cw_line': Box(CW, 1, (40, 44, 62, 255), (40, 44, 62, 255), 0),
 		'cw_plus_up': Plus('up'), 'cw_plus_over': Plus('over'), 'cw_plus_down': Plus('down'),
 	}
@@ -213,7 +231,7 @@ def Win(name, x, y, w, h, children):
 
 def TitleBar(name, title):
 	# yalniz kapat dugmesi gorunur (baslik cubugu dokusu seffaf); baslik yazisi gizli
-	return '{ "name" : "%s", "type" : "titlebar", "style" : ("attach",), "x" : %d, "y" : 14, "width" : 64, "color" : "red", "children" : (\n%s\n) },' % (
+	return '{ "name" : "%s", "type" : "titlebar", "style" : ("attach",), "x" : %d, "y" : 9, "width" : 64, "color" : "red", "children" : (\n%s\n) },' % (
 		name, W - 78, T('TitleName', 0, 0, '""', C_HEAD, 'Lato:12'))
 
 
@@ -233,31 +251,21 @@ def CharacterPage():
 		Win('SP_Label', 0, 0, 10, 10, [T('SP_Value', 0, 0, '""', C_VALUE)]),
 	]))
 
-	# derece (hizalama): ad / puan - patches/akravon_charwin.txt RefreshAlignment doldurur
-	c.append(T('Align_Title', X0, 22, '"Derece"', C_HEAD, 'Marcellus:20'))
-	c.append(I('Align_Card', X0, 48, IMG + 'cw_wide.png', [
-		T('Align_Name', 16, 11, '"-"', C_VALUE, 'Marcellus:22'),
-		T('Align_Point_Label', RW - 16, 9, '"Derece Puanı"', C_LABEL, 'Lato:14', 'right'),
-		T('Align_Value', RW - 16, 24, '"0"', C_HEAD, 'Lato:17', 'right'),
-	]))
-
 	# karakter durumu: 2x2 stat karti (buyuk dokunma alani)
 	s = [T('Character_Bar_01_Text', 0, 0, '"Karakter Durumu"', C_HEAD, 'Marcellus:20')]
 	s.append(Win('Status_Plus_Label', RW - 150, 2, 150, 18, [T('Status_Plus_Label_Text', 118, 0, '"Kalan Puan:"', C_LABEL, 'Lato:15', 'right'),
 		T('Status_Plus_Value', 150, 0, '"0"', C_HEAD, 'Lato:14', 'right')]))
 	cards = (('HTH', 'VIT', 'Can ve savunma'), ('INT', 'INT', 'Büyü ve SP'), ('STR', 'STR', 'Saldırı gücü'), ('DEX', 'DEX', 'İsabet, kaçınma'))
 	for (i, (key, label, hint)) in enumerate(cards):
-		x = (i % 2) * (CW + 12)
-		y = 26 + (i // 2) * 66
-		s.append(I('%s_Card' % key, x, y, IMG + 'cw_card.png', [
-			T('%s_Name' % key, 14, 8, '"%s"' % label, C_HEAD, 'Lato:19'),
-			T('%s_Hint' % key, 14, 32, '"%s"' % hint, C_LABEL, 'Lato:15'),
-			OldBtn('%s_Minus' % key, CW - 104, 22, 'minus'),
-			Win('%s_Label' % key, CW - 86, 0, 86, 58, [
-				T('%s_Value' % key, 26, 14, '"0"', C_VALUE, 'Marcellus:24', 'center'),
-				Btn('%s_Plus' % key, 50, 14, IMG + 'cw_plus_up.png', IMG + 'cw_plus_over.png', IMG + 'cw_plus_down.png')]),
+		y = 28 + i * 54
+		s.append(I('%s_Card' % key, 0, y, IMG + 'cw_statrow.png', [
+			T('%s_Name' % key, 16, 5, '"%s"' % label, C_HEAD, 'Marcellus:22'),
+			T('%s_Hint' % key, 16, 29, '"%s"' % hint, C_LABEL, 'Lato:16'),
+			Btn('%s_Minus' % key, RW - 138, 10, IMG + 'cw_minus_up.png', IMG + 'cw_minus_over.png', IMG + 'cw_minus_down.png'),
+			Win('%s_Label' % key, RW - 104, 0, 60, 50, [T('%s_Value' % key, 30, 11, '"0"', C_VALUE, 'Marcellus:24', 'center')]),
+			Btn('%s_Plus' % key, RW - 44, 10, IMG + 'cw_plus_up.png', IMG + 'cw_plus_over.png', IMG + 'cw_plus_down.png'),
 		]))
-	c.append(Win('Status_Standard', X0, 112, RW, 160, s))
+	c.append(Win('Status_Standard', X0, 22, RW, 250, s))
 
 	# savas degerleri
 	e = [T('Status_Extent_Label', 0, 0, '"Savaş Değerleri"', C_HEAD, 'Marcellus:20')]
@@ -265,12 +273,12 @@ def CharacterPage():
 		('MSPD', 'Hareket Hızı'), ('ASPD', 'Saldırı Hızı'), ('CSPD', 'Büyü Hızı'), ('ER', 'Savuşturma'))
 	for (i, (key, label)) in enumerate(values):
 		x = (i % 2) * (CW + 12)
-		y = 30 + (i // 2) * 27
-		e.append(Win('%s_Row' % key, x, y, CW, 26, [T('%s_Name' % key, 0, 1, '"%s"' % label, C_LABEL, 'Lato:16'),
-			T('%s_Value' % key, CW, 1, '"0"', C_VALUE, 'Lato:17', 'right'), I('%s_Line' % key, 0, 23, IMG + 'cw_line.png')]))
-	c.append(Win('Status_Extent', X0, 284, RW, 130, e))
+		y = 32 + (i // 2) * 30
+		e.append(Win('%s_Row' % key, x, y, CW, 28, [T('%s_Name' % key, 0, 1, '"%s"' % label, C_LABEL, 'Lato:17'),
+			T('%s_Value' % key, CW, 1, '"0"', C_VALUE, 'Lato:18', 'right'), I('%s_Line' % key, 0, 26, IMG + 'cw_line.png')]))
+	c.append(Win('Status_Extent', X0, 288, RW, 150, e))
 
-	return '{ "name" : "Character_Page", "type" : "window", "style" : ("attach", "not_pick",), "x" : 0, "y" : 0, "width" : %d, "height" : %d, "children" : (\n%s\n) },' % (W, H, '\n'.join(c))
+	return '{ "name" : "Character_Page", "type" : "window", "style" : ("attach", "not_pick",), "x" : 0, "y" : %d, "width" : %d, "height" : %d, "children" : (\n%s\n) },' % (DY, W, H - DY, '\n'.join(c))
 
 
 def SkillPage():
@@ -278,73 +286,90 @@ def SkillPage():
 	# yuva 1..8 = becerinin kendisi (kademe yuvalari 21../41.. yok); uicharacter yamasi mevcut kademeyi koyar
 	# kart dokulari/ad/rozet: patches/akravon_charwin.txt AkravonSkillCard
 	c = []
-	c.append(T('Skill_Title', X0, 22, '"Yetenekler"', C_HEAD, 'Marcellus:20'))
-	c.append(Win('Active_Skill_Point_Label', X0, 60, 160, 20, [T('Active_Skill_Point_Text', 0, 0, '"Kalan Puan:"', C_LABEL, 'Lato:16'),
+	c.append(Win('Active_Skill_Point_Label', X0, 28, 160, 20, [T('Active_Skill_Point_Text', 0, 0, '"Kalan Puan:"', C_LABEL, 'Lato:16'),
 		T('Active_Skill_Point_Value', 92, 0, '"0"', C_HEAD, 'Lato:17')]))
 	grp = []
 	for (i, name) in enumerate(('Skill_Group_Button_1', 'Skill_Group_Button_2')):
 		grp.append('{ "name" : "%s", "type" : "radio_button", "x" : %d, "y" : 0, "text" : "", "text_color" : 0xFFE8E2D2, '
 			'"default_image" : "%scw_group_normal.png", "over_image" : "%scw_group_over.png", "down_image" : "%scw_group_down.png" },' % (name, i * 90, IMG, IMG, IMG))
 	grp.append(T('Active_Skill_Group_Name', 0, 6, '""', C_HEAD, 'Lato:16'))
-	c.append(Win('Skill_Group_Bar', X0 + RW - 174, 54, 174, 30, grp))
+	c.append(Win('Skill_Group_Bar', X0 + RW - 174, 22, 174, 30, grp))
 
 	slots = []
 	cards = []
-	for k in range(8):
+	for k in range(6):
 		col, row = k % 2, k // 2
 		x = col * (CW + 12)
 		y = row * SKILL_STEP
-		cards.append(I('Skill_Card_%d' % k, x, y, IMG + 'cw_skillcard.png', [
-			I('Skill_Ring_%d' % k, 6, 4, IMG + 'cw_skillring.png'),
-			T('Skill_Name_%d' % k, 66, 10, '""', C_VALUE, 'Lato:15'),
-			T('Skill_Grade_%d' % k, 66, 32, '""', C_HEAD, 'Lato:16'),
+		cards.append(I('Skill_Card_%d' % k, x, y, IMG + 'cw_skillcard2.png', [
+			I('Skill_Ring_%d' % k, 6, 4, IMG + 'cw_clear32.png'),
+			T('Skill_Name_%d' % k, 58, 6, '""', C_VALUE, 'Lato:15'),
+			T('Skill_Grade_%d' % k, 58, 27, '""', C_HEAD, 'Lato:16'),
 		]))
-		# 32 px motor ikonu HD yuvarlak ikonun (48) tam altinda -> kose gorunmez, surukleme/tiklama motorda
-		slots.append('{"index":%d, "x":%d, "y":%d, "width":32, "height":32}' % (k + 1, x + 6 + 8, y + 4 + 8))
-	c.append(Win('Skill_Cards', X0, 96, RW, SKILL_STEP * 4, cards))
-	c.append('{ "name" : "Skill_Active_Slot", "type" : "slot", "x" : %d, "y" : 96, "width" : %d, "height" : %d, "image" : "%scw_clear32.png", "slot" : (%s) },' % (
-		X0, RW, SKILL_STEP * 4, IMG, ', '.join(slots)))
-	c.append(Win('Skill_HD_Layer', X0, 96, RW, SKILL_STEP * 4, ['{ "name" : "Skill_HD_%d", "type" : "expanded_image", "style" : ("not_pick",), "x" : %d, "y" : %d, "image" : "%scw_clear32.png" },' % (
-		k, (k % 2) * (CW + 12) + 6, (k // 2) * SKILL_STEP + 4, IMG) for k in range(8)]))
+		slots.append('{"index":%d, "x":%d, "y":%d, "width":44, "height":44}' % (k + 1, x + 4, y + 3))
+	c.append(Win('Skill_Cards', X0, 66, RW, SKILL_STEP * 3, cards))
+	c.append('{ "name" : "Skill_Active_Slot", "type" : "slot", "x" : %d, "y" : 66, "width" : %d, "height" : %d, "image" : "%scw_clear32.png", "slot" : (%s) },' % (
+		X0, RW, SKILL_STEP * 3, IMG, ', '.join(slots)))
+	c.append(Win('Skill_HD_Layer', X0, 66, RW, SKILL_STEP * 3, ['{ "name" : "Skill_HD_%d", "type" : "expanded_image", "style" : ("not_pick",), "x" : %d, "y" : %d, "image" : "%scw_clear32.png" },' % (
+		k, (k % 2) * (CW + 12) + 4, (k // 2) * SKILL_STEP + 3, IMG) for k in range(6)]))
 
-	# destek becerileri
-	sy = 96 + SKILL_STEP * 4 + 6
-	c.append(T('Support_Skill_Group_Name', X0, sy, '"Destek Yetenekleri"', C_HEAD, 'Marcellus:20'))
-	c.append(Win('Support_Skill_Point_Label', X0 + RW - 160, sy + 4, 160, 18, [T('Support_Skill_Point_Text', 120, 0, '"Kalan Puan:"', C_LABEL, 'Lato:15', 'right'),
-		T('Support_Skill_Point_Value', 160, 0, '"0"', C_HEAD, 'Lato:16', 'right')]))
-	# destek: yuvarlak halka + HD ikon (44 px), motor ikonu 30 px altta (patches: Support_HD_n)
-	bx = (RW - 240) // 5 + 40
-	c.append(Win('Support_Rings', X0, sy + 28, RW, 96, [I('Support_Ring_%d' % k, (k % 6) * bx - 5, (k // 6) * 46 - 5, IMG + 'cw_ring44.png') for k in range(12)]))
-	c.append('{ "name" : "Skill_ETC_Slot", "type" : "grid_table", "x" : %d, "y" : %d, "start_index" : 101, "x_count" : 6, "y_count" : 2, '
-		'"x_step" : 40, "y_step" : 40, "x_blank" : %d, "y_blank" : 6, "image" : "%scw_clear32.png" },' % (X0 + 2, sy + 30, (RW - 240) // 5, IMG))
-	c.append(Win('Support_HD_Layer', X0, sy + 28, RW, 96, ['{ "name" : "Support_HD_%d", "type" : "expanded_image", "style" : ("not_pick",), "x" : %d, "y" : %d, "image" : "%scw_clear32.png" },' % (
-		k, (k % 6) * bx - 5, (k // 6) * 46 - 5, IMG) for k in range(12)]))
+	# destek: ayri bolum, hep gorunur (sekmeden / gruptan bagimsiz)
+	sy = 66 + SKILL_STEP * 3 + 6
+	c.append(T('Support_Skill_Group_Name', X0, sy, '"Destek Yetenekleri"', C_LABEL, 'Lato:15'))
+	sup = []
+	supHd = []
+	etc = []
+	step = 58
+	for k in range(6):
+		col, row = k % 2, k // 2
+		x = col * (CW + 12)
+		y = row * step
+		sup.append(Win('Support_Card_%d' % k, x, y, CW, 54, [
+			T('Support_Name_%d' % k, 58, 6, '""', C_VALUE, 'Lato:16'),
+			T('Support_Grade_%d' % k, 58, 28, '""', C_HEAD, 'Lato:16'),
+		]))
+		supHd.append('{ "name" : "Support_HD_%d", "type" : "expanded_image", "style" : ("not_pick",), "x" : %d, "y" : %d, "image" : "%scw_clear32.png" },' % (k, x + 2, y + 3, IMG))
+		etc.append('{"index":%d, "x":%d, "y":%d, "width":44, "height":44}' % (101 + k, x + 4, y + 5))
+	c.append(Win('Support_Cards', X0, sy + 28, RW, step * 3, sup))
+	c.append('{ "name" : "Skill_ETC_Slot", "type" : "slot", "x" : %d, "y" : %d, "width" : %d, "height" : %d, "image" : "%scw_clear32.png", "slot" : (%s) },' % (
+		X0, sy + 28, RW, step * 3, IMG, ', '.join(etc)))
+	c.append(Win('Support_HD_Layer', X0, sy + 28, RW, step * 3, supHd))
+	# sayfa dugmeleri: < 1/2 >
+	c.append(Btn('Support_Prev', X0 + RW - 142, sy - 6, IMG + 'qs_lt_1.png', IMG + 'qs_lt_1.png', IMG + 'qs_lt_3.png'))
+	c.append(T('Support_Page_Text', X0 + RW - 72, sy + 1, '"1/1"', C_HEAD, 'Lato:16', 'center'))
+	c.append(Btn('Support_Next', X0 + RW - 46, sy - 6, IMG + 'qs_rt_1.png', IMG + 'qs_rt_1.png', IMG + 'qs_rt_3.png'))
+	c.append(Win('Akravon_Hidden_Skill', -4000, -4000, 10, 10, [
+		Win('Support_Skill_Point_Label', 0, 0, 10, 10, [T('Support_Skill_Point_Text', 0, 0, '""', C_LABEL, 'Lato:12'), T('Support_Skill_Point_Value', 0, 0, '"0"', C_HEAD, 'Lato:12')]),
+	]))
 
-	return '{ "name" : "Skill_Page", "type" : "window", "style" : ("attach", "not_pick",), "x" : 0, "y" : 0, "width" : %d, "height" : %d, "children" : (\n%s\n) },' % (W, H, '\n'.join(c))
+	return '{ "name" : "Skill_Page", "type" : "window", "style" : ("attach", "not_pick",), "x" : 0, "y" : %d, "width" : %d, "height" : %d, "children" : (\n%s\n) },' % (DY, W, H - DY, '\n'.join(c))
 
 
 def SideBlock():
 	# kenar cubugu ust kismi (tum bolumlerde gorunur): portre + ad (+ lonca) + ayirici + kapat
-	c = [I('Side_Line', SB, 24, IMG + 'cw_vline.png')]
-	c.append(I('Face_Slot', (SB - 94) // 2, 24, IMG + 'cw_face.png'))
-	c.append('{ "name" : "Face_Image", "type" : "expanded_image", "x" : %d, "y" : 28, "x_scale" : 2.0, "y_scale" : 2.0, "image" : "d:/ymir work/ui/game/windows/face_warrior.sub" },' % ((SB - 94) // 2 + 4))
+	c = [T('Window_Title', W // 2, 11, '"Karakter"', C_HEAD, 'Marcellus:26', 'center'), I('Header_Line', 16, 50, IMG + 'cw_hline.png'), I('Side_Line', SB, 24 + DY, IMG + 'cw_vline.png')]
+	c.append(I('Face_Slot', (SB - 94) // 2, 24 + DY, IMG + 'cw_face.png'))
+	c.append('{ "name" : "Face_Image", "type" : "expanded_image", "x" : %d, "y" : %d, "x_scale" : 2.0, "y_scale" : 2.0, "image" : "d:/ymir work/ui/game/windows/face_warrior.sub" },' % ((SB - 94) // 2 + 4, 28 + DY))
 	# ad kutusu image olmali: uicharacter SAFE_SetStringEvent / SetEvent(mouse_click) bagliyor
-	c.append(I('Character_Name_Slot', 14, 128, IMG + 'cw_clear.png', [T('Character_Name', 61, 0, '""', C_HEAD, 'Marcellus:20', 'center')]))
-	c.append(I('Guild_Name_Slot', 14, 152, IMG + 'cw_clear.png', [T('Guild_Name', 61, 0, '""', C_LABEL, 'Lato:15', 'center')]))
+	c.append(I('Character_Name_Slot', 14, 128 + DY, IMG + 'cw_clear.png', [T('Character_Name', 61, 0, '""', C_HEAD, 'Marcellus:20', 'center')]))
+	c.append(I('Guild_Name_Slot', 14, 152 + DY, IMG + 'cw_clear.png', [T('Guild_Name', 61, 0, '""', C_LABEL, 'Lato:15', 'center')]))
+	c.append(I('Align_Card', 14, 216, IMG + 'cw_aligncard.png', [
+		T('Align_Name', 10, 8, '"-"', C_VALUE, 'Marcellus:19', 'left'),
+		T('Align_Value', 10, 32, '"Puan : 0"', C_HEAD, 'Lato:14', 'left'),
+	]))
 	return '\n'.join(c)
 
 
 def EmotionPage():
 	# hareketler: tekli (1..) + karsilikli (51..) - yuva 40 px (patches/akravon_charwin.txt)
 	blank = (RW - 240) // 5
-	c = [T('Emotion_Title', X0, 22, '"Hareketler"', C_HEAD, 'Marcellus:20')]
-	c.append(T('Action_Bar_Text', X0, 58, '"Tekli Hareketler"', C_HEAD, 'Lato:16'))
-	c.append('{ "name" : "SoloEmotionSlot", "type" : "grid_table", "x" : %d, "y" : 82, "start_index" : 1, "x_count" : 6, "y_count" : 3, '
+	c = [T('Action_Bar_Text', X0, 22, '"Tekli Hareketler"', C_HEAD, 'Lato:16')]
+	c.append('{ "name" : "SoloEmotionSlot", "type" : "grid_table", "x" : %d, "y" : 46, "start_index" : 1, "x_count" : 6, "y_count" : 3, '
 		'"x_step" : 40, "y_step" : 40, "x_blank" : %d, "y_blank" : 8, "image" : "%scw_slot40.png" },' % (X0, blank, IMG))
-	c.append(T('Reaction_Bar_Text', X0, 238, '"Karşılıklı Hareketler"', C_HEAD, 'Lato:16'))
-	c.append('{ "name" : "DualEmotionSlot", "type" : "grid_table", "x" : %d, "y" : 262, "start_index" : 51, "x_count" : 6, "y_count" : 3, '
+	c.append(T('Reaction_Bar_Text', X0, 202, '"Karşılıklı Hareketler"', C_HEAD, 'Lato:16'))
+	c.append('{ "name" : "DualEmotionSlot", "type" : "grid_table", "x" : %d, "y" : 226, "start_index" : 51, "x_count" : 6, "y_count" : 3, '
 		'"x_step" : 40, "y_step" : 40, "x_blank" : %d, "y_blank" : 8, "image" : "%scw_slot40.png" },' % (X0, blank, IMG))
-	return '{ "name" : "Emoticon_Page", "type" : "window", "style" : ("attach", "not_pick",), "x" : 0, "y" : 0, "width" : %d, "height" : %d, "children" : (\n%s\n) },' % (W, H, '\n'.join(c))
+	return '{ "name" : "Emoticon_Page", "type" : "window", "style" : ("attach", "not_pick",), "x" : 0, "y" : %d, "width" : %d, "height" : %d, "children" : (\n%s\n) },' % (DY, W, H - DY, '\n'.join(c))
 
 
 def QuestPage():
@@ -361,7 +386,7 @@ def QuestPage():
 		c.append(T('Quest_Name_0%d' % i, X0 + 56, y + 9, '""', C_VALUE, 'Lato:16'))
 		c.append(T('Quest_LastTime_0%d' % i, X0 + 56, y + 30, '""', C_LABEL, 'Lato:14'))
 		c.append(T('Quest_LastCount_0%d' % i, X0 + 56, y + 46, '""', C_LABEL, 'Lato:14'))
-	return '{ "name" : "Quest_Page", "type" : "window", "style" : ("attach", "not_pick",), "x" : 0, "y" : 0, "width" : %d, "height" : %d, "children" : (\n%s\n) },' % (W, H, '\n'.join(c))
+	return '{ "name" : "Quest_Page", "type" : "window", "style" : ("attach", "not_pick",), "x" : 0, "y" : %d, "width" : %d, "height" : %d, "children" : (\n%s\n) },' % (DY, W, H - DY, '\n'.join(c))
 
 
 def TabControl():
@@ -370,7 +395,7 @@ def TabControl():
 	c.append('{ "name" : "Akravon_Nav_Bonus", "type" : "image", "x" : 0, "y" : 0, "image" : "%scw_nav_4.png" },' % IMG)
 	c += ['{ "name" : "Tab_Button_0%d", "type" : "radio_button", "x" : 0, "y" : %d, "width" : 122, "height" : %d },' % (i + 1, i * NAV_STEP, NAV_H) for i in range(5)]
 	side = SideBlock() + '\n' + TitleBar('Character_TitleBar', '')
-	return side + '\n' + '{ "name" : "TabControl", "type" : "window", "x" : 14, "y" : 180, "width" : 122, "height" : %d, "children" : (\n%s\n) },' % (NAV_STEP * (len(NAV) - 1) + NAV_H, '\n'.join(c))
+	return side + '\n' + '{ "name" : "TabControl", "type" : "window", "x" : 14, "y" : %d, "width" : 122, "height" : %d, "children" : (\n%s\n) },' % (288, NAV_STEP * (len(NAV) - 1) + NAV_H, '\n'.join(c))
 
 
 def Element(text, name):
@@ -426,7 +451,7 @@ def BuildScript(out):
 	old = '"name" : "board",\n\t\t\t"type" : "board",'
 	if text.count(old) != 1:
 		raise SystemExit('characterwindow: board bulunamadi')
-	text = text.replace(old, '"name" : "board",\n\t\t\t"type" : "expanded_image",\n\t\t\t"image" : "%scw_board.png",' % IMG, 1)
+	text = text.replace(old, '"name" : "board",\n\t\t\t"type" : "expanded_image",\n\t\t\t"image" : "%scw_board2.png",' % IMG, 1)
 	text = text.replace('"width" : 253,\n\t\t\t"height" : 361,', '"width" : %d,\n\t\t\t"height" : %d,' % (W, H), 1)
 	# kenar cubugu ayirici cizgi (board'un ilk cocugu)
 	text = text.replace('"y_scale" : %f,' % (H / 1028.0), '"y_scale" : %f,' % (H / 1028.0), 1)

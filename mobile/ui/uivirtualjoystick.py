@@ -394,14 +394,21 @@ class VirtualJoystick(ui.Window):
 		if self.knobActiveState == active:
 			return
 		self.knobActiveState = active
+		import uiAkravonHudAlpha
+		fixedAlpha = uiAkravonHudAlpha.Get("joy")
 		if self.usesMobileArt:
 			color = KNOB_ACTIVE_COLOR if active else KNOB_COLOR
+			if fixedAlpha < 0.999:	# oyuncu seffaflik secti: dokunulunca da ayni seffaflik
+				color = color[:3] + (KNOB_COLOR[3] * fixedAlpha,)
 		else:
 			color = FALLBACK_KNOB_ACTIVE_COLOR if active else FALLBACK_KNOB_COLOR
 		wndMgr.SetDiffuseColor(self.knobImage.hWnd, *color)
 		# AKRAVON: joystick bosta yari saydam, dokununca belirginlesir
 		if self.usesMobileArt and self.baseImage:
-			wndMgr.SetDiffuseColor(self.baseImage.hWnd, *(BASE_ACTIVE_COLOR if active else BASE_IDLE_COLOR))
+			baseColor = BASE_ACTIVE_COLOR if active else BASE_IDLE_COLOR
+			if fixedAlpha < 0.999:
+				baseColor = baseColor[:3] + (BASE_IDLE_COLOR[3] * fixedAlpha,)
+			wndMgr.SetDiffuseColor(self.baseImage.hWnd, *baseColor)
 
 	def __RefreshLockState(self):
 		if not self.lockIndicator:
