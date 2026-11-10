@@ -37,8 +37,8 @@ constexpr DWORD c_Name_Max_Length = 64;
 constexpr DWORD c_FileName_Max_Length = 128;
 constexpr DWORD c_Short_Name_Max_Length = 32;
 
-constexpr DWORD c_Inventory_Page_Column = 5;
-constexpr DWORD c_Inventory_Page_Row = 7;	// AKRAVON: 5x7 goz, 5 sayfa (175 yuva); sunucudaki 180 yuva duzeni bozulmaz
+constexpr DWORD c_Inventory_Page_Column = 6;
+constexpr DWORD c_Inventory_Page_Row = 6;	// AKRAVON: 6x6 goz, 5 sayfa (180 yuva = sunucudaki yuva sayisi)
 constexpr DWORD c_Inventory_Page_Size = c_Inventory_Page_Column*c_Inventory_Page_Row; // x*y
 
 #ifdef ENABLE_EXTEND_INVEN_SYSTEM

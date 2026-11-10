@@ -2224,8 +2224,8 @@ void CPythonPlayer::AutoHuntLoop()
 		if (pkInstMain->IsDead())
 			return;
 		// AKRAVON: iksir - HP/SP belirlenen yuzdenin altina dusunce envanterdeki iksir (1 sn aralik)
-		static const DWORD s_hpPotions[] = { 27001, 27002, 27003, 27007, 27051, 27110, 27111, 27112, 0 };
-		static const DWORD s_spPotions[] = { 27004, 27005, 27006, 27008, 27052, 27113, 27114, 27115, 0 };
+		static const DWORD s_hpPotions[] = { 50804, 50816, 27001, 27002, 27003, 27007, 27051, 27110, 27111, 27112, 0 };
+		static const DWORD s_spPotions[] = { 50803, 50815, 27004, 27005, 27006, 27008, 27052, 27113, 27114, 27115, 0 };
 		if (m_iAkPotionNext <= now)
 		{
 			for (int kind = 0; kind < 2; ++kind)
