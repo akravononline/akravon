@@ -135,8 +135,9 @@
 #define ENABLE_SAFEZONE_STOP_COLLISION			// Korumalı alanlarda birbirinin içinden geçme
 #define ENABLE_REFINE_RENEWAL					// Hızlı + basma
 #define ENABLE_CHAT_FLASH						// Chat Editline
-#define ENABLE_ITEM_DELETE_SYSTEM				// Toplu İtem sil
-#define ENABLE_DROP_DIALOG_EXTENDED_SYSTEM		// Yere item sil sat
+// AKRAVON: 2008-2011'de yok - toplu nesne islemleri / yere sil-sat kapali, yere atma orijinal
+//#define ENABLE_ITEM_DELETE_SYSTEM				// Toplu İtem sil
+//#define ENABLE_DROP_DIALOG_EXTENDED_SYSTEM		// Yere item sil sat
 #define ENABLE_BOSS_EFFECT_SYSTEM				// Patron efekti
 #define ENABLE_PERMA_SET						// Perma Affectler
 #define __BL_HIDE_EFFECT__						// skill buff gizleme
