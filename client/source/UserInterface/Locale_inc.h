@@ -116,7 +116,7 @@
 #define ENABLE_STATUS_UP_RENEWAL				// Hızlı Statü
 #define ENABLE_FAST_ATTACH_ITEMS_SYSTEM			// sağ tıkla ticaret
 #define ENABLE_NEW_MAX_COUNT					// eşya limit sistemi
-#define ENABLE_INSTANT_PICKUP_SYSTEM			// Hızlı item toplama
+//#define ENABLE_INSTANT_PICKUP_SYSTEM			// Hızlı item toplama
 #define ENABLE_AUTO_PICKUP_SYSTEM				// Oto İtem Toplama
 
 #define ENABLE_MOUSEWHEEL_EVENT					// Scrollbar
