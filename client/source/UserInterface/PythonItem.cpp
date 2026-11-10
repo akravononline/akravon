@@ -297,6 +297,7 @@ void CPythonItem::CreateItem(DWORD dwVirtualID, DWORD dwVirtualNumber, float x, 
 		return;
 
 	CGraphicThing* pItemModel = pItemData->GetDropModelThing();
+	TraceError("[YERITEM] vnum=%u drop=%d model=%p pos=%.0f,%.0f,%.0f", dwVirtualNumber, bDrop ? 1 : 0, (void*)pItemModel, x, y, z);	// AKRAVON: yerdeki esya gorunmuyor - gecici tani
 
 	TGroundItemInstance *	pGroundItemInstance = m_GroundItemInstancePool.Alloc();
 	pGroundItemInstance->dwVirtualNumber = dwVirtualNumber;
