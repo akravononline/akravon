@@ -17,6 +17,11 @@ STYLE_SCRIPTS = set((
 	"pickitemdialog.py",	# yigin bolme
 	"whisperdialog.py",	# fisilti
 	"guildwindow.py",	# lonca ana penceresi
+	"guildwindow_guildinfopage.py",
+	"guildwindow_guildinfopage_eu.py",
+	"declareguildwardialog.py",	# lonca savasi ilani
+	"changegradenamedialog.py",	# lonca rutbe adi
+	"guildwindow_guildskillpage.py",
 ))
 
 IMG = "d:/ymir work/ui/akravon_legacy/"
@@ -69,7 +74,7 @@ def _Children(window):
 BOARD_STEP = 24
 BOARD_MIN_H = 288
 BOARD_MAX_H = 624
-BOARD_FIXED = ((290, 558), (376, 356))	# npc dukkani
+BOARD_FIXED = ((290, 558), (376, 356), (700, 520), (720, 480), (460, 230))	# npc dukkani
 BOARD_WIDTHS = (380,)	# demirci: yukseklik 24 adimla
 
 
@@ -158,7 +163,82 @@ def _StyleTitleBar(titleBar, keep):
 			child.SetText = SetText
 
 
-def _StyleButton(button, keep):
+def _StyleQuestDialog(window):
+	# NPC gorev konusmasi: eski kalin seffaf panel yerine giris penceresindeki (uiAkravon.Frame) cerceve
+	try:
+		board = window.GetChild("board")
+		for piece in list(getattr(board, "Corners", [])) + list(getattr(board, "Lines", [])):
+			piece.Hide()
+		if getattr(board, "Base", None):
+			board.Base.Hide()
+		import uiAkravon
+		skin = BoardSkin()	# desenli lacivert doku (menu_board), hafif seffaf
+		skin.SetParent(board)
+		skin.SetPosition(2, 2)
+		skin.SetSize(max(1, board.GetWidth() - 4), max(1, board.GetHeight() - 4))
+		for key in skin.pieces:
+			skin.pieces[key][0].SetAlpha(0.93)
+		skin.Show()
+		frame = uiAkravon.Frame(True)	# altin cerceve, kose susleri, elmaslar (zemin yok)
+		frame.SetParent(board)
+		frame.SetPosition(0, 0)
+		frame.fill.Hide()
+		frame.SetSize(board.GetWidth(), board.GetHeight())
+		frame.Show()
+		board.akrFrame = frame
+		board.akrSkin = skin
+		original = board.SetSize
+
+		def SetSize(width, height):
+			original(width, height)
+			frame.SetSize(board.GetWidth(), board.GetHeight())
+			skin.SetSize(max(1, board.GetWidth() - 4), max(1, board.GetHeight() - 4))
+		board.SetSize = SetSize
+	except Exception:
+		import dbg
+		import traceback
+		dbg.TraceError("uiAkravonKit gorev cercevesi: %s" % traceback.format_exc())
+
+
+def _StylePlainPopup(window):
+	# lonca vb. "UIScript/PopupDialog.py"yi duz ScriptWindow olarak yukler: yazi ve dugme etiketi bizim stile baglanmaz -> uicommon.PopupDialog ile ayni baglama
+	try:
+		message = window.GetChild("message")
+		window.board = window.GetChild("board")
+		window.accceptButton = window.GetChild("accept")
+		import uiAkravonPopup
+		uiAkravonPopup.Style(window, 1)
+		message.SetText = lambda text: window.SetText(text)
+	except Exception:
+		import dbg
+		import traceback
+		dbg.TraceError("uiAkravonKit popup: %s" % traceback.format_exc())
+
+
+def _StyleBoardTitle(board, keep):
+	# board_with_titlebar: baslik cubugu ve cikis dugmesi kodda olusur (eleman listesinde yok) -> kare carpi + Marcellus altin baslik
+	titleBar = getattr(board, "titleBar", None)
+	name = getattr(board, "titleName", None)
+	if titleBar is None or name is None or getattr(board, "akrTitle", None):
+		return
+	titleBar.akrBoard = board
+	_StyleTitleBar(titleBar, keep)
+	text = name.GetText()
+	name.Hide()
+	label = uiMobileStyle.CreateText(board, text, board.GetWidth() // 2, 13, GOLD, "Marcellus:22", "center")
+	board.akrTitle = label
+	keep.append(label)
+
+	def SetTitleName(newText):
+		label.SetText(newText)
+
+	def SetTitleColor(color):
+		pass
+	board.SetTitleName = SetTitleName
+	board.SetTitleColor = SetTitleColor
+
+
+def _StyleButton(button, keep, ownSkin = False):
 	try:
 		text = button.GetText()
 	except Exception:
@@ -171,7 +251,7 @@ def _StyleButton(button, keep):
 		return
 	if getattr(button, "ButtonText", None):
 		button.ButtonText.Hide()
-	if height < 40:	# eski kucuk dugme: depo dugmesi gorseli ustune
+	if height < 40 and not ownSkin:	# eski kucuk dugme: depo dugmesi gorseli ustune (kendi gorselli dugmelerde yok)
 		skin = ui.ExpandedImageBox()
 		skin.SetParent(button)
 		skin.AddFlag("not_pick")
@@ -181,7 +261,8 @@ def _StyleButton(button, keep):
 		skin.Show()
 		keep.append(skin)
 	size = 19 if height >= 40 else max(12, min(19, int(height * 0.62)))
-	label = uiMobileStyle.CreateText(button, uiMobileStyle.TrUpper(text), width // 2, max(0, (height - size) // 2 - 1), TEXT, "Marcellus:%d" % size, "center")
+	color = GOLD if getattr(button, "akrName", "") in GOLD_LABEL_BUTTONS else TEXT
+	label = uiMobileStyle.CreateText(button, uiMobileStyle.TrUpper(text), width // 2, max(0, (height - size) // 2 - 1), color, "Marcellus:%d" % size, "center")
 	keep.append(label)
 
 	def SetText(newText, height = 4):
@@ -189,8 +270,10 @@ def _StyleButton(button, keep):
 	button.SetText = SetText
 
 
-DIVIDER_Y = {"shopdialog.py" : 51, "refinedialog.py" : 58}
-DIVIDER_SCRIPTS = set(("shopdialog.py", "refinedialog.py"))	# envanter gibi baslik alti cizgi
+GOLD_LABEL_BUTTONS = set(("UploadGuildMarkButton", "UploadGuildSymbolButton"))
+OWN_SKIN_SCRIPTS = set(("guildwindow_guildinfopage.py", "guildwindow_guildinfopage_eu.py", "declareguildwardialog.py", "guildwindow.py", "changegradenamedialog.py", "guildwindow_guildskillpage.py"))	# dugmeler kendi gorselini tasir
+DIVIDER_Y = {"shopdialog.py" : 51, "refinedialog.py" : 58, "guildwindow.py" : 52, "declareguildwardialog.py" : 52, "changegradenamedialog.py" : 52}
+DIVIDER_SCRIPTS = set(("shopdialog.py", "refinedialog.py", "guildwindow.py", "declareguildwardialog.py", "changegradenamedialog.py"))	# envanter gibi baslik alti cizgi
 
 
 def _ShopAfter(window):
@@ -376,6 +459,11 @@ def StyleWindow(window, name = ""):
 	if keep is None:
 		keep = []
 		window.akrKitKeep = keep
+	for (key, element) in getattr(window, "ElementDictionary", {}).items():
+		try:
+			element.akrName = key
+		except Exception:
+			pass
 	elements = list(getattr(window, "ElementDictionary", {}).values())
 	mainBoard = None
 	for element in elements:
@@ -388,6 +476,9 @@ def StyleWindow(window, name = ""):
 		mainBoard.akrDivider = divider
 		keep.append(divider)
 	for element in elements:
+		if isinstance(element, ui.BoardWithTitleBar):
+			_StyleBoardTitle(element, keep)
+	for element in elements:
 		if isinstance(element, ui.TitleBar):
 			element.akrBoard = mainBoard
 			_StyleTitleBar(element, keep)
@@ -396,7 +487,7 @@ def StyleWindow(window, name = ""):
 		after(window)
 	for element in elements:
 		if isinstance(element, ui.Button) and not isinstance(element, ui.TitleBar):
-			_StyleButton(element, keep)
+			_StyleButton(element, keep, name in OWN_SKIN_SCRIPTS)
 
 
 def Install():
@@ -408,6 +499,10 @@ def Install():
 	def LoadScriptFile(self, window, FileName):
 		result = original(self, window, FileName)
 		name = FileName.replace("\\", "/").split("/")[-1].lower()
+		if name == "questdialog.py":
+			_StyleQuestDialog(window)
+		if name == "popupdialog.py" and type(window) is ui.ScriptWindow:
+			_StylePlainPopup(window)
 		if name in STYLE_SCRIPTS:
 			try:
 				StyleWindow(window, name)

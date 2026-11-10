@@ -101,7 +101,7 @@ async def Main(arguments):
 				await device.Put(DEVICE_MOBILE + '/' + name, Convert(name))
 		elif flag == '--orijinal':
 			for name in sorted(os.listdir(ORIJINAL)):
-				sub = SUBFOLDER.get(name)
+				sub = SUBFOLDER.get(name) or ('uiscript' if name.startswith(('guildwindow', 'declareguildwardialog', 'changegradenamedialog')) else None)
 				await device.Put(DEVICE_MOBILE + ('/' + sub if sub else '') + '/' + name, open(os.path.join(ORIJINAL, name), 'rb').read())
 		elif flag == '--gorsel':
 			await PushTree(device, GORSEL, DEVICE_MOBILE)

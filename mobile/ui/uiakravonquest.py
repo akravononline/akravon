@@ -22,7 +22,7 @@ BOARD_PAD = 16
 TITLE_HEIGHT = 54
 ROW_HEIGHT = 62
 ROW_GAP = 6
-MAX_ROWS = 6
+MAX_ROWS = 4
 SCROLL_STEP = 2
 SCROLL_W = 44
 TITLE_TEXT = "Görevler"
@@ -155,6 +155,72 @@ class ArrowButton(uiMobileStyle.Pressable):
 		self.image = None
 
 
+class DragCatcher(ui.Window):
+	# liste alani: parmagi surukle = kaydir; kisa dokunus = o satiri ac
+	def __init__(self, board, x, y, width, height):
+		ui.Window.__init__(self, "UI")
+		self.SetParent(board)
+		self.SetPosition(x, y)
+		self.SetSize(width, height)
+		self.board = board
+		self.dragging = False
+		self.moved = False
+		self.dragY = 0
+		self.dragOffset = 0
+		self.touchedRow = None
+		self.Show()
+
+	def __del__(self):
+		ui.Window.__del__(self)
+
+	def __RowAt(self):
+		import wndMgr
+		(mouseX, mouseY) = wndMgr.GetMousePosition()
+		(left, top) = self.GetGlobalPosition()
+		index = int((mouseY - top) // (ROW_HEIGHT + ROW_GAP))
+		if 0 <= index < MAX_ROWS:
+			return index
+		return None
+
+	def OnMouseLeftButtonDown(self):
+		import wndMgr
+		self.dragging = True
+		self.moved = False
+		self.dragY = wndMgr.GetMousePosition()[1]
+		self.dragOffset = self.board.offset
+		self.touchedRow = self.__RowAt()
+		if self.touchedRow is not None:
+			self.board.rows[self.touchedRow].pressed = True
+			self.board.rows[self.touchedRow].RefreshVisual()
+		return True
+
+	def OnUpdate(self):
+		if not self.dragging:
+			return
+		import wndMgr
+		delta = self.dragY - wndMgr.GetMousePosition()[1]
+		if abs(delta) > 14:
+			self.moved = True
+			if self.touchedRow is not None:
+				self.board.rows[self.touchedRow].pressed = False
+				self.board.rows[self.touchedRow].RefreshVisual()
+				self.touchedRow = None
+		offset = self.dragOffset + int(round(delta / float(ROW_HEIGHT + ROW_GAP)))
+		if offset != self.board.offset:
+			self.board.offset = offset
+			self.board.Layout()
+
+	def OnMouseLeftButtonUp(self):
+		if self.touchedRow is not None:
+			self.board.rows[self.touchedRow].pressed = False
+			self.board.rows[self.touchedRow].RefreshVisual()
+		if self.dragging and not self.moved and self.touchedRow is not None:
+			self.board.OnRowTap(self.touchedRow)
+		self.dragging = False
+		self.touchedRow = None
+		return True
+
+
 class QuestBoard(ui.Window):
 	def __init__(self, owner):
 		ui.Window.__init__(self, "UI")
@@ -180,18 +246,16 @@ class QuestBoard(ui.Window):
 			row.SetPosition(BOARD_PAD, TITLE_HEIGHT + 12 + index * (ROW_HEIGHT + ROW_GAP))
 			row.SetEvent(ui.__mem_func__(self.__OnRow), index)
 			self.rows.append(row)
-		scrollX = BOARD_WIDTH - BOARD_PAD - SCROLL_W
-		self.upButton = ArrowButton(self, scrollX, TITLE_HEIGHT + 12, "qs_up", ui.__mem_func__(self.ScrollUp))
-		self.downButton = ArrowButton(self, scrollX, TITLE_HEIGHT + 12 + self.listHeight - SCROLL_W, "qs_dn", ui.__mem_func__(self.ScrollDown))
-		trackTop = TITLE_HEIGHT + 12 + SCROLL_W + 6
-		self.trackHeight = self.listHeight - (SCROLL_W + 6) * 2
-		self.track = uiMobileStyle.CreateBar(self, uiMobileStyle.Color(10, 16, 32, 220), scrollX + SCROLL_W // 2 - 3, trackTop, 6, self.trackHeight)
-		self.thumb = uiMobileStyle.CreateBar(self, uiMobileStyle.Color(176, 140, 74, 255), scrollX + SCROLL_W // 2 - 3, trackTop, 6, 20)
-		self.trackTop = trackTop
+		navTop = TITLE_HEIGHT + 12 + self.listHeight + 8
+		self.upButton = ArrowButton(self, BOARD_WIDTH // 2 - 120, navTop, "qs_up", ui.__mem_func__(self.ScrollUp))
+		self.downButton = ArrowButton(self, BOARD_WIDTH // 2 + 76, navTop, "qs_dn", ui.__mem_func__(self.ScrollDown))
+		self.track = None
+		self.thumb = None
+		self.catcher = DragCatcher(self, BOARD_PAD, TITLE_HEIGHT + 12, BOARD_WIDTH - BOARD_PAD * 2, self.listHeight)
 		self.counter = uiMobileStyle.CreateText(self, "", BOARD_WIDTH // 2, 0, uiAkravon.HINT_COLOR, INFO_FONT, "center")
-		self.SetSize(BOARD_WIDTH, TITLE_HEIGHT + 12 + self.listHeight + BOARD_PAD + 18)
-		self.board.SetSize(BOARD_WIDTH, TITLE_HEIGHT + 12 + self.listHeight + BOARD_PAD + 18)
-		self.counter.SetPosition(BOARD_WIDTH // 2, TITLE_HEIGHT + 12 + self.listHeight + 6)
+		self.SetSize(BOARD_WIDTH, navTop + SCROLL_W + BOARD_PAD)
+		self.board.SetSize(BOARD_WIDTH, navTop + SCROLL_W + BOARD_PAD)
+		self.counter.SetPosition(BOARD_WIDTH // 2, navTop + 12)
 		self.Hide()
 
 	def __del__(self):
@@ -232,18 +296,13 @@ class QuestBoard(ui.Window):
 		scrollable = count > MAX_ROWS
 		fullWidth = BOARD_WIDTH - BOARD_PAD * 2
 		for row in self.rows:
-			row.SetWidth(fullWidth - SCROLL_W - 10 if scrollable else fullWidth)
-		for widget in (self.upButton, self.downButton, self.track, self.thumb):
+			row.SetWidth(fullWidth)
+		for widget in (self.upButton, self.downButton):
 			if scrollable:
 				widget.Show()
 			else:
 				widget.Hide()
-		if scrollable:
-			thumbHeight = max(24, int(self.trackHeight * MAX_ROWS / float(count)))
-			span = self.trackHeight - thumbHeight
-			maxOffset = count - MAX_ROWS
-			self.thumb.SetSize(6, thumbHeight)
-			self.thumb.SetPosition(self.thumb.GetLocalPosition()[0], self.trackTop + int(span * self.offset / float(maxOffset)))
+		self.catcher.SetTop()
 		if count:
 			self.empty.Hide()
 			first = self.offset + 1
@@ -252,6 +311,9 @@ class QuestBoard(ui.Window):
 		else:
 			self.empty.Show()
 			self.counter.SetText("")
+
+	def OnRowTap(self, index):
+		self.__OnRow(index)
 
 	def __OnRow(self, index):
 		position = self.offset + index

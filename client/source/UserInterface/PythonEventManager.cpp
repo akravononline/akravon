@@ -13,7 +13,7 @@
 #include "PythonMiniMap.h"
 
 const LONG c_lNormal_Waiting_Time = 5;
-const int c_fLine_Temp = 16;
+const int c_fLine_Temp = 24;	// AKRAVON: gorev metni satir araligi (mobil, buyuk yazi)
 
 void ShowArgument(script::TArgList & rArgumentList)
 {
@@ -79,7 +79,7 @@ void CPythonEventManager::__InitEventSet(TEventSet& rEventSet)
 	rEventSet.isLock = false;
 	rEventSet.lLastDelayTime = 0;
 	rEventSet.iCurrentLetter = 0;
-	rEventSet.CurrentColor = D3DXCOLOR(1, 1, 1, 1);
+	rEventSet.CurrentColor = D3DXCOLOR(0.98f, 0.94f, 0.86f, 1);
 	rEventSet.strCurrentLine = "";
 
 	rEventSet.pCurrentTextLine = NULL;
@@ -1104,7 +1104,9 @@ void CPythonEventManager::__InsertLine(TEventSet& rEventSet, BOOL isCenter, int 
 
 	// DEFAULT_FONT
 	//CGraphicText * pText = (CGraphicText*)CResourceManager::Instance().GetTypeResourcePointer(g_strDefaultFontName.c_str());
-	CGraphicText* pkDefaultFont = static_cast<CGraphicText*>(DefaultFont_GetResource());
+	CGraphicText* pkDefaultFont = static_cast<CGraphicText*>(CResourceManager::Instance().GetTypeResourcePointer("Lato:18"));	// AKRAVON: gorev metni Lato
+	if (!pkDefaultFont)
+		pkDefaultFont = static_cast<CGraphicText*>(DefaultFont_GetResource());
 	if (!pkDefaultFont)
 	{
 		TraceError("CPythonEventManager::InsertLine - CANNOT_FIND_DEFAULT_FONT");
@@ -1121,7 +1123,7 @@ void CPythonEventManager::__InsertLine(TEventSet& rEventSet, BOOL isCenter, int 
 	rEventSet.pCurrentTextLine->SetTextPointer(pkDefaultFont);
 	// END_OF_DEFAULT_FONT
 
-	rEventSet.pCurrentTextLine->SetColor(1.0f, 1.0f, 1.0f);
+	rEventSet.pCurrentTextLine->SetColor(0.98f, 0.94f, 0.86f);	// AKRAVON: krem
 	rEventSet.pCurrentTextLine->SetValue("");
 
 	if (rEventSet.isTextCenterMode || isCenter)
