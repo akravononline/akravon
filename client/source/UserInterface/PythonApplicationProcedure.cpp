@@ -79,8 +79,14 @@ void CPythonApplication::__MinimizeFullScreenWindow(HWND hWnd, DWORD dwWidth, DW
 
 LRESULT CPythonApplication::WindowProcedure(HWND hWnd, UINT uiMsg, WPARAM wParam, LPARAM lParam)
 {
+#ifdef CYNEX_MOBILE
+	// AKRAVON: parmakla cift dokunus - 300 ms / 5 px fare icin; parmak titremesi ve hizi icin genis (esyayi cift dokunarak kullanma)
+	const int c_DoubleClickTime = 480;
+	const int c_DoubleClickBox = 28;
+#else
 	const int c_DoubleClickTime = 300;
 	const int c_DoubleClickBox = 5;
+#endif
 	static int s_xDownPosition = 0;
 	static int s_yDownPosition = 0;
 
