@@ -438,7 +438,7 @@ bool CPythonEventManager::ProcessEventSet(TEventSet * pEventSet)
 				pEventSet->CurrentColor.a = 1.0f;
 
 				// AKRAVON: sunucu color256(255,230,186) -> [COLOR r;1|g;0.902|b;0.729] (0..1). Ilk satirda ise ortali gorev basligi
-				if (!pEventSet->isTitleLine && pEventSet->ScriptTextLineList.empty() && pEventSet->strCurrentLine.empty()
+				if (!pEventSet->isTitleLine && pEventSet->iyLocal == 0 && pEventSet->strCurrentLine.empty()
 					&& fabs(pEventSet->CurrentColor.r - 1.0f) < 0.01f
 					&& fabs(pEventSet->CurrentColor.g - 0.902f) < 0.01f
 					&& fabs(pEventSet->CurrentColor.b - 0.729f) < 0.01f
@@ -472,7 +472,7 @@ bool CPythonEventManager::ProcessEventSet(TEventSet * pEventSet)
 				pEventSet->CurrentColor.a = 1.0f;
 
 				// AKRAVON: say_title() ciktisi (255,230,186) ilk satirsa -> ortali gorev basligi
-				if (!pEventSet->isTitleLine && pEventSet->ScriptTextLineList.empty() && pEventSet->strCurrentLine.empty()
+				if (!pEventSet->isTitleLine && pEventSet->iyLocal == 0 && pEventSet->strCurrentLine.empty()
 					&& atoi(GetArgument("r", ScriptCommand.argList)) == 255
 					&& atoi(GetArgument("g", ScriptCommand.argList)) == 230
 					&& atoi(GetArgument("b", ScriptCommand.argList)) == 186
