@@ -140,6 +140,7 @@ class CPythonEventManager : public CSingleton<CPythonEventManager>
 			int nAnswer;
 
 			bool isTextCenterMode;
+			bool isTitleLine;	// AKRAVON: gorev basligi satiri (ortali, ayiriciyla)
 			bool isWaitFlag;
 			#ifdef ENABLE_NEW_EVENT_STRUCT
 			int iTotalLineCount{0};

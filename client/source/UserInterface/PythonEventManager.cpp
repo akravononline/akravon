@@ -99,6 +99,7 @@ void CPythonEventManager::__InitEventSet(TEventSet& rEventSet)
 	rEventSet.iAdjustLine = 0;
 
 	rEventSet.isTextCenterMode = false;
+	rEventSet.isTitleLine = false;
 	rEventSet.isWaitFlag = false;
 
 	__InsertLine(rEventSet);
@@ -454,6 +455,21 @@ bool CPythonEventManager::ProcessEventSet(TEventSet * pEventSet)
 				pEventSet->CurrentColor.g = float(atof(GetArgument("g", ScriptCommand.argList)) / 255.0f);
 				pEventSet->CurrentColor.b = float(atof(GetArgument("b", ScriptCommand.argList)) / 255.0f);
 				pEventSet->CurrentColor.a = 1.0f;
+
+				// AKRAVON: say_title() ciktisi (255,230,186) ilk satirsa -> ortali gorev basligi
+				if (!pEventSet->isTitleLine && pEventSet->ScriptTextLineList.empty() && pEventSet->strCurrentLine.empty()
+					&& atoi(GetArgument("r", ScriptCommand.argList)) == 255
+					&& atoi(GetArgument("g", ScriptCommand.argList)) == 230
+					&& atoi(GetArgument("b", ScriptCommand.argList)) == 186
+					&& pEventSet->pCurrentTextLine)
+				{
+					pEventSet->isTitleLine = true;
+					CGraphicText* pkTitleFont = static_cast<CGraphicText*>(CResourceManager::Instance().GetTypeResourcePointer("Marcellus:22"));
+					if (pkTitleFont)
+						pEventSet->pCurrentTextLine->SetTextPointer(pkTitleFont);
+					pEventSet->pCurrentTextLine->SetHorizonalAlign(CGraphicTextInstance::HORIZONTAL_ALIGN_CENTER);
+					PyCallClassMemberFunc(pEventSet->poEventHandler, "OnQuestTitleLine", Py_BuildValue("()"));
+				}
 			}
 			else
 			{
@@ -1100,6 +1116,11 @@ void CPythonEventManager::__InsertLine(TEventSet& rEventSet, BOOL isCenter, int 
 		kLine.pInstance = rEventSet.pCurrentTextLine;
 		rEventSet.ScriptTextLineList.push_back(kLine);
 		__AddSpace(rEventSet, c_fLine_Temp);
+		if (rEventSet.isTitleLine)
+		{
+			rEventSet.isTitleLine = false;
+			__AddSpace(rEventSet, 16);	// AKRAVON: baslik ile ayirici/metin arasi bosluk
+		}
 	}
 
 	// DEFAULT_FONT
