@@ -177,6 +177,21 @@ void CPythonTextTail::UpdateTextTail(TTextTail * pTextTail)
 	}
 }
 
+static const char * c_szEmpireFlagFiles[4] = { NULL, "d:/ymir work/ui/intro/empire/empireflag_a.sub", "d:/ymir work/ui/intro/empire/empireflag_b.sub", "d:/ymir work/ui/intro/empire/empireflag_c.sub" };
+static const float c_fEmpireFlagHeight = 22.0f;	// ekranda bayrak yuksekligi (px)
+
+static CGraphicImageInstance * MakeEmpireFlagInstance(int iEmpire)
+{
+	if (iEmpire < 1 || iEmpire > 3)
+		return NULL;
+	CGraphicImage * pImage = dynamic_cast<CGraphicImage *>(CResourceManager::Instance().GetResourcePointer(c_szEmpireFlagFiles[iEmpire]));
+	if (!pImage)
+		return NULL;
+	CGraphicImageInstance * pInstance = CGraphicImageInstance::New();
+	pInstance->SetImagePointer(pImage);
+	return pInstance;
+}
+
 void CPythonTextTail::ArrangeTextTail()
 {
 	TTextTailList::iterator itor;
@@ -327,6 +342,35 @@ void CPythonTextTail::ArrangeTextTail()
 		pTextTail->pTextInstance->SetColor(pTextTail->Color.r, pTextTail->Color.g, pTextTail->Color.b);
 		pTextTail->pTextInstance->SetPosition(pTextTail->x + fxAdd, pTextTail->y, pTextTail->z);
 		pTextTail->pTextInstance->Update();
+
+		// AKRAVON: diger krallikta oyuncuda ismin soluna krallik bayragi (kendi krallik: gosterilmez)
+		pTextTail->bEmpireShow = false;
+		if (pTextTail->pEmpireFlag)
+		{
+			CInstanceBase * pMainInstance = CPythonCharacterManager::Instance().GetMainInstancePtr();
+			if (pMainInstance && pMainInstance->GetEmpireID() != (DWORD)pTextTail->iEmpire)
+			{
+				float fScale = c_fEmpireFlagHeight / (float)(pTextTail->pEmpireFlag->GetHeight() > 0 ? pTextTail->pEmpireFlag->GetHeight() : 1);
+				float fWidth = pTextTail->pEmpireFlag->GetWidth() * fScale;
+				float fLeft = pTextTail->x + fxAdd - iNameWidth / 2.0f - fWidth - 8.0f;
+				if (pTextTail->pTitleTextInstance)
+				{
+					int iTitleWidth, iTitleHeight;
+					pTextTail->pTitleTextInstance->GetTextSize(&iTitleWidth, &iTitleHeight);
+					fLeft -= iTitleWidth + 4.0f;
+				}
+				if (pTextTail->pLevelTextInstance)
+				{
+					int iLevelWidth, iLevelHeight;
+					pTextTail->pLevelTextInstance->GetTextSize(&iLevelWidth, &iLevelHeight);
+					fLeft -= iLevelWidth + 4.0f;
+				}
+				pTextTail->fEmpireScale = fScale;
+				pTextTail->fEmpireX = fLeft;
+				pTextTail->fEmpireY = pTextTail->y - iNameHeight / 2.0f - c_fEmpireFlagHeight / 2.0f;
+				pTextTail->bEmpireShow = true;
+			}
+		}
 	}
 #ifdef ENABLE_EXYGO_FPS_BOOST
 		);
@@ -381,6 +425,24 @@ void CPythonTextTail::Render()
 	{
 		TTextTail * pTextTail = *itor;
 		pTextTail->pTextInstance->Render();
+		if (pTextTail->bEmpireShow && pTextTail->pEmpireFlag && pTextTail->pEmpireGlow)
+		{
+			// nefes alan renkli isilti (bayragin arkasinda, biraz buyuk) + bayragin kendisi
+			float fPulse = 0.5f + 0.5f * sinf(CTimer::Instance().GetCurrentMillisecond() * 0.0050f);
+			static const float c_afGlowColor[4][3] = { {1.0f, 1.0f, 1.0f}, {1.0f, 0.30f, 0.25f}, {1.0f, 0.85f, 0.25f}, {0.35f, 0.60f, 1.0f} };
+			const float * c_pfColor = c_afGlowColor[pTextTail->iEmpire];
+			float fGlowScale = pTextTail->fEmpireScale * 1.55f;
+			float fGlowW = pTextTail->pEmpireGlow->GetWidth() * (fGlowScale - pTextTail->fEmpireScale) * 0.5f;
+			float fGlowH = pTextTail->pEmpireGlow->GetHeight() * (fGlowScale - pTextTail->fEmpireScale) * 0.5f;
+			pTextTail->pEmpireGlow->SetScale(fGlowScale, fGlowScale);
+			pTextTail->pEmpireGlow->SetPosition(pTextTail->fEmpireX - fGlowW, pTextTail->fEmpireY - fGlowH);
+			pTextTail->pEmpireGlow->SetDiffuseColor(c_pfColor[0], c_pfColor[1], c_pfColor[2], 0.18f + 0.40f * fPulse);
+			pTextTail->pEmpireGlow->Render();
+			pTextTail->pEmpireFlag->SetScale(pTextTail->fEmpireScale, pTextTail->fEmpireScale);
+			pTextTail->pEmpireFlag->SetPosition(pTextTail->fEmpireX, pTextTail->fEmpireY);
+			pTextTail->pEmpireFlag->SetDiffuseColor(1.0f, 1.0f, 1.0f, 0.82f + 0.18f * fPulse);
+			pTextTail->pEmpireFlag->Render();
+		}
 		if (pTextTail->pMarkInstance && pTextTail->pGuildNameTextInstance)
 		{
 			pTextTail->pMarkInstance->Render();
@@ -624,6 +686,13 @@ void CPythonTextTail::RegisterCharacterTextTail(DWORD dwGuildID, DWORD dwVirtual
 	pTextTail->pGuildNameTextInstance=NULL;
 	pTextTail->pTitleTextInstance=NULL;
 	pTextTail->pLevelTextInstance=NULL;
+
+	if (pCharacterInstance->IsPC())
+	{
+		pTextTail->iEmpire = (int)pCharacterInstance->GetEmpireID();
+		pTextTail->pEmpireFlag = MakeEmpireFlagInstance(pTextTail->iEmpire);
+		pTextTail->pEmpireGlow = MakeEmpireFlagInstance(pTextTail->iEmpire);
+	}
 
 	if (0 != dwGuildID)
 	{
@@ -1027,6 +1096,16 @@ void CPythonTextTail::DeleteTextTail(TTextTail * pTextTail)
 	{
 		CGraphicMarkInstance::Delete(pTextTail->pMarkInstance);
 		pTextTail->pMarkInstance = NULL;
+	}
+	if (pTextTail->pEmpireFlag)
+	{
+		CGraphicImageInstance::Delete(pTextTail->pEmpireFlag);
+		pTextTail->pEmpireFlag = NULL;
+	}
+	if (pTextTail->pEmpireGlow)
+	{
+		CGraphicImageInstance::Delete(pTextTail->pEmpireGlow);
+		pTextTail->pEmpireGlow = NULL;
 	}
 	if (pTextTail->pGuildNameTextInstance)
 	{

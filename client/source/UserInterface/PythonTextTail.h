@@ -39,7 +39,14 @@ class CPythonTextTail : public CSingleton<CPythonTextTail>
 			bool  bRender;
 #endif
 
-			STextTail() {}
+			// AKRAVON: isim yaninda diger krallik bayragi ikonu (isiltili, nefes alan)
+			CGraphicImageInstance *			pEmpireFlag;
+			CGraphicImageInstance *			pEmpireGlow;
+			int								iEmpire;
+			bool							bEmpireShow;
+			float							fEmpireX, fEmpireY, fEmpireScale;
+
+			STextTail() : pEmpireFlag(NULL), pEmpireGlow(NULL), iEmpire(0), bEmpireShow(false), fEmpireX(0.0f), fEmpireY(0.0f), fEmpireScale(1.0f) {}
 			virtual ~STextTail() {}
 		} TTextTail;
 
