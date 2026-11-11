@@ -180,11 +180,11 @@ void CPythonTextTail::UpdateTextTail(TTextTail * pTextTail)
 static const char * c_szEmpireFlagFiles[4] = { NULL, "d:/ymir work/ui/intro/empire/empireflag_a.sub", "d:/ymir work/ui/intro/empire/empireflag_b.sub", "d:/ymir work/ui/intro/empire/empireflag_c.sub" };
 static const float c_fEmpireFlagHeight = 22.0f;	// ekranda bayrak yuksekligi (px)
 
-static CGraphicImageInstance * MakeEmpireFlagInstance(int iEmpire)
+static CGraphicImageInstance * MakeEmpireFlagInstance(int iEmpire, bool bGlow = false)
 {
 	if (iEmpire < 1 || iEmpire > 3)
 		return NULL;
-	CGraphicImage * pImage = dynamic_cast<CGraphicImage *>(CResourceManager::Instance().GetResourcePointer(c_szEmpireFlagFiles[iEmpire]));
+	CGraphicImage * pImage = dynamic_cast<CGraphicImage *>(CResourceManager::Instance().GetResourcePointer(bGlow ? "d:/ymir work/ui/akravon_legacy/empire_glow.png" : c_szEmpireFlagFiles[iEmpire]));
 	if (!pImage)
 		return NULL;
 	CGraphicImageInstance * pInstance = CGraphicImageInstance::New();
@@ -431,12 +431,13 @@ void CPythonTextTail::Render()
 			float fPulse = 0.5f + 0.5f * sinf(CTimer::Instance().GetCurrentMillisecond() * 0.0050f);
 			static const float c_afGlowColor[4][3] = { {1.0f, 1.0f, 1.0f}, {1.0f, 0.30f, 0.25f}, {1.0f, 0.85f, 0.25f}, {0.35f, 0.60f, 1.0f} };
 			const float * c_pfColor = c_afGlowColor[pTextTail->iEmpire];
-			float fGlowScale = pTextTail->fEmpireScale * 1.55f;
-			float fGlowW = pTextTail->pEmpireGlow->GetWidth() * (fGlowScale - pTextTail->fEmpireScale) * 0.5f;
-			float fGlowH = pTextTail->pEmpireGlow->GetHeight() * (fGlowScale - pTextTail->fEmpireScale) * 0.5f;
+			float fFlagW = pTextTail->pEmpireFlag->GetWidth() * pTextTail->fEmpireScale;
+			float fFlagH = pTextTail->pEmpireFlag->GetHeight() * pTextTail->fEmpireScale;
+			float fGlowSize = fFlagW * 2.3f;
+			float fGlowScale = fGlowSize / (float)(pTextTail->pEmpireGlow->GetWidth() > 0 ? pTextTail->pEmpireGlow->GetWidth() : 1);
 			pTextTail->pEmpireGlow->SetScale(fGlowScale, fGlowScale);
-			pTextTail->pEmpireGlow->SetPosition(pTextTail->fEmpireX - fGlowW, pTextTail->fEmpireY - fGlowH);
-			pTextTail->pEmpireGlow->SetDiffuseColor(c_pfColor[0], c_pfColor[1], c_pfColor[2], 0.18f + 0.40f * fPulse);
+			pTextTail->pEmpireGlow->SetPosition(pTextTail->fEmpireX + fFlagW * 0.5f - fGlowSize * 0.5f, pTextTail->fEmpireY + fFlagH * 0.5f - fGlowSize * 0.5f);
+			pTextTail->pEmpireGlow->SetDiffuseColor(c_pfColor[0], c_pfColor[1], c_pfColor[2], 0.30f + 0.55f * fPulse);
 			pTextTail->pEmpireGlow->Render();
 			pTextTail->pEmpireFlag->SetScale(pTextTail->fEmpireScale, pTextTail->fEmpireScale);
 			pTextTail->pEmpireFlag->SetPosition(pTextTail->fEmpireX, pTextTail->fEmpireY);
@@ -691,7 +692,7 @@ void CPythonTextTail::RegisterCharacterTextTail(DWORD dwGuildID, DWORD dwVirtual
 	{
 		pTextTail->iEmpire = (int)pCharacterInstance->GetEmpireID();
 		pTextTail->pEmpireFlag = MakeEmpireFlagInstance(pTextTail->iEmpire);
-		pTextTail->pEmpireGlow = MakeEmpireFlagInstance(pTextTail->iEmpire);
+		pTextTail->pEmpireGlow = MakeEmpireFlagInstance(pTextTail->iEmpire, true);
 	}
 
 	if (0 != dwGuildID)
