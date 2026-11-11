@@ -147,6 +147,16 @@ PyObject * miniMapUpdateAtlas(PyObject * poSelf, PyObject * poArgs)
 	return Py_BuildNone();
 }
 
+PyObject * miniMapSetAtlasScale(PyObject * poSelf, PyObject * poArgs)
+{
+	float fScale;
+	if (!PyTuple_GetFloat(poArgs, 0, &fScale))
+		return Py_BuildException();
+
+	CPythonMiniMap::Instance().SetAtlasScale(fScale);
+	return Py_BuildNone();
+}
+
 PyObject * miniMapRenderAtlas(PyObject * poSelf, PyObject * poArgs)
 {
 	float fScrrenX;
@@ -355,6 +365,7 @@ void initMiniMap()
 		{ "LoadAtlas",						miniMapLoadAtlas,								METH_VARARGS },
 		{ "UpdateAtlas",					miniMapUpdateAtlas,								METH_VARARGS },
 		{ "RenderAtlas",					miniMapRenderAtlas,								METH_VARARGS },
+		{ "SetAtlasScale",					miniMapSetAtlasScale,							METH_VARARGS },
 		{ "ShowAtlas",						miniMapShowAtlas,								METH_VARARGS },
 		{ "HideAtlas",						miniMapHideAtlas,								METH_VARARGS },
 		{ "isShowAtlas",					miniMapisShowAtlas,								METH_VARARGS },

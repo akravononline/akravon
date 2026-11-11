@@ -1192,6 +1192,8 @@ void CPythonMiniMap::RenderAtlas(float fScreenX, float fScreenY)
 		m_fAtlasScreenY = fScreenY;
 	}
 
+	m_matWorldAtlas._11 = m_fAtlasScale;
+	m_matWorldAtlas._22 = m_fAtlasScale;
 	STATEMANAGER.SetTransform(D3DTS_WORLD, &m_matWorldAtlas);
 	STATEMANAGER.SaveTextureStageState(0, D3DTSS_MINFILTER, D3DTEXF_POINT);
 	STATEMANAGER.SaveTextureStageState(0, D3DTSS_MAGFILTER, D3DTEXF_POINT);
@@ -1380,6 +1382,9 @@ bool CPythonMiniMap::GetAtlasInfo(float fScreenX, float fScreenY, std::string& r
 bool CPythonMiniMap::GetAtlasInfo(float fScreenX, float fScreenY, std::string& rReturnString, float* pReturnPosX, float* pReturnPosY, DWORD* pdwTextColor, DWORD* pdwGuildID)
 #endif
 {
+	const float fInvScale = (m_fAtlasScale > 0.01f) ? 1.0f / m_fAtlasScale : 1.0f;
+	fScreenX = m_fAtlasScreenX + (fScreenX - m_fAtlasScreenX) * fInvScale;	// AKRAVON: olcekli haritada ekran konumunu 1x konuma cevir
+	fScreenY = m_fAtlasScreenY + (fScreenY - m_fAtlasScreenY) * fInvScale;
 	float fRealX = (fScreenX - m_fAtlasScreenX) * (m_fAtlasMaxX / m_fAtlasImageSizeX);
 	float fRealY = (fScreenY - m_fAtlasScreenY) * (m_fAtlasMaxY / m_fAtlasImageSizeY);
 
@@ -1522,6 +1527,15 @@ bool CPythonMiniMap::GetAtlasInfo(float fScreenX, float fScreenY, std::string& r
 	}
 
 	return false;
+}
+
+void CPythonMiniMap::SetAtlasScale(float fScale)
+{
+	if (fScale < 0.5f)
+		fScale = 0.5f;
+	if (fScale > 4.0f)
+		fScale = 4.0f;
+	m_fAtlasScale = fScale;
 }
 
 bool CPythonMiniMap::GetAtlasSize(float * pfSizeX, float * pfSizeY)
@@ -1779,6 +1793,7 @@ void CPythonMiniMap::__Initialize()
 
 	m_fAtlasScreenX = 0.0f;
 	m_fAtlasScreenY = 0.0f;
+	m_fAtlasScale = 1.0f;
 
 	m_dwAtlasBaseX = 0;
 	m_dwAtlasBaseY = 0;

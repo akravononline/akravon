@@ -70,6 +70,8 @@ class CPythonMiniMap : public CScreen, public CSingleton<CPythonMiniMap>
 		bool GetAtlasInfo(float fScreenX, float fScreenY, std::string& rReturnString, float* pReturnPosX, float* pReturnPosY, DWORD* pdwTextColor, DWORD* pdwGuildID);
 		#endif
 		bool GetAtlasSize(float * pfSizeX, float * pfSizeY);
+		void SetAtlasScale(float fScale);	// AKRAVON: buyuk harita olcegi (1.0 = 256 px)
+		float GetAtlasScale() const { return m_fAtlasScale; }
 
 		void AddObserver(DWORD dwVID, float fSrcX, float fSrcY);
 		void MoveObserver(DWORD dwVID, float fDstX, float fDstY);
@@ -245,6 +247,7 @@ class CPythonMiniMap : public CScreen, public CSingleton<CPythonMiniMap>
 		D3DXMATRIX						m_matWorldAtlas;
 		CGraphicExpandedImageInstance	m_AtlasPlayerMark;
 
+		float							m_fAtlasScale;
 		float							m_fAtlasScreenX;
 		float							m_fAtlasScreenY;
 

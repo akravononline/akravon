@@ -63,13 +63,86 @@ def Install(miniMapWindow):
 	atlasWindow = atlas
 	originalShow = atlas.Show
 
+	Style(atlas)
+
 	def Show(*args):
+		ApplyScale(atlas)
 		originalShow()
 		Center(atlas)
+		try:
+			atlas.AtlasMainWindow.SetTop()
+		except Exception:
+			pass
 
 	atlas.Show = Show
 	handler = AtlasHandler(atlas)
 	atlas.board.SetOnMouseLeftButtonUpEvent(ui.__mem_func__(handler.OnClick))
+
+
+PAD = 14
+TITLE_H = 46
+BOARD_PATH_PAD = 4
+
+
+def Style(atlas):
+	# AKRAVON: eski Metin2 cercevesi yerine kendi lacivert-altin tahtamiz, baslik ve kare kapat dugmesi
+	import uiMobileStyle
+	import uiAkravonQuest
+	import uiAkravonInventory
+	board = atlas.board
+	for part in list(getattr(board, "Corners", [])) + list(getattr(board, "Lines", [])) + [getattr(board, "Base", None)]:
+		if part:
+			part.Hide()
+	titleText = ""
+	titleBar = getattr(board, "titleBar", None)
+	titleName = getattr(board, "titleName", None)
+	if titleName:
+		titleText = titleName.GetText()
+		titleName.Hide()
+	if titleBar:
+		titleBar.Hide()
+	parts = {}
+	parts["frame"] = uiAkravonQuest.Board9()
+	parts["frame"].SetParent(board)
+	parts["frame"].AddFlag("not_pick")
+	parts["frame"].Show()
+	parts["title"] = uiMobileStyle.CreateText(board, titleText or "B\xf6lge Haritas\xfd", 100, 14, uiMobileStyle.Color(222, 184, 110), "Marcellus:22", "center")
+	parts["divider"] = uiMobileStyle.CreateBar(board, uiMobileStyle.Color(150, 118, 58), PAD, TITLE_H, 100, 1)
+	parts["close"] = uiAkravonInventory.CloseButton(board, 100, 11, ui.__mem_func__(atlas.Hide))
+	atlas.akrParts = parts
+
+
+def LayoutFrame(atlas, width, height):
+	parts = getattr(atlas, "akrParts", None)
+	if not parts:
+		return
+	parts["frame"].SetSize(width, height)
+	parts["title"].SetPosition(width // 2, 14)
+	parts["divider"].SetSize(width - PAD * 2, 1)
+	parts["close"].SetPosition(width - PAD - 38, 7)
+
+
+def ApplyScale(atlas):
+	# harita ekran yuksekligine gore tam sayi kati buyur (nokta filtre: kesirli olcek bulaniklastirir)
+	try:
+		(ok, sizeX, sizeY) = miniMap.GetAtlasSize()
+	except Exception:
+		(ok, sizeX, sizeY) = (0, 256, 256)
+	if not ok or sizeX <= 0 or sizeY <= 0:
+		(sizeX, sizeY) = (256, 256)
+	scale = 1
+	if hasattr(miniMap, "SetAtlasScale"):
+		maxWidth = wndMgr.GetScreenWidth() - 40
+		maxHeight = wndMgr.GetScreenHeight() - 40 - TITLE_H - PAD
+		scale = int(min(maxWidth // (sizeX + PAD * 2), maxHeight // sizeY))
+		scale = max(1, min(scale, 4))
+		miniMap.SetAtlasScale(float(scale))
+	width = sizeX * scale + PAD * 2
+	height = sizeY * scale + TITLE_H + PAD + 8
+	atlas.SetSize(width, height)
+	atlas.board.SetSize(width, height)
+	atlas.AtlasMainWindow.SetPosition(PAD, TITLE_H + 8)
+	LayoutFrame(atlas, width, height)
 
 
 def Center(atlas):

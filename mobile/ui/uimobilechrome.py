@@ -60,11 +60,16 @@ HUD_ALERT_ASSET = "hudbtn_alert_%d"
 HUD_ALERT_SPEED = 5.0
 HUD_ALERT_MIN_ALPHA = 0.25
 # renk (r, g, b), yanip sonme hizi (0 = sabit), en dusuk saydamlik
-RUN_WAVE_SECONDS = 2.8	# calisiyor efekti: dalga halkasinin dugme disina yayilma suresi
-RUN_WAVE_GROW = 0.34	# halka dugme boyunun en fazla bu kadar buyur
-RUN_BREATH = 1.5	# ic isima nefes hizi (rad / sn, ~4 sn / dongu)
+# calisiyor efekti: iksir kabarciklari (baslangic fazi, tur suresi sn, yatay konum [yaricap orani], boy, salinim)
+RUN_BUBBLES = ((0.00, 3.6, -0.42, 0.62, 0.07), (0.17, 4.4, 0.30, 0.85, 0.09), (0.34, 3.9, -0.08, 0.50, 0.06), (0.52, 5.0, 0.52, 0.70, 0.08),
+		(0.69, 4.1, -0.55, 0.78, 0.07), (0.83, 4.7, 0.10, 0.58, 0.10), (0.94, 3.4, 0.38, 0.46, 0.06))
+# dis kabarciklar: dugme kenarindan disari dogru yukselir (baslangic fazi, tur suresi sn, cikis acisi [derece, 0 = sag, -90 = yukari], boy)
+RUN_OUT_BUBBLES = ((0.05, 3.8, -25.0, 0.8), (0.22, 4.6, -75.0, 0.6), (0.41, 4.0, -120.0, 0.9), (0.58, 5.0, -160.0, 0.55),
+		(0.74, 4.3, 20.0, 0.7), (0.90, 3.6, -50.0, 0.5))
+RUN_BUBBLE_ASSET = 64.0
+RUN_GLOW_ALPHA = 0.55	# ic isima sabit (yanip sonmez)
 RUN_COLOR = (0.45, 1.0, 0.55)
-HUD_RING_STYLES = {"alert": (1.0, 0.3, 0.22, 4.0, 0.35), "run": (0.45, 1.0, 0.55, 1.1, 0.30), "open": (1.0, 0.96, 0.88, 0, 0.8)}
+HUD_RING_STYLES = {"alert": (1.0, 0.3, 0.22, 4.0, 0.35), "run": (0.45, 1.0, 0.55, 0, 0.45), "open": (1.0, 0.96, 0.88, 0, 0.8)}
 
 CHAT_TITLE_TEXT = "S O H B E T"
 CHAT_TITLE_COLOR = uiMobileStyle.Color(190, 176, 148)
@@ -228,10 +233,7 @@ class HudButton(ui.Window):
 		ui.Window.Hide(self)
 		if getattr(self, "alert", None):
 			self.alert.Hide()
-		for name in ("runArc", "runArc2", "runGlow"):
-			image = getattr(self, name, None)
-			if image:
-				image.Hide()
+		self.__HideRunFx()
 
 	def SetRunning(self, enabled):
 		self.running = enabled
@@ -260,14 +262,20 @@ class HudButton(ui.Window):
 			self.alert.AddFlag("float")
 			self.alert.LoadImage(HUD_PATH % "btn_alert")
 			self.alert.SetScale(self.alertScale, self.alertScale)
-		if kind == "run" and not getattr(self, "runArc", None):
-			for (name, asset) in (("runGlow", "btn_run_glow"), ("runArc", "btn_run_ring"), ("runArc2", "btn_run_ring")):
-				image = ui.ExpandedImageBox()
-				image.AddFlag("not_pick")
-				image.AddFlag("float")
-				image.LoadImage(HUD_PATH % asset)
-				image.SetScale(self.alertScale, self.alertScale)
-				setattr(self, name, image)
+		if kind == "run" and not getattr(self, "runBubbles", None):
+			glow = ui.ExpandedImageBox()
+			glow.AddFlag("not_pick")
+			glow.AddFlag("float")
+			glow.LoadImage(HUD_PATH % "btn_run_glow")
+			glow.SetScale(self.alertScale, self.alertScale)
+			self.runGlow = glow
+			self.runBubbles = []
+			for index in range(len(RUN_BUBBLES) + len(RUN_OUT_BUBBLES)):
+				bubble = ui.ExpandedImageBox()
+				bubble.AddFlag("not_pick")
+				bubble.AddFlag("float")
+				bubble.LoadImage(HUD_PATH % "btn_run_bubble")
+				self.runBubbles.append(bubble)
 		if not self.alert:
 			return
 		if kind:
@@ -275,14 +283,65 @@ class HudButton(ui.Window):
 			self.OnUpdate()
 		else:
 			self.alert.Hide()
-			for name in ("runArc", "runArc2", "runGlow"):
-				image = getattr(self, name, None)
-				if image:
-					image.Hide()
+			self.__HideRunFx()
 
 	def EnablePressRipple(self, color = (1.0, 0.9, 0.6)):
 		if not getattr(self, "ripple", None):
 			self.ripple = PressRipple(color)
+
+	def __HideRunFx(self):
+		glow = getattr(self, "runGlow", None)
+		if glow:
+			glow.Hide()
+		for bubble in getattr(self, "runBubbles", None) or ():
+			bubble.Hide()
+
+	def __UpdateRunFx(self, left, top):
+		# iksir kabarciklari: alttan yukari salinarak yukselir, ortada belirgin, uclarda solar; her karede kayar (akici)
+		now = app.GetTime()
+		glow = self.runGlow
+		glow.SetPosition(left, top)
+		wndMgr.SetDiffuseColor(glow.hWnd, RUN_COLOR[0], RUN_COLOR[1], RUN_COLOR[2], RUN_GLOW_ALPHA)
+		glow.Show()
+		scale = self.alertScale
+		center = 88.0 * scale	# 176 tuvalin merkezi
+		radius = 68.0 * scale	# dugme yaricapi
+		for (index, bubble) in enumerate(self.runBubbles):
+			if index >= len(RUN_BUBBLES):
+				# dis kabarcik: kenardan disari, hafif yukari suzulerek
+				(phase, period, angle, sizeFactor) = RUN_OUT_BUBBLES[index - len(RUN_BUBBLES)]
+				t = ((now / period) + phase) % 1.0
+				rad = math.radians(angle)
+				distance = radius * (0.98 + 0.42 * t)
+				x = distance * math.cos(rad) + radius * 0.05 * math.sin((t * 2.0 + phase) * 6.2832)
+				y = distance * math.sin(rad) - radius * 0.22 * t
+				alpha = (math.sin(t * 3.14159) ** 0.8) * 0.9
+				if alpha <= 0.02:
+					bubble.Hide()
+					continue
+				size = RUN_BUBBLE_ASSET * scale * 0.46 * sizeFactor * (0.8 + 0.5 * t)
+				factor = size / RUN_BUBBLE_ASSET
+				bubble.SetScale(factor, factor)
+				bubble.SetPosition(int(left + center + x - size / 2.0), int(top + center + y - size / 2.0))
+				wndMgr.SetDiffuseColor(bubble.hWnd, RUN_COLOR[0], RUN_COLOR[1], RUN_COLOR[2], alpha)
+				bubble.Show()
+				continue
+			(phase, period, xFactor, sizeFactor, wobble) = RUN_BUBBLES[index]
+			t = ((now / period) + phase) % 1.0
+			y = radius * (0.86 - 1.72 * t)
+			x = radius * (xFactor + wobble * math.sin((t * 1.6 + phase) * 6.2832))
+			distance = math.sqrt(x * x + y * y) / radius
+			edge = max(0.0, min(1.0, (0.94 - distance) / 0.26))
+			alpha = (math.sin(t * 3.14159) ** 0.7) * edge * 0.95
+			if alpha <= 0.02:
+				bubble.Hide()
+				continue
+			size = RUN_BUBBLE_ASSET * scale * 0.55 * sizeFactor * (0.75 + 0.45 * t)
+			factor = size / RUN_BUBBLE_ASSET
+			bubble.SetScale(factor, factor)
+			bubble.SetPosition(int(left + center + x - size / 2.0), int(top + center + y - size / 2.0))
+			wndMgr.SetDiffuseColor(bubble.hWnd, RUN_COLOR[0], RUN_COLOR[1], RUN_COLOR[2], alpha)
+			bubble.Show()
 
 	def OnUpdate(self):
 		ripple = getattr(self, "ripple", None)
@@ -291,42 +350,19 @@ class HudButton(ui.Window):
 		if not self.alert:
 			return
 		kind = self.__RingKind()
-		arc = getattr(self, "runArc", None)
-		arc2 = getattr(self, "runArc2", None)
-		glow = getattr(self, "runGlow", None)
 		if not kind or not self.IsShow():
 			self.alert.Hide()
-			if arc:
-				arc.Hide()
-				arc2.Hide()
-				glow.Hide()
+			self.__HideRunFx()
 			return
 		(x, y) = self.GetGlobalPosition()
 		offset = int(round(20 * self.alertScale))
 		self.alert.SetPosition(x - offset, y - offset)
 		self.alert.Show()
-		if arc:
+		if getattr(self, "runBubbles", None):
 			if kind == "run":
-				now = app.GetTime()
-				glow.SetPosition(x - offset, y - offset)
-				breath = 0.5 + 0.5 * math.sin(now * RUN_BREATH)
-				wndMgr.SetDiffuseColor(glow.hWnd, RUN_COLOR[0], RUN_COLOR[1], RUN_COLOR[2], 0.35 + 0.45 * breath)
-				glow.Show()
-				# dalga halkalari: dugme merkezinden disari buyuyup solar (iki halka yarim donem arayla)
-				(cx, cy) = (x + self.GetWidth() / 2.0, y + self.GetHeight() / 2.0)
-				full = 176.0 * self.alertScale
-				for (ring, phase) in ((arc, 0.0), (arc2, 0.5)):
-					t = ((now / RUN_WAVE_SECONDS) + phase) % 1.0
-					scale = self.alertScale * (1.0 + RUN_WAVE_GROW * t)
-					size = 176.0 * scale
-					ring.SetScale(scale, scale)
-					ring.SetPosition(int(cx - size / 2.0), int(cy - size / 2.0))
-					wndMgr.SetDiffuseColor(ring.hWnd, RUN_COLOR[0], RUN_COLOR[1], RUN_COLOR[2], 0.85 * (1.0 - t) ** 1.6)
-					ring.Show()
+				self.__UpdateRunFx(x - offset, y - offset)
 			else:
-				arc.Hide()
-				arc2.Hide()
-				glow.Hide()
+				self.__HideRunFx()
 		(red, green, blue, speed, low) = HUD_RING_STYLES[kind]
 		alpha = low
 		if speed:
