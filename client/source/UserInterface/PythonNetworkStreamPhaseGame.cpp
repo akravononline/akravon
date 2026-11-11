@@ -1867,6 +1867,22 @@ void CPythonNetworkStream::__ConvertEmpireText(DWORD dwEmpireID, char* szText)
 	}
 }
 
+// AKRAVON: karsi krallikten gelen genel / bagirma mesajinin basina krallik bayragi (satir ici gorsel: icon/akr_flag_N.png)
+static void AkravonPrependEmpireFlag(char * buf, size_t cap, DWORD dwEmpire)
+{
+	CInstanceBase * pkInstMain = CPythonCharacterManager::Instance().GetMainInstancePtr();
+	if (!pkInstMain)
+		return;
+	if (dwEmpire < 1 || dwEmpire > 3 || dwEmpire == pkInstMain->GetEmpireID())
+		return;
+
+	char tmp[1024 + 1];
+	_snprintf(tmp, sizeof(tmp), "|Eakr_flag_%d|e %s", (int)dwEmpire, buf);
+	tmp[sizeof(tmp) - 1] = '\0';
+	_snprintf(buf, cap, "%s", tmp);
+	buf[cap - 1] = '\0';
+}
+
 bool CPythonNetworkStream::RecvChatPacket()
 {
 	TPacketGCChat kChat;
@@ -1969,6 +1985,9 @@ bool CPythonNetworkStream::RecvChatPacket()
 			CPythonTextTail::Instance().RegisterChatTail(kChat.dwVID, line);
 		}
 
+		if (CHAT_TYPE_SHOUT == kChat.type || CHAT_TYPE_TALKING == kChat.type)
+			AkravonPrependEmpireFlag(buf, sizeof(buf), pkInstChatter->GetEmpireID());
+
 		if (pkInstChatter->IsPC())
 			CPythonChat::Instance().AppendChat(kChat.type, buf);
 	}
@@ -1991,6 +2010,8 @@ bool CPythonNetworkStream::RecvChatPacket()
 				if (m_isEnableChatInsultFilter)
 					__FilterInsult(p, strlen(p));
 			}
+
+			AkravonPrependEmpireFlag(buf, sizeof(buf), kChat.bEmpire);
 		}
 
 		CPythonChat::Instance().AppendChat(kChat.type, buf);
