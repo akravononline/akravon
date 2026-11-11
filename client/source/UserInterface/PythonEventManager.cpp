@@ -405,12 +405,28 @@ bool CPythonEventManager::ProcessEventSet(TEventSet * pEventSet)
 	{
 		case EVENT_TYPE_LETTER:
 		{
-			const std::string& c_rstValue = GetArgumentString("value", ScriptCommand.argList);
+			std::string c_rstValue = GetArgumentString("value", ScriptCommand.argList);
+			// AKRAVON: satir basindaki bosluklar silinir (sunucu metinleri bosluk ile basliyor: ilk satir iceride kaliyordu)
+			if (pEventSet->strCurrentLine.empty() && !pEventSet->isTitleLine)
+			{
+				size_t first = c_rstValue.find_first_not_of(" \t");
+				if (first == std::string::npos)
+					c_rstValue = "";
+				else if (first > 0)
+					c_rstValue.erase(0, first);
+			}
 			pEventSet->strCurrentLine.append(c_rstValue);
 			if (c_rstValue.find_first_not_of(" \t\r\n") != std::string::npos)
 				pEventSet->isTextStarted = true;
 			pEventSet->pCurrentTextLine->SetValueString(pEventSet->strCurrentLine);
 			pEventSet->pCurrentTextLine->SetColor(pEventSet->CurrentColor.r,pEventSet->CurrentColor.g,pEventSet->CurrentColor.b);
+			// AKRAVON: onemli (kirmizi) metin biraz buyuk
+			if (!pEventSet->isTitleLine && pEventSet->CurrentColor.r > 0.85f && pEventSet->CurrentColor.g < 0.5f && pEventSet->CurrentColor.b < 0.5f && c_rstValue.find_first_not_of(" \t\r\n") != std::string::npos)
+			{
+				CGraphicText* pkBigFont = static_cast<CGraphicText*>(CResourceManager::Instance().GetTypeResourcePointer("LatoBd:20"));
+				if (pkBigFont)
+					pEventSet->pCurrentTextLine->SetTextPointer(pkBigFont);
+			}
 			pEventSet->iCurrentLetter+=c_rstValue.length();
 
 			if (pEventSet->iCurrentLetter >= pEventSet->iRestrictedCharacterCount)
@@ -1139,7 +1155,7 @@ void CPythonEventManager::__InsertLine(TEventSet& rEventSet, BOOL isCenter, int 
 		if (rEventSet.isTitleLine)
 		{
 			rEventSet.isTitleLine = false;
-			__AddSpace(rEventSet, 34);	// AKRAVON: baslik ile ayirici/metin arasi bosluk
+			__AddSpace(rEventSet, 46);	// AKRAVON: baslik ile ayirici/metin arasi bosluk
 		}
 	}
 

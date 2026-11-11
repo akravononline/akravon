@@ -73,9 +73,9 @@ def _Children(window):
 
 BOARD_STEP = 24
 BOARD_MIN_H = 288
-BOARD_MAX_H = 624
+BOARD_MAX_H = 744
 BOARD_FIXED = ((290, 558), (376, 356), (700, 520), (720, 480), (460, 230))	# npc dukkani
-BOARD_WIDTHS = (380,)	# demirci: yukseklik 24 adimla
+BOARD_WIDTHS = (380, 630)	# demirci: yukseklik 24 adimla
 
 
 def _BoardFile(width, height):
@@ -114,7 +114,7 @@ def _LayoutBoard(board):
 	closeInfo = getattr(board, "akrClose", None)
 	if closeInfo:
 		(close, tbx, tby) = closeInfo
-		close.SetPosition(width - tbx - 12 - close.GetWidth(), 10 - tby)
+		close.SetPosition(width - tbx - 12 - close.GetWidth(), 16 - tby)
 	divider = getattr(board, "akrDivider", None)
 	if divider:
 		divider.SetSize(max(1, width - 32), 1)
@@ -143,7 +143,7 @@ def _StyleTitleBar(titleBar, keep):
 		board = getattr(titleBar, "akrBoard", None)
 		(tbx, tby) = titleBar.GetLocalPosition()
 		if board is not None:
-			close.SetPosition(board.GetWidth() - tbx - 12 - close.GetWidth(), 10 - tby)	# envanterle ayni: icerde
+			close.SetPosition(board.GetWidth() - tbx - 12 - close.GetWidth(), 16 - tby)	# envanterle ayni: icerde
 			board.akrClose = (close, tbx, tby)
 		else:
 			close.SetPosition(max(0, titleBar.GetWidth() - close.GetWidth()), 0)
@@ -295,7 +295,7 @@ REFINE_SHIFT = 23	# materyal satirlari ozellik grubuyla ayni hizada
 REFINE_EXTRA_H = 78
 REFINE_TOP = 72	# icerik baslik cizgisinin altindan baslar
 REFINE_TIP_WIDTH = 230	# ozellik kutusu: sikismaz ama cok genis degil
-REFINE_SLOT = 64	# hedef esya kutucugu (buyuk)
+REFINE_SLOT = 54	# hedef esya kutucugu
 REFINE_GAP = 10
 
 
@@ -316,15 +316,17 @@ def _RefineAfter(window):
 	original = window.UpdateDialog
 
 	def UpdateDialog():
+		if getattr(window, "akr", None):
+			return	# sifirdan yazilmis yeni pencere (uiAkravonRefine) kendi yerlesimini yapar
 		_WidenRefineTip(window)
 		original()
 		board = window.board
-		width = 380
+		width = 630	# AKRAVON: sagda malzeme / sans / bedel paneli (sol grup ayni yerde)
 		tipHeight = window.toolTip.GetHeight()
-		costY = REFINE_TOP + tipHeight + 20
+		costY = max(REFINE_TOP + tipHeight + 20, REFINE_TOP + 40 + max(1, getattr(window, "akrMat", 0)) * 58 + 90)
 		buttonsY = costY + 42
 		height = buttonsY + 44 + 28
-		for (name, x) in (("AcceptButton", 190 - 80 - 70), ("CancelButton", 190 + 80 - 70)):
+		for (name, x) in (("AcceptButton", width // 2 - 80 - 70), ("CancelButton", width // 2 + 80 - 70)):
 			try:
 				button = window.GetChild(name)
 				button.SetWindowHorizontalAlignLeft()
@@ -361,6 +363,8 @@ def _RefineAfter(window):
 			toolTip.SetPosition((380 - groupWidth) // 2 + REFINE_SLOT + REFINE_GAP, REFINE_TOP)
 		_RefineTarget(window)
 		_HideRefineCheck(window)
+		if hasattr(window, "AkrLayout"):
+			window.AkrLayout(costY - 26, height)	# basari sansi ve bedel biraz yukarida
 		import wndMgr
 		window.SetPosition((wndMgr.GetScreenWidth() - width) // 2, max(10, (wndMgr.GetScreenHeight() - height) // 2))
 	window.UpdateDialog = UpdateDialog
@@ -422,6 +426,7 @@ def _RefineTarget(window):
 	cell.SetParent(holder)
 	cell.AddFlag("not_pick")
 	cell.LoadImage("mobile_ui/akravon/hud/akrslot_%d.png" % ySize)
+	cell.SetScale(REFINE_SLOT / 64.0, REFINE_SLOT / 64.0)
 	cell.SetPosition(0, 0)
 	cell.Show()
 	window.akrTargetParts.append(cell)
@@ -434,7 +439,7 @@ def _RefineTarget(window):
 	icon.Show()
 	window.akrTargetParts.append(icon)
 	holder.SetSize(REFINE_SLOT, REFINE_SLOT * ySize)
-	holder.SetPosition((380 - (REFINE_SLOT + REFINE_GAP + REFINE_TIP_WIDTH)) // 2, REFINE_TOP + 4)
+	holder.SetPosition((380 - (REFINE_SLOT + REFINE_GAP + REFINE_TIP_WIDTH)) // 2 - 16, REFINE_TOP + 4)
 	holder.Show()
 
 

@@ -183,6 +183,21 @@ def __Plan():
 	except Exception:
 		points = ()
 	if len(points) < 2:
+		# uzak hedef (arazi haritasi yalniz yakinda yuklu): hedefe dogru en fazla 90 m'lik ara hedef; her yeniden planlamada ilerler
+		distance = math.hypot(target[0] - px, target[1] - py)
+		if distance > 9000.0:
+			points = ()
+			for leg in (9000.0, 6000.0, 3500.0):
+				ratio = leg / distance
+				legX = px + (target[0] - px) * ratio
+				legY = py + (target[1] - py) * ratio
+				try:
+					points = background.FindPath(px, py, legX, legY)
+				except Exception:
+					points = ()
+				if len(points) >= 2:
+					break
+	if len(points) < 2:
 		return False
 	path = list(points)
 	pathIndex = 1
@@ -275,8 +290,8 @@ def Update(interrupted):
 			Update.replans = 0
 		lastProgressTime = now
 		lastProgressPos = (px, py)
-	elif now - lastPlanTime >= REPLAN_SECONDS:
-		__Plan()
+	elif now - lastPlanTime >= REPLAN_SECONDS or (pathIndex >= len(path) - 1 and math.hypot(path[-1][0] - px, path[-1][1] - py) < WAYPOINT_DISTANCE * 2):
+		__Plan()	# ara hedefe varinca bir sonraki parca
 
 	# siradaki ara nokta
 	while pathIndex < len(path) - 1 and math.hypot(path[pathIndex][0] - px, path[pathIndex][1] - py) < WAYPOINT_DISTANCE:

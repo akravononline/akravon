@@ -559,6 +559,8 @@ class MobileCreateCharacterWindow(introCreate.CreateCharacterWindow):
 				touched = editLine.IsIn() or field.IsIn()
 			except ReferenceError:
 				touched = False
+			if touched and editLine.IsFocus():
+				editLine.KillFocus()	# klavye kapaninca odak acik kaliyordu: ikinci dokunus klavyeyi acmiyordu
 			if editLine.IsFocus() or touched:
 				ui.Window.SetFocus(editLine)
 

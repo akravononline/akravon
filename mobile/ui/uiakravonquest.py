@@ -459,7 +459,13 @@ class QuestHud(object):
 			entries.append(("notice", notice, notice[0], notice[1], ""))
 		for button in self.__Buttons():
 			name = getattr(button, "name", "") or "?"
+			if name in OPENED_LETTERS:
+				continue	# okunmus mektup: listede kalmaz
 			entries.append(("new", button, name, "Yeni g\xf6rev - ba\xfelamak i\xe7in dokun", ""))
+		alive = set(getattr(button, "name", "") for button in self.__Buttons())
+		for stale in list(OPENED_LETTERS):
+			if stale not in alive:
+				OPENED_LETTERS.discard(stale)	# gorev bitti: bir sonraki mektup yine gorunsun
 		try:
 			total = quest.GetQuestCount()
 		except Exception:
@@ -548,6 +554,9 @@ class QuestHud(object):
 			self.Refresh()
 			return
 		if kind == "new":
+			OPENED_LETTERS.add(name)
+			if IsSkillQuest(name):
+				WalkToTeacher()
 			method = getattr(self.interface, "_Interface__StartQuest", None)
 			if method:
 				method(key)
@@ -592,7 +601,7 @@ class QuestHud(object):
 		self.badge = None
 		try:
 			for button in self.__Buttons():
-				button.Show()
+				button.Hide()	# oyundan cikinca eski gorev mektuplari karakter ekranlarinda kalmasin
 		except Exception:
 			pass
 		self.interface = None
@@ -628,6 +637,47 @@ def AddHistory(name):
 		out.close()
 	except IOError:
 		pass
+
+
+# 5. seviye beceri egitimi gorevi ("Egitim"): beceri ustasina (Bedensel) ayak izleriyle otomatik yuruyus.
+# Koordinatlar orijinal harita verisinden (npc.txt): krallik -> meslek -> (x, y)  (meslek: 0 savasci, 1 ninja, 2 sura, 3 saman)
+SKILL_TEACHERS = {
+	1 : {0 : (622, 556), 1 : (629, 554), 2 : (644, 551), 3 : (651, 549)},	# Shinsoo (Yongan)
+	2 : {0 : (623, 595), 1 : (631, 595), 2 : (645, 595), 3 : (653, 595)},	# Chunjo (Joan)
+	3 : {0 : (444, 623), 1 : (444, 631), 2 : (443, 644), 3 : (443, 652)},	# Jinno (Pyungmoo)
+}
+SKILL_WORDS = (u"e\u011fitim", u"beceri")
+OPENED_LETTERS = set()	# okunmus mektuplar (liste kalabalik etmesin)
+
+
+def IsSkillQuest(name):
+	try:
+		lowered = name.decode("cp1254").lower()
+	except Exception:
+		lowered = str(name).lower()
+	for word in SKILL_WORDS:
+		if word in lowered:
+			return True
+	return False
+
+
+def WalkToTeacher():
+	try:
+		import net
+		import chr as chrModule
+		import uiAkravonAtlas
+		empire = net.GetEmpireID()
+		job = net.GetMainActorRace() % 4
+		(x, y) = SKILL_TEACHERS[empire][job]
+		import chat
+		if uiAkravonAtlas.SetTarget(x * 100.0, y * 100.0):
+			chat.AppendChat(chat.CHAT_TYPE_INFO, "Beceri ustas\xfdna y\xfcr\xfcn\xfcyor...")
+		else:
+			chat.AppendChat(chat.CHAT_TYPE_INFO, "Beceri ustas\xfd k\xf6yde: ba\xfelang\xfd\xe7 k\xf6y\xfcne git.")
+	except Exception:
+		import dbg
+		import traceback
+		dbg.TraceError("WalkToTeacher: " + traceback.format_exc())
 
 
 NOTICES = []	# [gonderen, metin]: [Biyolog] / [Sistem] bildirimleri (fisilti mektubu yerine Gorev listesine duser)

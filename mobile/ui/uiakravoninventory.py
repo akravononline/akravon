@@ -153,6 +153,12 @@ class Skin(object):
 		self.keep = []
 
 		try:
+			import uiToolTip
+			uiToolTip.ANCHOR_WINDOWS[:] = [item for item in uiToolTip.ANCHOR_WINDOWS if item is not window]
+			uiToolTip.ANCHOR_WINDOWS.append(window)	# esya ipucu envanterin soluna sabitlenir
+		except Exception:
+			pass
+		try:
 			window.GetChild("TitleBar").Hide()
 		except Exception:
 			pass
