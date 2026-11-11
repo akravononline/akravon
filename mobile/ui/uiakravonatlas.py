@@ -110,6 +110,15 @@ def Style(atlas):
 	parts["divider"] = uiMobileStyle.CreateBar(board, uiMobileStyle.Color(150, 118, 58), PAD, TITLE_H, 100, 1)
 	parts["close"] = uiAkravonInventory.CloseButton(board, 100, 11, ui.__mem_func__(atlas.Hide))
 	atlas.akrParts = parts
+	# harita cizici cerceveden SONRA olusturulur (pencereler olusturulma sirasiyla cizilir; yoksa cerceve haritayi ortuyor)
+	old = atlas.AtlasMainWindow
+	old.Hide()
+	renderer = old.__class__()
+	renderer.SetParent(board)
+	renderer.SetPosition(PAD, TITLE_H + 8)
+	renderer.Show()
+	atlas.AtlasMainWindow = renderer
+	atlas.akrOldRenderer = old
 
 
 def LayoutFrame(atlas, width, height):
@@ -139,6 +148,8 @@ def ApplyScale(atlas):
 		miniMap.SetAtlasScale(float(scale))
 	width = sizeX * scale + PAD * 2
 	height = sizeY * scale + TITLE_H + PAD + 8
+	atlas.akrScale = scale
+	atlas.akrSize = (sizeX * scale + PAD * 2, sizeY * scale + TITLE_H + PAD + 8)
 	atlas.SetSize(width, height)
 	atlas.board.SetSize(width, height)
 	atlas.AtlasMainWindow.SetPosition(PAD, TITLE_H + 8)
@@ -148,7 +159,9 @@ def ApplyScale(atlas):
 def Center(atlas):
 	width = wndMgr.GetScreenWidth()
 	height = wndMgr.GetScreenHeight()
-	atlas.SetPosition(max(0, (width - atlas.GetWidth()) // 2), max(0, (height - atlas.GetHeight()) // 2))
+	(atlasWidth, atlasHeight) = getattr(atlas, "akrSize", (atlas.GetWidth(), atlas.GetHeight()))
+	atlas.SetSize(atlasWidth, atlasHeight)
+	atlas.SetPosition(max(0, (width - atlasWidth) // 2), max(0, (height - atlasHeight) // 2))
 
 
 def __Plan():

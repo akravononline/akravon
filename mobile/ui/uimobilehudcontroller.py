@@ -898,6 +898,12 @@ class MobileHudController(object):
 		for name in BLOCKING_WINDOW_NAMES:
 			if self.__IsWindowOpen(name):
 				return True
+		try:
+			import uiAkravonAtlas
+			if uiAkravonAtlas.atlasWindow and uiAkravonAtlas.atlasWindow.IsShow():
+				return True	# buyuk harita acikken beceri yuvalari / saldiri / yardimcilar gizlenir
+		except Exception:
+			pass
 		return False
 
 	def __GetState(self):

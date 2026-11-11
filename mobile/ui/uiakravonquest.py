@@ -17,7 +17,7 @@ BOARD_PATH = "mobile_ui/akravon/hud/menu_board_%s.png"
 BOARD_CORNER = 12
 BUTTON_SIZE = 52
 BUTTON_TOP_RATIO = 0.29	# eski mektuplarin yeri (170 / 600)
-BOARD_WIDTH = 480
+BOARD_WIDTH = 400
 BOARD_PAD = 16
 TITLE_HEIGHT = 54
 ROW_HEIGHT = 62
@@ -450,6 +450,13 @@ class QuestHud(object):
 	def Entries(self):
 		# (tur, anahtar, ad, bilgi, sayi): bekleyen mektuplar once, sonra devam eden gorevler (kalan sayi ile)
 		entries = []
+		if not hasattr(self, "seen"):
+			self.seen = {}	# gorev no -> okunmus sayac imzasi (imza ayniysa soldaki listede gosterilmez)
+			self.sigs = {}
+			self.missing = {}
+			self.known = {}	# gorev no -> ad (kaybolan gorev = tamamlandi -> gecmis)
+		for notice in NOTICES:
+			entries.append(("notice", notice, notice[0], notice[1], ""))
 		for button in self.__Buttons():
 			name = getattr(button, "name", "") or "?"
 			entries.append(("new", button, name, "Yeni g\xf6rev - ba\xfelamak i\xe7in dokun", ""))
@@ -468,7 +475,31 @@ class QuestHud(object):
 			value = str(counterValue) if counterName else ""
 			if lastName and lastTime > 0:
 				info += "   %s: %d dk %d sn" % (lastName, lastTime // 60, lastTime % 60)
+			signature = (counterName, counterValue)
+			self.sigs[questIndex] = signature
+			self.known[questIndex] = name
+			if questIndex not in self.seen:
+				self.seen[questIndex] = signature	# ilk gorulen: zaten okunmus sayilir (yeni gorev mektuptan acilmistir)
+			if self.seen[questIndex] == signature:
+				continue	# okunmus, sayac degismemis: soldaki bildirim listesinde yok, Karakter penceresinde
 			entries.append(("active", questIndex, name, info, value))
+		alive = set()
+		for index in range(total):
+			try:
+				alive.add(quest.GetQuestIndex(index))
+			except Exception:
+				pass
+		now = app.GetTime()
+		for questIndex in list(self.known.keys()):
+			if questIndex in alive:
+				self.missing.pop(questIndex, None)
+				continue
+			start = self.missing.setdefault(questIndex, now)
+			if now - start > 3.0:	# 3 sn boyunca listede yok = bitti
+				AddHistory(self.known[questIndex])
+				del self.known[questIndex]
+				self.missing.pop(questIndex, None)
+				self.seen.pop(questIndex, None)
 		return entries
 
 	def Refresh(self):
@@ -509,6 +540,13 @@ class QuestHud(object):
 		import constInfo
 		constInfo.AKRAVON_QUEST_TITLE = name or ""
 		import event
+		if kind == "notice":
+			if key in NOTICES:
+				NOTICES.remove(key)
+			import chat
+			chat.AppendChat(chat.CHAT_TYPE_INFO, "<%s> %s" % (name, info))
+			self.Refresh()
+			return
 		if kind == "new":
 			method = getattr(self.interface, "_Interface__StartQuest", None)
 			if method:
@@ -516,6 +554,7 @@ class QuestHud(object):
 			else:
 				event.QuestButtonClick(key.index)
 		else:
+			self.seen[key] = self.sigs.get(key)	# okundu: soldaki listeden kalkar
 			event.QuestButtonClick(-2147483648 + key)
 		self.Refresh()
 
@@ -557,6 +596,49 @@ class QuestHud(object):
 		except Exception:
 			pass
 		self.interface = None
+
+
+HISTORY_FILE = "akravon_gorev_gecmis.txt"
+HISTORY = None	# [(ad, zaman metni)] en yeni basta; tamamlanan / biten gorevler
+
+
+def GetHistory():
+	global HISTORY
+	if HISTORY is None:
+		HISTORY = []
+		try:
+			for line in open(HISTORY_FILE, "r").read().split("\n"):
+				if "\t" in line:
+					parts = line.split("\t")
+					HISTORY.append((parts[0], parts[1]))
+		except IOError:
+			pass
+	return HISTORY
+
+
+def AddHistory(name):
+	import time
+	history = GetHistory()
+	stamp = time.strftime("%d.%m.%Y %H:%M")
+	history.insert(0, (name, stamp))
+	del history[100:]
+	try:
+		out = open(HISTORY_FILE, "w")
+		out.write("\n".join("%s\t%s" % item for item in history))
+		out.close()
+	except IOError:
+		pass
+
+
+NOTICES = []	# [gonderen, metin]: [Biyolog] / [Sistem] bildirimleri (fisilti mektubu yerine Gorev listesine duser)
+
+
+def AddNotice(sender, text):
+	NOTICES.insert(0, [sender, text])
+	if len(NOTICES) > 20:
+		del NOTICES[20:]
+	if hud:
+		hud.Refresh()
 
 
 def Install(interface):
