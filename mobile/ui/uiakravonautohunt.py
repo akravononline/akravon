@@ -51,9 +51,14 @@ def Toggle():
 
 def ToggleHunt():
 	# AKRAVON: HUD oto av dugmesi - dogrudan baslat / durdur (ayarlar kaydedilmis dosyadan)
+	if interrupted and not IsRunning():
+		return IsRunning()	# AKRAVON: joystick kesintisinin 4 sn sayimi bitmeden yeniden baslatilamaz (iOS + Android)
 	CancelInterrupt()
 	if IsRunning():
 		player.AkravonAutoHuntStop()
+	elif IsMounted():
+		import chat
+		chat.AppendChat(chat.CHAT_TYPE_INFO, "At üzerindeyken oto av kullanılamaz.")
 	else:
 		s = Settings()
 		player.AkravonAutoHunt(s.hp if s.hpOn else 0, s.sp if s.spOn else 0, s.DewArgument())
@@ -118,12 +123,21 @@ def Update(joystickActive, button = None):
 	# her karede (HUD denetleyicisi): joystick kullanimi oto avi bozar; yuvarlak oto av dugmesinde 4..1 kirmizi sayim, sonra normal
 	global interrupted, countStart
 	now = app.GetTime()
+	if IsRunning() and IsMounted():
+		player.AkravonAutoHuntStop()	# ata binince oto av durur
+		if panel is not None:
+			panel.Refresh()
+	if not joystickActive and IsRunning() and KeyboardMoving():
+		joystickActive = True	# klavye ile hareket de joystick gibi oto avi bozar (emulator / klavyeli cihaz)
 	if joystickActive and IsRunning():
 		player.AkravonAutoHuntStop()
 		interrupted = True
 		countStart = now	# AKRAVON: sayim hareket ederken de akar (4'te takili kalmaz)
 		if panel is not None:
 			panel.Refresh()
+	ripple = getattr(button, "ripple", None) if button is not None else None
+	if ripple:
+		ripple.color = (1.0, 0.25, 0.2) if interrupted else (0.45, 1.0, 0.45)	# sayim sirasinda basma efekti de kirmizi
 	if not interrupted or button is None:
 		return
 	box = __Overlay(button)
@@ -147,6 +161,23 @@ def Destroy():
 	if panel is not None:
 		panel.Destroy()
 	panel = None
+
+
+def KeyboardMoving():
+	try:
+		for name in ("DIK_W", "DIK_A", "DIK_S", "DIK_D", "DIK_UP", "DIK_DOWN", "DIK_LEFT", "DIK_RIGHT"):
+			if app.IsPressed(getattr(app, name)):
+				return True
+	except Exception:
+		pass
+	return False
+
+
+def IsMounted():
+	try:
+		return bool(player.IsMountingHorse())
+	except Exception:
+		return False
 
 
 def IsRunning():

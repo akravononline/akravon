@@ -25,8 +25,22 @@ def Bubble():
 	fill = np.clip((R - r) / (1.5 * SS), 0.0, 1.0) * 0.28
 	rim = np.clip(1.0 - np.abs(r - R) / (2.4 * SS), 0.0, 1.0) ** 1.2 * 0.95
 	hx, hy = c - 9.0 * SS, c - 9.0 * SS
-	spot = np.exp(-(((xs - hx) / (4.5 * SS)) ** 2 + ((ys - hy) / (3.2 * SS)) ** 2)) * 0.95
+	spot = np.exp(-(((xs - hx) / (8.0 * SS)) ** 2 + ((ys - hy) / (3.2 * SS)) ** 2)) * 0.95
 	alpha = np.clip(fill + rim + spot, 0.0, 1.0)
+	out = np.zeros((n, n, 4), np.uint8)
+	out[..., :3] = 255
+	out[..., 3] = (alpha * 255).astype(np.uint8)
+	return Image.fromarray(out, 'RGBA').resize((S, S), Image.LANCZOS)
+
+
+def Dot():
+	# minik parlak nokta parcacik (beyaz, oyunda yesile boyanir)
+	S = 16
+	n = S * SS
+	c = (n - 1) / 2.0
+	ys, xs = np.mgrid[0:n, 0:n].astype(np.float32)
+	r = np.sqrt((xs - c) ** 2 + (ys - c) ** 2)
+	alpha = np.clip(np.exp(-((r / (2.6 * SS)) ** 2)) * 1.3, 0.0, 1.0)
 	out = np.zeros((n, n, 4), np.uint8)
 	out[..., :3] = 255
 	out[..., 3] = (alpha * 255).astype(np.uint8)
@@ -38,13 +52,12 @@ def Glow():
 	c = (n - 1) / 2.0
 	ys, xs = np.mgrid[0:n, 0:n].astype(np.float32)
 	r = np.sqrt((xs - c) ** 2 + (ys - c) ** 2)
-	inner = 66.0 * SS
-	# kenara dogru artan ic isima: merkez saydam, kenarda belirgin; dis tarafta keskin kesim
-	t = np.clip(r / inner, 0.0, 1.0)
-	alpha = (t ** 2.6) * 0.78
-	alpha[r > inner] = 0.0
-	edge = np.clip((inner - r) / (2.0 * SS), 0.0, 1.0)
-	alpha *= edge
+	# kenar isiltisi: dugme kenarinda (r=68) en parlak, disa dogru yumusakca solar, ice dogru da hafifce girer
+	edge = 68.0 * SS
+	# referans: kenara yapisik ince parlak halka, disa dogru kisa yumusak yayilim, iceride bir sey yok
+	outer = np.where(r > edge, np.exp(-(((r - edge) / (8.0 * SS)) ** 2)), np.exp(-(((r - edge) / (3.0 * SS)) ** 2))) * 0.95
+	alpha = outer
+	alpha = np.clip(alpha, 0.0, 1.0)
 	out = np.zeros((n, n, 4), np.uint8)
 	out[..., :3] = 255
 	out[..., 3] = (alpha * 255).astype(np.uint8)
@@ -55,5 +68,6 @@ if __name__ == '__main__':
 	out = sys.argv[1] if len(sys.argv) > 1 else OUT
 	os.makedirs(out, exist_ok = True)
 	Bubble().save(os.path.join(out, 'btn_run_bubble.png'))
+	Dot().save(os.path.join(out, 'btn_run_dot.png'))
 	Glow().save(os.path.join(out, 'btn_run_glow.png'))
 	print('btn_run_bubble / btn_run_glow ->', os.path.abspath(out))

@@ -61,14 +61,13 @@ HUD_ALERT_SPEED = 5.0
 HUD_ALERT_MIN_ALPHA = 0.25
 # renk (r, g, b), yanip sonme hizi (0 = sabit), en dusuk saydamlik
 # calisiyor efekti: iksir kabarciklari (baslangic fazi, tur suresi sn, yatay konum [yaricap orani], boy, salinim)
-RUN_BUBBLES = ((0.00, 3.6, -0.42, 0.62, 0.07), (0.17, 4.4, 0.30, 0.85, 0.09), (0.34, 3.9, -0.08, 0.50, 0.06), (0.52, 5.0, 0.52, 0.70, 0.08),
-		(0.69, 4.1, -0.55, 0.78, 0.07), (0.83, 4.7, 0.10, 0.58, 0.10), (0.94, 3.4, 0.38, 0.46, 0.06))
+RUN_BUBBLES = ()	# icerideki kabarciklar kaldirildi (referans: sadece kenar isiltisi + disarida minik noktalar)
 # dis kabarciklar: dugme kenarindan disari dogru yukselir (baslangic fazi, tur suresi sn, cikis acisi [derece, 0 = sag, -90 = yukari], boy)
-RUN_OUT_BUBBLES = ((0.05, 3.8, -25.0, 0.8), (0.22, 4.6, -75.0, 0.6), (0.41, 4.0, -120.0, 0.9), (0.58, 5.0, -160.0, 0.55),
-		(0.74, 4.3, 20.0, 0.7), (0.90, 3.6, -50.0, 0.5))
-RUN_BUBBLE_ASSET = 64.0
-RUN_GLOW_ALPHA = 0.55	# ic isima sabit (yanip sonmez)
+RUN_OUT_BUBBLES = tuple(((i * 0.618) % 1.0, 1.3 + (i % 5) * 0.3, (i * 137.5) % 360.0 - 180.0, 0.7 + (i % 4) * 0.25) for i in range(36))
+RUN_BUBBLE_ASSET = 16.0
+RUN_GLOW_ALPHA = 0.9	# kenar isiltisi sabit (yanip sonmez)
 RUN_COLOR = (0.45, 1.0, 0.55)
+RUN_TINT = (0.72, 1.0, 0.78)	# oto av aktifken dugme ikonunun hafif yesil tonu
 HUD_RING_STYLES = {"alert": (1.0, 0.3, 0.22, 4.0, 0.35), "run": (0.45, 1.0, 0.55, 0, 0.45), "open": (1.0, 0.96, 0.88, 0, 0.8)}
 
 CHAT_TITLE_TEXT = "S O H B E T"
@@ -93,6 +92,8 @@ def HudButtonSize(size):
 
 
 PRESS_SECONDS = 0.42
+PRESS_SINK_SECONDS = 0.26	# dugme ice cokup geri gelme suresi
+PRESS_SINK_DEPTH = 0.14	# en fazla kucuklme orani
 PRESS_RING_TEXTURE = HUD_PATH % "hud_press_ring"
 PRESS_DOT_TEXTURE = HUD_PATH % "hud_press_dot"
 PRESS_DOT_COUNT = 8
@@ -189,6 +190,8 @@ class HudButton(ui.Window):
 		self.label = uiMobileStyle.CreateText(self, getattr(uiScriptLocale, labelName, "") if labelName else "", size // 2, size - HUD_LABEL_BOTTOM, HUD_LABEL_COLOR, HUD_LABEL_FONT, "center", True)
 
 		self.SetTouchTapEvent(ui.__mem_func__(self.__OnTap))
+		self.flashStart = -10.0	# efektsiz basma geri bildirimi: dokununca dugme kisa sure kararir
+		self.flashed = False
 
 	def __del__(self):
 		ui.Window.__del__(self)
@@ -274,7 +277,7 @@ class HudButton(ui.Window):
 				bubble = ui.ExpandedImageBox()
 				bubble.AddFlag("not_pick")
 				bubble.AddFlag("float")
-				bubble.LoadImage(HUD_PATH % "btn_run_bubble")
+				bubble.LoadImage(HUD_PATH % "btn_run_dot")
 				self.runBubbles.append(bubble)
 		if not self.alert:
 			return
@@ -288,6 +291,8 @@ class HudButton(ui.Window):
 	def EnablePressRipple(self, color = (1.0, 0.9, 0.6)):
 		if not getattr(self, "ripple", None):
 			self.ripple = PressRipple(color)
+		else:
+			self.ripple.color = color
 
 	def __HideRunFx(self):
 		glow = getattr(self, "runGlow", None)
@@ -312,14 +317,14 @@ class HudButton(ui.Window):
 				(phase, period, angle, sizeFactor) = RUN_OUT_BUBBLES[index - len(RUN_BUBBLES)]
 				t = ((now / period) + phase) % 1.0
 				rad = math.radians(angle)
-				distance = radius * (0.98 + 0.42 * t)
+				distance = radius * (1.04 + 0.5 * t)
 				x = distance * math.cos(rad) + radius * 0.05 * math.sin((t * 2.0 + phase) * 6.2832)
-				y = distance * math.sin(rad) - radius * 0.22 * t
+				y = distance * math.sin(rad) - radius * 0.08 * t
 				alpha = (math.sin(t * 3.14159) ** 0.8) * 0.9
 				if alpha <= 0.02:
 					bubble.Hide()
 					continue
-				size = RUN_BUBBLE_ASSET * scale * 0.46 * sizeFactor * (0.8 + 0.5 * t)
+				size = RUN_BUBBLE_ASSET * scale * 1.35 * sizeFactor * (1.0 - 0.3 * t)
 				factor = size / RUN_BUBBLE_ASSET
 				bubble.SetScale(factor, factor)
 				bubble.SetPosition(int(left + center + x - size / 2.0), int(top + center + y - size / 2.0))
@@ -347,9 +352,39 @@ class HudButton(ui.Window):
 		ripple = getattr(self, "ripple", None)
 		if ripple:
 			ripple.Update(self)
+		elif self.image:
+			# basma: dugme ice dogru cokup (kararip) yumusakca geri gelir
+			p = (app.GetTime() - self.flashStart) / PRESS_SINK_SECONDS
+			if p < 1.0:
+				if p < 0.35:
+					depth = p / 0.35
+				else:
+					q = (p - 0.35) / 0.65
+					depth = 1.0 - q + 0.08 * math.sin(q * 3.14159)
+				factor = 1.0 - PRESS_SINK_DEPTH * depth
+				shade = 1.0 - 0.3 * max(0.0, depth)
+				self.flashed = True
+				self.image.SetScale(self.assetScale * factor, self.assetScale * factor)
+				offset = int(round(self.GetWidth() * (1.0 - factor) / 2.0))
+				self.image.SetPosition(offset, offset)
+				wndMgr.SetDiffuseColor(self.image.hWnd, shade, shade, shade, 1.0)
+			elif self.flashed:
+				self.flashed = False
+				self.image.SetScale(self.assetScale, self.assetScale)
+				self.image.SetPosition(0, 0)
+				wndMgr.SetDiffuseColor(self.image.hWnd, 1.0, 1.0, 1.0, 1.0)
 		if not self.alert:
 			return
 		kind = self.__RingKind()
+		if ripple and self.image:
+			# oto av calisirken dugmenin ici hafif yesilimsi
+			tinted = (kind == "run")
+			if tinted != getattr(self, "runTinted", False):
+				self.runTinted = tinted
+				if tinted:
+					wndMgr.SetDiffuseColor(self.image.hWnd, RUN_TINT[0], RUN_TINT[1], RUN_TINT[2], 1.0)
+				else:
+					wndMgr.SetDiffuseColor(self.image.hWnd, 1.0, 1.0, 1.0, 1.0)
 		if not kind or not self.IsShow():
 			self.alert.Hide()
 			self.__HideRunFx()
@@ -389,6 +424,10 @@ class HudButton(ui.Window):
 		self.state = state
 		self.image.LoadImage(self.assetPrefix[:-4] + "_%s%s.png" % (state, self.suffix))
 		self.image.SetScale(self.assetScale, self.assetScale)
+		if self.pressed:
+			wndMgr.SetDiffuseColor(self.image.hWnd, 0.55, 0.55, 0.55, 1.0)
+		else:
+			wndMgr.SetDiffuseColor(self.image.hWnd, 1.0, 1.0, 1.0, 1.0)
 
 	def __Run(self):
 		# AKRAVON: iPhone'da tek dokunus hem dokunma hem fare tiklamasi olarak gelebiliyor: 0.35 sn icinde ikinci calisma yutulur (ac-kapa hatasi)
@@ -400,6 +439,8 @@ class HudButton(ui.Window):
 		ripple = getattr(self, "ripple", None)
 		if ripple:
 			ripple.Start()
+		else:
+			self.flashStart = now
 		if self.event:
 			self.event()
 
