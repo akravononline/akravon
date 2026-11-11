@@ -33,135 +33,145 @@ handler = None
 footCounter = 0
 
 
-class AtlasHandler(object):
-	def __init__(self, atlas):
-		self.atlas = atlas
+class Renderer(ui.Window):
+	# haritanin kendisini motor cizer (RenderAtlas); biz yalniz konum ve olcek veririz
+	def __init__(self):
+		ui.Window.__init__(self)
+		self.AddFlag("not_pick")
 
-	def OnClick(self):
-		atlas = self.atlas
-		if not atlas or not atlas.AtlasMainWindow:
-			return
-		(mouseX, mouseY) = wndMgr.GetMousePosition()
-		info = miniMap.GetAtlasInfo(mouseX, mouseY)
-		(posX, posY) = (info[2], info[3])
-		if chr.IsGameMaster(player.GetMainCharacterIndex()):
-			net.SendChatPacket("/go %s %s" % (str(posX), str(posY)))
-			return
-		if posX <= 0 and posY <= 0:
-			return
-		if SetTarget(posX * 100.0, posY * 100.0):
-			atlas.Hide()
+	def OnUpdate(self):
+		miniMap.UpdateAtlas()
+
+	def OnRender(self):
+		(x, y) = self.GetGlobalPosition()
+		miniMap.RenderAtlas(float(x), float(y))
 
 
-def Install(miniMapWindow):
-	global atlasWindow, handler
-	atlas = getattr(miniMapWindow, "AtlasWindow", None)
-	if not atlas or getattr(atlas, "akravonInstalled", False):
-		atlasWindow = atlas
-		return
-	atlas.akravonInstalled = True
-	atlasWindow = atlas
-	originalShow = atlas.Show
+class MapCatcher(ui.Window):
+	# haritaya dokunma: gidilecek nokta
+	def __init__(self, owner):
+		ui.Window.__init__(self)
+		self.SetParent(owner)
+		self.owner = owner
+		self.Show()
 
-	Style(atlas)
-
-	def Show(*args):
-		ApplyScale(atlas)
-		originalShow()
-		Center(atlas)
-		try:
-			atlas.AtlasMainWindow.SetTop()
-		except Exception:
-			pass
-
-	atlas.Show = Show
-	handler = AtlasHandler(atlas)
-	atlas.board.SetOnMouseLeftButtonUpEvent(ui.__mem_func__(handler.OnClick))
+	def OnMouseLeftButtonUp(self):
+		self.owner.OnMapClick()
 
 
 PAD = 14
 TITLE_H = 46
-BOARD_PATH_PAD = 4
+GAP = 14			# harita ile bilgi paneli arasi (ayirici ortada)
+PANEL_W = 260		# sag bilgi paneli genisligi
+ATLAS_SCALE = 1.5	# harita buyutme (1.0 = eski boyut); iki platformda sabit, ekran boyuna bagli degil
+TITLE_TEXT = "Genel Görünüm Haritası"
+INFO_TITLE = "Otomatik Yürüyüş"
+INFO_TEXT = "Haritada gitmek istediğiniz yere dokunun, karakteriniz engellerden kaçarak otomatik olarak oraya yürür."
+INFO_FONT = "Lato:21"
+LINE_H = 29
+LINE_COLOR = (96, 74, 42)
 
 
-def Style(atlas):
-	# AKRAVON: eski Metin2 cercevesi yerine kendi lacivert-altin tahtamiz, baslik ve kare kapat dugmesi
-	import uiMobileStyle
-	import uiAkravonQuest
-	import uiAkravonInventory
-	board = atlas.board
-	for part in list(getattr(board, "Corners", [])) + list(getattr(board, "Lines", [])) + [getattr(board, "Base", None)]:
-		if part:
-			part.Hide()
-	titleText = ""
-	titleBar = getattr(board, "titleBar", None)
-	titleName = getattr(board, "titleName", None)
-	if titleName:
-		titleText = titleName.GetText()
-		titleName.Hide()
-	if titleBar:
-		titleBar.Hide()
-	parts = {}
-	parts["frame"] = uiAkravonQuest.Board9()
-	parts["frame"].SetParent(board)
-	parts["frame"].AddFlag("not_pick")
-	parts["frame"].Show()
-	parts["title"] = uiMobileStyle.CreateText(board, titleText or "B\xf6lge Haritas\xfd", 100, 14, uiMobileStyle.Color(222, 184, 110), "Marcellus:22", "center")
-	parts["divider"] = uiMobileStyle.CreateBar(board, uiMobileStyle.Color(150, 118, 58), PAD, TITLE_H, 100, 1)
-	parts["close"] = uiAkravonInventory.CloseButton(board, 100, 11, ui.__mem_func__(atlas.Hide))
-	atlas.akrParts = parts
-	# harita cizici cerceveden SONRA olusturulur (pencereler olusturulma sirasiyla cizilir; yoksa cerceve haritayi ortuyor)
-	old = atlas.AtlasMainWindow
-	old.Hide()
-	renderer = old.__class__()
-	renderer.SetParent(board)
-	renderer.SetPosition(PAD, TITLE_H + 8)
-	renderer.Show()
-	atlas.AtlasMainWindow = renderer
-	atlas.akrOldRenderer = old
+class AtlasBoard(ui.Window):
+	# AKRAVON: buyuk harita penceresi sifirdan: lacivert-altin tahta, baslik, kare kapat, solda harita, ortada ayirici, sagda bilgi
+	def __init__(self):
+		import uiMobileStyle
+		import uiAkravonQuest
+		import uiAkravonInventory
+		ui.Window.__init__(self, "UI")
+		self.AddFlag("float")
+		self.frame = uiAkravonQuest.Board9()
+		self.frame.SetParent(self)
+		self.frame.AddFlag("not_pick")
+		self.frame.Show()
+		self.title = uiMobileStyle.CreateText(self, TITLE_TEXT, 100, 14, uiMobileStyle.Color(222, 184, 110), "Marcellus:22", "center")
+		self.divider = uiMobileStyle.CreateBar(self, uiMobileStyle.Color(*LINE_COLOR), PAD, TITLE_H, 100, 1)
+		self.vline = uiMobileStyle.CreateBar(self, uiMobileStyle.Color(*LINE_COLOR), 100, TITLE_H + 12, 1, 100)
+		self.infoTitle = uiMobileStyle.CreateText(self, INFO_TITLE, 100, 100, uiMobileStyle.Color(222, 184, 110), "Marcellus:25", "left")
+		self.infoLines = [uiMobileStyle.CreateText(self, line, 100, 100, uiMobileStyle.TEXT_COLOR, INFO_FONT, "left") for line in uiMobileStyle.WrapLines(INFO_TEXT, PANEL_W, INFO_FONT)]
+		self.closeButton = uiAkravonInventory.CloseButton(self, 100, 11, ui.__mem_func__(self.Close))
+		self.renderer = Renderer()
+		self.renderer.SetParent(self)
+		self.renderer.Show()
+		self.catcher = MapCatcher(self)
+		self.AtlasMainWindow = self.renderer	# AtlasHandler uyumu
+		self.size = (0, 0)
+		self.Hide()
+
+	def __del__(self):
+		ui.Window.__del__(self)
+
+	def Open(self):
+		try:
+			(ok, sizeX, sizeY) = miniMap.GetAtlasSize()
+		except Exception:
+			(ok, sizeX, sizeY) = (0, 256, 256)
+		if not ok or sizeX <= 0 or sizeY <= 0:
+			(sizeX, sizeY) = (256, 256)
+		scale = 1.0
+		if hasattr(miniMap, "SetAtlasScale"):
+			scale = ATLAS_SCALE
+			miniMap.SetAtlasScale(float(scale))
+		mapWidth = int(sizeX * scale)
+		mapHeight = int(sizeY * scale)
+		width = PAD + mapWidth + GAP + 1 + GAP + PANEL_W + PAD
+		height = TITLE_H + 12 + mapHeight + PAD
+		self.size = (width, height)
+		self.SetSize(width, height)
+		self.frame.SetSize(width, height)
+		self.title.SetPosition(width // 2, 14)
+		self.divider.SetSize(width - PAD * 2, 1)
+		self.closeButton.SetPosition(width - PAD - 34, 11 - 4)
+		lineX = PAD + mapWidth + GAP
+		self.vline.SetPosition(lineX, TITLE_H + 12)
+		self.vline.SetSize(1, height - TITLE_H - 12 - PAD)
+		textX = lineX + 1 + GAP
+		self.infoTitle.SetPosition(textX, TITLE_H + 14)
+		for (index, line) in enumerate(self.infoLines):
+			line.SetPosition(textX, TITLE_H + 14 + 42 + index * LINE_H)
+		self.renderer.SetPosition(PAD, TITLE_H + 12)
+		self.catcher.SetPosition(PAD, TITLE_H + 12)
+		self.catcher.SetSize(mapWidth, mapHeight)
+		self.SetPosition(max(0, (wndMgr.GetScreenWidth() - width) // 2), max(0, (wndMgr.GetScreenHeight() - height) // 2))
+		miniMap.ShowAtlas()
+		self.Show()
+		self.SetTop()
+
+	def Close(self):
+		miniMap.HideAtlas()
+		self.Hide()
+
+	def OnMapClick(self):
+		(mouseX, mouseY) = wndMgr.GetMousePosition()
+		info = miniMap.GetAtlasInfo(mouseX, mouseY)
+		(posX, posY) = (info[2], info[3])
+		if posX <= 0 and posY <= 0:
+			return
+		if chr.IsGameMaster(player.GetMainCharacterIndex()):
+			net.SendChatPacket("/go %s %s" % (str(posX), str(posY)))
+			return
+		if SetTarget(posX * 100.0, posY * 100.0):
+			self.Close()
+
+	def OnPressEscapeKey(self):
+		self.Close()
+		return True
 
 
-def LayoutFrame(atlas, width, height):
-	parts = getattr(atlas, "akrParts", None)
-	if not parts:
+def Install(miniMapWindow):
+	# eski Metin2 harita penceresi yalniz motor kaydi icin gizli kalir; Show / Hide / IsShow bizim pencereye yonlenir
+	global atlasWindow, handler
+	legacy = getattr(miniMapWindow, "AtlasWindow", None)
+	if not legacy or getattr(legacy, "akravonInstalled", False):
 		return
-	parts["frame"].SetSize(width, height)
-	parts["title"].SetPosition(width // 2, 14)
-	parts["divider"].SetSize(width - PAD * 2, 1)
-	parts["close"].SetPosition(width - PAD - 38, 7)
-
-
-def ApplyScale(atlas):
-	# harita ekran yuksekligine gore tam sayi kati buyur (nokta filtre: kesirli olcek bulaniklastirir)
-	try:
-		(ok, sizeX, sizeY) = miniMap.GetAtlasSize()
-	except Exception:
-		(ok, sizeX, sizeY) = (0, 256, 256)
-	if not ok or sizeX <= 0 or sizeY <= 0:
-		(sizeX, sizeY) = (256, 256)
-	scale = 1
-	if hasattr(miniMap, "SetAtlasScale"):
-		maxWidth = wndMgr.GetScreenWidth() - 40
-		maxHeight = wndMgr.GetScreenHeight() - 40 - TITLE_H - PAD
-		scale = int(min(maxWidth // (sizeX + PAD * 2), maxHeight // sizeY))
-		scale = max(1, min(scale, 4))
-		miniMap.SetAtlasScale(float(scale))
-	width = sizeX * scale + PAD * 2
-	height = sizeY * scale + TITLE_H + PAD + 8
-	atlas.akrScale = scale
-	atlas.akrSize = (sizeX * scale + PAD * 2, sizeY * scale + TITLE_H + PAD + 8)
-	atlas.SetSize(width, height)
-	atlas.board.SetSize(width, height)
-	atlas.AtlasMainWindow.SetPosition(PAD, TITLE_H + 8)
-	LayoutFrame(atlas, width, height)
-
-
-def Center(atlas):
-	width = wndMgr.GetScreenWidth()
-	height = wndMgr.GetScreenHeight()
-	(atlasWidth, atlasHeight) = getattr(atlas, "akrSize", (atlas.GetWidth(), atlas.GetHeight()))
-	atlas.SetSize(atlasWidth, atlasHeight)
-	atlas.SetPosition(max(0, (width - atlasWidth) // 2), max(0, (height - atlasHeight) // 2))
+	legacy.akravonInstalled = True
+	board = AtlasBoard()
+	atlasWindow = board
+	handler = board
+	legacy.Hide()
+	legacy.Show = board.Open
+	legacy.Hide = board.Close
+	legacy.IsShow = board.IsShow
 
 
 def __Plan():
