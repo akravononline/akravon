@@ -1868,11 +1868,30 @@ void CPythonNetworkStream::__ConvertEmpireText(DWORD dwEmpireID, char* szText)
 }
 
 // AKRAVON: karsi krallikten gelen genel / bagirma mesajinin basina krallik bayragi (satir ici gorsel: icon/akr_flag_N.png)
+extern bool AkravonEmpireByName(const char * c_szName, DWORD * pdwEmpire);
+
 static void AkravonPrependEmpireFlag(char * buf, size_t cap, DWORD dwEmpire)
 {
 	CInstanceBase * pkInstMain = CPythonCharacterManager::Instance().GetMainInstancePtr();
 	if (!pkInstMain)
 		return;
+	if (dwEmpire < 1 || dwEmpire > 3)
+	{
+		// paketteki krallik bos: "Isim : mesaj" bicimindeki isimden hatirladigimiz krallik
+		char szName[64];
+		const char * c_pColon = strchr(buf, ':');
+		if (c_pColon && (size_t)(c_pColon - buf) < sizeof(szName))
+		{
+			size_t len = (size_t)(c_pColon - buf);
+			memcpy(szName, buf, len);
+			while (len > 0 && szName[len - 1] == ' ')
+				--len;
+			szName[len] = '\0';
+			DWORD dwFound = 0;
+			if (AkravonEmpireByName(szName, &dwFound))
+				dwEmpire = dwFound;
+		}
+	}
 	if (dwEmpire < 1 || dwEmpire > 3 || dwEmpire == pkInstMain->GetEmpireID())
 		return;
 
@@ -2011,6 +2030,7 @@ bool CPythonNetworkStream::RecvChatPacket()
 					__FilterInsult(p, strlen(p));
 			}
 
+			TraceError("CHATFLAG shout vid=%u empire=%u buf=%s", (unsigned)kChat.dwVID, (unsigned)kChat.bEmpire, buf);
 			AkravonPrependEmpireFlag(buf, sizeof(buf), kChat.bEmpire);
 		}
 

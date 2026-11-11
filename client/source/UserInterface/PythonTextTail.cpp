@@ -177,6 +177,23 @@ void CPythonTextTail::UpdateTextTail(TTextTail * pTextTail)
 	}
 }
 
+// AKRAVON: gordugumuz oyuncularin isim -> krallik tablosu (bagirma paketinde krallik bos gelirse sohbet bayragi icin)
+static std::map<std::string, DWORD> g_mapAkravonEmpire;
+void AkravonRememberEmpire(const char * c_szName, DWORD dwEmpire)
+{
+	if (c_szName && c_szName[0] && dwEmpire >= 1 && dwEmpire <= 3)
+		g_mapAkravonEmpire[c_szName] = dwEmpire;
+}
+
+bool AkravonEmpireByName(const char * c_szName, DWORD * pdwEmpire)
+{
+	std::map<std::string, DWORD>::iterator it = g_mapAkravonEmpire.find(c_szName ? c_szName : "");
+	if (it == g_mapAkravonEmpire.end())
+		return false;
+	*pdwEmpire = it->second;
+	return true;
+}
+
 static const char * c_szEmpireFlagFiles[4] = { NULL, "d:/ymir work/ui/intro/empire/empireflag_a.sub", "d:/ymir work/ui/intro/empire/empireflag_b.sub", "d:/ymir work/ui/intro/empire/empireflag_c.sub" };
 static const float c_fEmpireFlagHeight = 22.0f;	// ekranda bayrak yuksekligi (px)
 
@@ -690,6 +707,7 @@ void CPythonTextTail::RegisterCharacterTextTail(DWORD dwGuildID, DWORD dwVirtual
 
 	if (pCharacterInstance->IsPC())
 	{
+		AkravonRememberEmpire(pCharacterInstance->GetNameString(), pCharacterInstance->GetEmpireID());
 		pTextTail->iEmpire = (int)pCharacterInstance->GetEmpireID();
 		pTextTail->pEmpireFlag = MakeEmpireFlagInstance(pTextTail->iEmpire);
 		pTextTail->pEmpireGlow = MakeEmpireFlagInstance(pTextTail->iEmpire, true);
