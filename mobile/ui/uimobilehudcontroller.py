@@ -1,4 +1,5 @@
 from __future__ import division
+import math
 import app
 import mouseModule
 import player
@@ -655,20 +656,68 @@ class MobileHudController(object):
 		self.__ArrangeWhisperButtons()
 
 	def __ArrangeWhisperButtons(self):
-		# Cynex: fisilti/[DUYURU] dugmeleri sag sutundaki Topla/Oto Av/Binek ile cakismasin - solunda dizilir
+		self.__UpdateWhisperButtons()
+
+	WHISPER_ICON = "mobile_ui/akravon/hud/mail_icon.png"
+	WHISPER_ICON_RED = "mobile_ui/akravon/hud/mail_icon_red.png"
+	WHISPER_STEP = 64
+
+	def __UpdateWhisperButtons(self):
+		# AKRAVON: gelen fisilti dugmeleri Sohbet ikonunun ALTINA dizilir; arkadas / oyuncu icin kendi zarf ikonumuz
+		# (GM ve sistem kendi ikonunu korur); okunmamis mesajda zarf kirmizi yanip soner
 		buttons = getattr(self.interface, "whisperButtonList", None)
 		if not buttons:
 			return
-		(utilityX, utilityY) = self.utilityOrigin
-		y = utilityY
+		try:
+			import uiWhisper
+			unread = uiWhisper.UNREAD
+		except Exception:
+			unread = ()
+		chat = self.chatController
+		x = getattr(chat, "bubbleX", int(uiMobileHud.SCREEN_EDGE) - 7)
+		y = getattr(chat, "bubbleY", None)
+		if y is None:
+			y = 260
+		y += 62 + 8
+		now = app.GetTime()
 		for button in buttons:
-			if "DUYURU" in str(getattr(button, "name", "")).upper():
+			name = str(getattr(button, "name", ""))
+			if "DUYURU" in name.upper():
 				button.Hide()	# AKRAVON: duyuru zarfi yok
 				continue
-			x = utilityX - button.GetWidth() - uiMobileHud.WINDOW_GAP * 2
+			if not getattr(button, "akrStyled", False):
+				button.akrStyled = True
+				isGM = False
+				try:
+					isGM = bool(self.interface.IsGameMasterName(name)) or name in ("[Sistem]", "[Efsun Botu]")
+				except Exception:
+					pass
+				if not isGM:
+					button.SetUpVisual(self.WHISPER_ICON)
+					button.SetOverVisual(self.WHISPER_ICON)
+					button.SetDownVisual(self.WHISPER_ICON)
+					button.SetToolTipText("")
+				button.akrIsGM = isGM
+				shown = name if len(name) <= 9 else name[:8] + ".."
+				button.akrLabel = uiMobileStyle.CreateText(button, shown, button.GetWidth() // 2, button.GetHeight() + 2, uiMobileStyle.Color(250, 228, 176), "LatoBd:13", "center", True)
+				red = ui.ExpandedImageBox()
+				red.SetParent(button)
+				red.AddFlag("not_pick")
+				red.LoadImage(self.WHISPER_ICON_RED)
+				red.Hide()
+				button.akrRed = red
 			if button.GetLocalPosition() != (x, y):
 				button.SetPosition(x, y)
-			y += button.GetHeight() + uiMobileHud.WINDOW_GAP
+			button.Show()
+			red = getattr(button, "akrRed", None)
+			if red and not button.akrIsGM:
+				if name in unread:
+					pulse = 0.5 + 0.5 * math.sin(now * 6.0)
+					wndMgr.SetDiffuseColor(red.hWnd, 1.0, 1.0, 1.0, pulse)
+					red.Show()
+				else:
+					red.Hide()
+			y += self.WHISPER_STEP
 
 	def __StyleAffectToggle(self, toggle):
 		if self.affectToggleDesktop:
@@ -1145,6 +1194,10 @@ class MobileHudController(object):
 		self.skillArc.UpdateFlash()
 		import uiAkravonAutoHunt
 		uiAkravonAutoHunt.Update(bool(self.joystick.isActive), self.utilities.GetButton("autohunt") if self.utilities else None)
+		try:
+			self.__UpdateWhisperButtons()
+		except Exception:
+			pass
 		import uiAkravonAtlas
 		uiAkravonAtlas.Update(bool(self.joystick.isActive or getattr(self.attackButton, "isActive", False)))
 		if uiMobileHud.IsEditing():
