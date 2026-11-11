@@ -407,8 +407,7 @@ bool CPythonEventManager::ProcessEventSet(TEventSet * pEventSet)
 		{
 			const std::string& c_rstValue = GetArgumentString("value", ScriptCommand.argList);
 			pEventSet->strCurrentLine.append(c_rstValue);
-			if (c_rstValue.find_first_not_of(" 	
-") != std::string::npos)
+			if (c_rstValue.find_first_not_of(" \t\r\n") != std::string::npos)
 				pEventSet->isTextStarted = true;
 			pEventSet->pCurrentTextLine->SetValueString(pEventSet->strCurrentLine);
 			pEventSet->pCurrentTextLine->SetColor(pEventSet->CurrentColor.r,pEventSet->CurrentColor.g,pEventSet->CurrentColor.b);
