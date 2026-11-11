@@ -195,7 +195,7 @@ bool AkravonEmpireByName(const char * c_szName, DWORD * pdwEmpire)
 }
 
 static const char * c_szEmpireFlagFiles[4] = { NULL, "d:/ymir work/ui/intro/empire/empireflag_a.sub", "d:/ymir work/ui/intro/empire/empireflag_b.sub", "d:/ymir work/ui/intro/empire/empireflag_c.sub" };
-static const float c_fEmpireFlagHeight = 22.0f;	// ekranda bayrak yuksekligi (px)
+static const float c_fEmpireFlagHeight = 14.0f;	// ekranda bayrak yuksekligi (px)
 
 static CGraphicImageInstance * MakeEmpireFlagInstance(int iEmpire, bool bGlow = false)
 {

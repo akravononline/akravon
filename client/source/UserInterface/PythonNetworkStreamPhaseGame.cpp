@@ -1879,11 +1879,19 @@ static void AkravonPrependEmpireFlag(char * buf, size_t cap, DWORD dwEmpire)
 	{
 		// paketteki krallik bos: "Isim : mesaj" bicimindeki isimden hatirladigimiz krallik
 		char szName[64];
-		const char * c_pColon = strchr(buf, ':');
-		if (c_pColon && (size_t)(c_pColon - buf) < sizeof(szName))
+		const char * c_pStart = buf;
+		const char * c_pEnd = NULL;
+		if (strncmp(buf, "|Hwhisper:", 10) == 0)
 		{
-			size_t len = (size_t)(c_pColon - buf);
-			memcpy(szName, buf, len);
+			c_pStart = buf + 10;
+			c_pEnd = strchr(c_pStart, '|');
+		}
+		else
+			c_pEnd = strchr(buf, ':');
+		if (c_pEnd && (size_t)(c_pEnd - c_pStart) < sizeof(szName))
+		{
+			size_t len = (size_t)(c_pEnd - c_pStart);
+			memcpy(szName, c_pStart, len);
 			while (len > 0 && szName[len - 1] == ' ')
 				--len;
 			szName[len] = '\0';
@@ -2030,8 +2038,7 @@ bool CPythonNetworkStream::RecvChatPacket()
 					__FilterInsult(p, strlen(p));
 			}
 
-			TraceError("CHATFLAG shout vid=%u empire=%u buf=%s", (unsigned)kChat.dwVID, (unsigned)kChat.bEmpire, buf);
-			AkravonPrependEmpireFlag(buf, sizeof(buf), kChat.bEmpire);
+			AkravonPrependEmpireFlag(buf, sizeof(buf), 0);	// paketteki krallik alani alicinin krallig: isimden bulunur
 		}
 
 		CPythonChat::Instance().AppendChat(kChat.type, buf);
