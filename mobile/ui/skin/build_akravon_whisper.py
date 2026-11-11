@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # AKRAVON: fisilti gorselleri
-#  mail_icon / mail_icon_red : HUD'da Sohbet ikonunun altina gelen zarf (Sohbet ikonuyla ayni bej / metal stil; red = yanip sonme katmani)
+#  mail_icon / mail_icon_green : HUD'da Sohbet ikonunun altina gelen zarf (Sohbet ikonuyla ayni bej / metal stil; green = okunmamis yanip sonme katmani)
 #  wsp_min_1 / wsp_min_3 : fisilti penceresi kucult dugmesi (kapat dugmesiyle ayni cerceve, ortada tire)
 #  wsp_me_* / wsp_other_* : mesaj balonlari (9 parca, kose 12 px): kendi mesajimiz yesil, gelen mesaj mavi, ince acik kenar
 import os
@@ -22,28 +22,33 @@ def MeanColor(path):
 	return tuple(int(v) for v in im[mask][:, :3].mean(axis = 0))
 
 
+ART = os.path.join(HERE, 'ref_menu', 'ikon', 'zarf_tas.png')	# el yapimi tas kabartmali zarf (kaynak sanat)
+
+
 def Envelope(tint = None):
-	# 48x45 tuval; govde: dolgulu yuvarlak dikdortgen, ustte V kapak cizgisi, hafif bej doku
-	w, h = 48, 45
-	base = MeanColor(os.path.join(HUD, 'chat_icon.png'))
-	big = Image.new('RGBA', (w * SS, h * SS), (0, 0, 0, 0))
-	d = ImageDraw.Draw(big)
-	body = (3 * SS, 8 * SS, 45 * SS, 38 * SS)
-	dark = tuple(int(c * 0.55) for c in base) + (255,)
-	d.rounded_rectangle(body, 5 * SS, fill = base + (255,), outline = dark, width = 2 * SS)
-	d.line((5 * SS, 11 * SS, 24 * SS, 26 * SS), fill = dark, width = 2 * SS)
-	d.line((43 * SS, 11 * SS, 24 * SS, 26 * SS), fill = dark, width = 2 * SS)
-	light = tuple(min(255, int(c * 1.25)) for c in base) + (255,)
-	d.line((6 * SS, 36 * SS, 20 * SS, 24 * SS), fill = light, width = SS)
-	d.line((42 * SS, 36 * SS, 28 * SS, 24 * SS), fill = light, width = SS)
-	im = big.resize((w, h), Image.LANCZOS)
+	# kullanicinin tas kabartmali zarfi: kenar kirlerini temizle, kirp, 46 genislige indir, rengi Sohbet ikonuyla ayni tona cek
+	art = Image.open(ART).convert('RGBA')
+	a = np.array(art).astype(np.float32)
+	# kenardaki yari saydam kir / benek: sert esik + acilim (erozyon sonra genisleme) ile ana govde disinda her sey silinir
+	solid = Image.fromarray(((a[..., 3] > 200) * 255).astype(np.uint8), 'L')
+	solid = solid.filter(ImageFilter.MinFilter(15)).filter(ImageFilter.MaxFilter(17))
+	keep = np.array(solid) > 128
+	a[..., 3] = np.where(keep, a[..., 3], 0)
+	ys, xs = np.where(a[..., 3] > 0)
+	art = Image.fromarray(a.astype(np.uint8), 'RGBA').crop((xs.min(), ys.min(), xs.max() + 1, ys.max() + 1))
+	width = 46
+	height = int(round(art.size[1] * width / float(art.size[0])))
+	art = art.resize((width, height), Image.LANCZOS)
+	px = np.array(art).astype(np.float32)
+	mask = px[..., 3] > 200
+	target = MeanColor(os.path.join(HUD, 'chat_icon.png'))
+	current = px[mask][:, :3].mean(axis = 0)
+	for channel in range(3):
+		px[..., channel] = np.clip(px[..., channel] * (target[channel] / float(current[channel])), 0, 255)
 	if tint:
-		px = np.array(im).astype(np.float32)
-		px[..., 0] = np.clip(px[..., 0] * 0.55 + tint[0] * 0.6, 0, 255)
-		px[..., 1] = np.clip(px[..., 1] * 0.55 + tint[1] * 0.25, 0, 255)
-		px[..., 2] = np.clip(px[..., 2] * 0.55 + tint[2] * 0.25, 0, 255)
-		im = Image.fromarray(px.astype(np.uint8), 'RGBA')
-	return im
+		for channel in range(3):
+			px[..., channel] = np.clip(px[..., channel] * 0.45 + tint[channel] * 0.75, 0, 255)
+	return Image.fromarray(px.astype(np.uint8), 'RGBA')
 
 
 def Minimize(state):
@@ -56,27 +61,20 @@ def Minimize(state):
 	return big.resize((32, 32), Image.LANCZOS)
 
 
-def Bubble(fill, edge):
-	# 36x36: yumusak kose (yaricap 11), ust yarida hafif parlama, 1 px acik kenar
+def Corner(fill, edge):
+	# 12x12 kose: yaricap 11 yuvarlak, 1 px kenar, dolgu opak; kenar / dolgu duz seritlerle ayni renk
 	size = 36
 	big = Image.new('RGBA', (size * SS, size * SS), (0, 0, 0, 0))
 	d = ImageDraw.Draw(big)
-	d.rounded_rectangle((0, 0, size * SS - 1, size * SS - 1), 11 * SS, fill = fill + (250,), outline = edge + (255,), width = SS)
-	shine = Image.new('RGBA', big.size, (0, 0, 0, 0))
-	sd = ImageDraw.Draw(shine)
-	sd.rounded_rectangle((SS, SS, size * SS - SS - 1, size * SS // 2), 10 * SS, fill = (255, 255, 255, 18))
-	big = Image.alpha_composite(big, shine)
+	d.rounded_rectangle((0, 0, size * SS - 1, size * SS - 1), 11 * SS, fill = fill + (255,), outline = edge + (255,), width = SS)
 	return big.resize((size, size), Image.LANCZOS)
 
 
-def Slice(im, prefix, out):
+def Corners(im, prefix, out):
 	c = 12
 	w, h = im.size
-	pieces = {
-		'tl': (0, 0, c, c), 'tr': (w - c, 0, w, c), 'bl': (0, h - c, c, h), 'br': (w - c, h - c, w, h),
-		't': (c, 0, w - c, c), 'b': (c, h - c, w - c, h), 'l': (0, c, c, h - c), 'r': (w - c, c, w, h - c), 'c': (c, c, w - c, h - c),
-	}
-	for (key, box) in pieces.items():
+	boxes = {'tl': (0, 0, c, c), 'tr': (w - c, 0, w, c), 'bl': (0, h - c, c, h), 'br': (w - c, h - c, w, h)}
+	for (key, box) in boxes.items():
 		im.crop(box).save(os.path.join(out, '%s_%s.png' % (prefix, key)))
 
 
@@ -86,9 +84,9 @@ if __name__ == '__main__':
 	os.makedirs(hud, exist_ok = True)
 	os.makedirs(legacy, exist_ok = True)
 	Envelope().save(os.path.join(hud, 'mail_icon.png'))
-	Envelope((255, 70, 60)).save(os.path.join(hud, 'mail_icon_red.png'))
+	Envelope((70, 235, 110)).save(os.path.join(hud, 'mail_icon_green.png'))
 	Minimize('up').save(os.path.join(legacy, 'wsp_min_1.png'))
 	Minimize('down').save(os.path.join(legacy, 'wsp_min_3.png'))
-	Slice(Bubble((28, 98, 70), (96, 196, 140)), 'wsp_me', legacy)
-	Slice(Bubble((34, 54, 104), (110, 146, 224)), 'wsp_other', legacy)
+	Corners(Corner((28, 98, 70), (96, 196, 140)), 'wsp_me', legacy)
+	Corners(Corner((34, 54, 104), (110, 146, 224)), 'wsp_other', legacy)
 	print('fisilti gorselleri ->', os.path.abspath(hud), os.path.abspath(legacy))

@@ -659,7 +659,7 @@ class MobileHudController(object):
 		self.__UpdateWhisperButtons()
 
 	WHISPER_ICON = "mobile_ui/akravon/hud/mail_icon.png"
-	WHISPER_ICON_RED = "mobile_ui/akravon/hud/mail_icon_red.png"
+	WHISPER_ICON_RED = "mobile_ui/akravon/hud/mail_icon_green.png"	# okunmamis: yesil yanip soner (Sohbet kirmizisiyla karismasin)
 	WHISPER_STEP = 64
 
 	def __UpdateWhisperButtons(self):

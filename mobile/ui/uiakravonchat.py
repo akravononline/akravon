@@ -190,14 +190,10 @@ class ChatButton(uiMobileStyle.Pressable):
 		self.__ApplyTint()
 
 	def __ApplyTint(self):
-		# okunmamis mesaj: ikon SABIT kirmizi (yanip sonmez)
+		# okunmamis mesaj: ikon boyanmaz (bej kalir), yalniz kose rozetindeki kirmizi sayi gosterir
 		if getattr(self, "icon", None):
-			if self.alert:
-				shade = 0.8 if self.pressed else 1.0
-				wndMgr.SetDiffuseColor(self.icon.hWnd, shade, 0.3 * shade, 0.3 * shade, 1.0)
-			else:
-				shade = 0.78 if self.pressed else 1.0
-				wndMgr.SetDiffuseColor(self.icon.hWnd, shade, shade, shade, 1.0)
+			shade = 0.78 if self.pressed else 1.0
+			wndMgr.SetDiffuseColor(self.icon.hWnd, shade, shade, shade, 1.0)
 
 
 class Grip(ui.Window):
