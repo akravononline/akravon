@@ -436,6 +436,21 @@ bool CPythonEventManager::ProcessEventSet(TEventSet * pEventSet)
 				pEventSet->CurrentColor.g = (float)atof(GetArgument("g", ScriptCommand.argList));
 				pEventSet->CurrentColor.b = (float)atof(GetArgument("b", ScriptCommand.argList));
 				pEventSet->CurrentColor.a = 1.0f;
+
+				// AKRAVON: sunucu color256(255,230,186) -> [COLOR r;1|g;0.902|b;0.729] (0..1). Ilk satirda ise ortali gorev basligi
+				if (!pEventSet->isTitleLine && pEventSet->ScriptTextLineList.empty() && pEventSet->strCurrentLine.empty()
+					&& fabs(pEventSet->CurrentColor.r - 1.0f) < 0.01f
+					&& fabs(pEventSet->CurrentColor.g - 0.902f) < 0.01f
+					&& fabs(pEventSet->CurrentColor.b - 0.729f) < 0.01f
+					&& pEventSet->pCurrentTextLine)
+				{
+					pEventSet->isTitleLine = true;
+					CGraphicText* pkTitleFont = static_cast<CGraphicText*>(CResourceManager::Instance().GetTypeResourcePointer("Marcellus:22"));
+					if (pkTitleFont)
+						pEventSet->pCurrentTextLine->SetTextPointer(pkTitleFont);
+					pEventSet->pCurrentTextLine->SetHorizonalAlign(CGraphicTextInstance::HORIZONTAL_ALIGN_CENTER);
+					PyCallClassMemberFunc(pEventSet->poEventHandler, "OnQuestTitleLine", Py_BuildValue("()"));
+				}
 			}
 			else
 			{
