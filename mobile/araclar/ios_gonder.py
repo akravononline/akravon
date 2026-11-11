@@ -105,6 +105,10 @@ async def Main(arguments):
 				await device.Put(DEVICE_MOBILE + ('/' + sub if sub else '') + '/' + name, open(os.path.join(ORIJINAL, name), 'rb').read())
 		elif flag == '--gorsel':
 			await PushTree(device, GORSEL, DEVICE_MOBILE)
+			# lonca imza / simge dosyalari: oyun bunlari uygulama ana klasorunden (Documents/upload) okur
+			upload = os.path.join(GORSEL, 'upload')
+			if os.path.isdir(upload):
+				await PushTree(device, upload, '/Documents/upload')
 		elif flag == '--karakter':
 			# yeniden uret -> proje icindeki kopyalara yaz -> gonder
 			subprocess.check_call([sys.executable, os.path.join(UI, 'skin', 'build_akravon_charwin.py'), UI_OUT])

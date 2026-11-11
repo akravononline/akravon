@@ -53,6 +53,11 @@ const char* CynexPlatform_GetDataPath(void);
 const char* CynexPlatform_GetDeviceId(void);
 void CynexPlatform_ShowMessage(const char* title, const char* text);
 
+// AKRAVON: galeriden gorsel sec (lonca imzasi / simgesi). kind 0 = imza (BMP), 1 = simge (JPEG); gorsel ortadan kirpilip width x height'a kucultulur
+// ve destPath'e kaydedilir (goreli yol = oyun klasoru). durum: 0 bosta, 1 secim suruyor, 2 kaydedildi, 3 iptal / hata
+void CynexPlatform_PickImage(int kind, int width, int height, const char* destPath);
+int CynexPlatform_PickImageState(void);
+
 #ifdef __cplusplus
 }
 #endif

@@ -8,6 +8,7 @@ import wndMgr
 import uiMobileStyle
 import uiAkravon
 import uiAkravonQuest
+import uiAkravonOffer
 
 BOARD_W = 500
 PAD = 18
@@ -16,8 +17,8 @@ GOLD = uiMobileStyle.Color(222, 184, 110)
 CREAM = uiMobileStyle.Color(250, 236, 210)
 
 KINDS = {
-	"mark" : {"title" : "Lonca İmzası", "filters" : ("tga", "bmp", "jpg"), "prefix" : "imza_", "size" : (16, 12), "scale" : 4, "cols" : 4, "rows" : 3, "cell" : (104, 84)},
-	"symbol" : {"title" : "Lonca Simgesi", "filters" : ("jpg",), "prefix" : "simge_", "size" : (64, 128), "scale" : 1, "cols" : 5, "rows" : 1, "cell" : (84, 150)},
+	"mark" : {"id" : 0, "ext" : "bmp", "title" : "Lonca İmzası", "filters" : ("tga", "bmp", "jpg"), "prefix" : "imza_", "size" : (16, 12), "scale" : 4, "cols" : 4, "rows" : 3, "cell" : (104, 84)},
+	"symbol" : {"id" : 1, "ext" : "jpg", "title" : "Lonca Simgesi", "filters" : ("jpg",), "prefix" : "simge_", "size" : (64, 128), "scale" : 1, "cols" : 5, "rows" : 1, "cell" : (84, 150)},
 }
 
 
@@ -89,7 +90,7 @@ class Picker(ui.ScriptWindow):
 		self.gridX = (BOARD_W - gridW) // 2
 		self.gridY = TITLE_H + 16
 		navY = self.gridY + gridH + 12
-		height = navY + 44 + 16 + 24 + 52 + PAD
+		height = navY + 44 + 12 + 44 + 14 + 24 + 52 + PAD	# + galeri dugmesi
 		self.board = uiAkravonQuest.Board9()
 		self.board.SetParent(self)
 		self.board.AddFlag("not_pick")
@@ -109,15 +110,20 @@ class Picker(ui.ScriptWindow):
 		self.prev = uiAkravonQuest.ArrowButton(self, BOARD_W // 2 - 120, navY, "qs_up", ui.__mem_func__(self.__PrevPage))
 		self.next = uiAkravonQuest.ArrowButton(self, BOARD_W // 2 + 76, navY, "qs_dn", ui.__mem_func__(self.__NextPage))
 		self.counter = uiMobileStyle.CreateText(self, "", BOARD_W // 2, navY + 12, uiAkravon.HINT_COLOR, "Lato:17", "center")
-		self.status = uiMobileStyle.CreateText(self, "", BOARD_W // 2, navY + 44 + 16, CREAM, "Lato:18", "center")
-		self.save = uiAkravon.TextButton(200, 48, uiMobileStyle.TrUpper("Kaydet"), "gold", "Marcellus:19")
+		self.gallery = uiAkravonOffer.SkinButton("Galeriden Seç")
+		self.gallery.SetParent(self)
+		self.gallery.SetPosition(BOARD_W // 2 - 95, navY + 44 + 10)
+		self.gallery.SetEvent(ui.__mem_func__(self.__OnGallery))
+		self.gallery.Show()
+		self.status = uiMobileStyle.CreateText(self, "", BOARD_W // 2, navY + 44 + 10 + 44 + 14, CREAM, "Lato:18", "center")
+		self.save = uiAkravonOffer.SkinButton("Kaydet")
 		self.save.SetParent(self)
-		self.save.SetPosition(BOARD_W // 2 - 210, height - PAD - 48)
+		self.save.SetPosition(BOARD_W // 2 - 196, height - PAD - 44)
 		self.save.SetEvent(ui.__mem_func__(self.__OnSave))
 		self.save.Show()
-		self.cancel = uiAkravon.TextButton(200, 48, uiMobileStyle.TrUpper("Kapat"), "close", "Marcellus:19")
+		self.cancel = uiAkravonOffer.SkinButton("Kapat")
 		self.cancel.SetParent(self)
-		self.cancel.SetPosition(BOARD_W // 2 + 10, height - PAD - 48)
+		self.cancel.SetPosition(BOARD_W // 2 + 6, height - PAD - 44)
 		self.cancel.SetEvent(ui.__mem_func__(self.Close))
 		self.cancel.Show()
 
@@ -140,7 +146,7 @@ class Picker(ui.ScriptWindow):
 		for cell in getattr(self, "cells", []):
 			cell.Destroy()
 		self.cells = []
-		for name in ("prev", "next", "save", "cancel", "close"):
+		for name in ("prev", "next", "save", "cancel", "close", "gallery"):
 			widget = getattr(self, name, None)
 			if widget:
 				widget.Destroy()
@@ -158,7 +164,7 @@ class Picker(ui.ScriptWindow):
 			for name in app.GetFileList("upload/*." + extension):
 				if name.lower().startswith(self.kind["prefix"]):
 					files.append(name)
-		files.sort()
+		files.sort(key = lambda name: ("ozel" not in name.lower(), name))	# kendi gorsellerin en basta
 		self.files = files
 
 	def __PerPage(self):
@@ -194,6 +200,31 @@ class Picker(ui.ScriptWindow):
 			self.selected = self.files[position]
 			self.status.SetText("")
 			self.__Refresh()
+
+	def __OnGallery(self):
+		if not hasattr(app, "PickImage"):
+			self.status.SetText("Bu özellik yeni sürümde (uygulamayı güncelle)")
+			return
+		(width, height) = self.kind["size"]
+		self.customName = "%s_ozel_%d.%s" % (self.kind["prefix"].rstrip("_"), int(app.GetTime() * 10), self.kind["ext"])
+		self.status.SetText("Galeri açılıyor...")
+		app.PickImage(self.kind["id"], width, height, "upload/" + self.customName)
+		self.picking = True
+
+	def OnUpdate(self):
+		if not getattr(self, "picking", False):
+			return
+		state = app.PickImageState()
+		if state == 2:
+			self.picking = False
+			self.__ScanFiles()
+			self.selected = self.customName
+			self.page = 0
+			self.status.SetText("Görselin eklendi, KAYDET'e bas")
+			self.__Refresh()
+		elif state == 3:
+			self.picking = False
+			self.status.SetText("Seçim iptal edildi")
 
 	def __OnSave(self):
 		if not self.selected:

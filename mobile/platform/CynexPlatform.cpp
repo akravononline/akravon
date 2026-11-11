@@ -663,6 +663,11 @@ void CynexPlatform_ShowKeyboard(int show)
 	CallVoid("showKeyboard", "(Z)V", (jboolean)(show ? JNI_TRUE : JNI_FALSE));
 }
 
+// AKRAVON: galeri secimi android'de henuz yok (iOS once) - hemen iptal doner
+static int s_pickState = 0;
+void CynexPlatform_PickImage(int kind, int width, int height, const char* destPath) { s_pickState = 3; }
+int CynexPlatform_PickImageState(void) { return s_pickState; }
+
 void CynexPlatform_SetClipboardText(const char* utf8)
 {
 	JNIEnv* env = Env();

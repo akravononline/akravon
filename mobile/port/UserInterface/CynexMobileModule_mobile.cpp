@@ -82,6 +82,22 @@ namespace
 		return Py_BuildNone();
 	}
 
+	// AKRAVON: galeriden gorsel sec: app.PickImage(kind, width, height, dest) ; app.PickImageState() -> 0 bosta, 1 suruyor, 2 tamam, 3 iptal
+	PyObject* appPickImage(PyObject* poSelf, PyObject* poArgs)
+	{
+		int iKind = 0, iWidth = 16, iHeight = 12;
+		char* szDest;
+		if (!PyTuple_GetInteger(poArgs, 0, &iKind) || !PyTuple_GetInteger(poArgs, 1, &iWidth) || !PyTuple_GetInteger(poArgs, 2, &iHeight) || !PyTuple_GetString(poArgs, 3, &szDest))
+			return Py_BuildException();
+		CynexPlatform_PickImage(iKind, iWidth, iHeight, szDest);
+		return Py_BuildNone();
+	}
+
+	PyObject* appPickImageState(PyObject* poSelf, PyObject* poArgs)
+	{
+		return Py_BuildValue("i", CynexPlatform_PickImageState());
+	}
+
 	PyObject* appShowKeyboard(PyObject* poSelf, PyObject* poArgs)
 	{
 		int iShow = 1;
@@ -335,6 +351,8 @@ void CynexMobile_InitPythonModules()
 		{ "Vibrate",				appVibrate,					METH_VARARGS },
 		{ "OpenURL",				appOpenURL,					METH_VARARGS },
 		{ "ShowKeyboard",			appShowKeyboard,			METH_VARARGS },
+		{ "PickImage",				appPickImage,				METH_VARARGS },
+		{ "PickImageState",			appPickImageState,			METH_VARARGS },
 		{ "ShowNotification",		appShowNotification,		METH_VARARGS },
 		{ "CancelNotification",		appCancelNotification,		METH_VARARGS },
 		{ NULL, NULL, 0 },

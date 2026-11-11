@@ -13,6 +13,7 @@
 #include <mutex>
 #include <string>
 #include <string.h>
+#include <vector>
 #include <unistd.h>
 #include <pthread.h>
 #include <windows.h>
@@ -334,6 +335,105 @@ int main(int argc, char* argv[])
 	}
 }
 
+// ---------------------------------------------------------------- AKRAVON: galeriden gorsel sec (lonca imzasi / simgesi)
+static std::atomic<int> g_pickState(0);
+static int g_pickKind = 0, g_pickW = 16, g_pickH = 12;
+static std::string g_pickDest;
+
+static std::string PickAbsolutePath(const std::string& dest)
+{
+	if (!dest.empty() && dest[0] == '/') return dest;
+	return g_dataPath + "/" + dest;
+}
+
+static bool PickSave(UIImage* image)
+{
+	if (!image) return false;
+	const CGFloat tw = g_pickW, th = g_pickH;
+	// ortadan kirp: hedef en/boy oranina gore
+	const CGFloat sw = image.size.width, sh = image.size.height;
+	if (sw <= 0 || sh <= 0) return false;
+	CGFloat cw = sw, ch = sw * th / tw;
+	if (ch > sh) { ch = sh; cw = sh * tw / th; }
+	CGRect crop = CGRectMake((sw - cw) / 2.0, (sh - ch) / 2.0, cw, ch);
+	UIGraphicsImageRendererFormat* fmt = [UIGraphicsImageRendererFormat defaultFormat];
+	fmt.scale = 1.0;
+	fmt.opaque = YES;
+	UIGraphicsImageRenderer* r = [[UIGraphicsImageRenderer alloc] initWithSize:CGSizeMake(tw, th) format:fmt];
+	UIImage* small = [r imageWithActions:^(UIGraphicsImageRendererContext* ctx) {
+		[[UIColor blackColor] setFill];
+		UIRectFill(CGRectMake(0, 0, tw, th));
+		CGFloat scale = tw / cw;
+		[image drawInRect:CGRectMake(-crop.origin.x * scale, -crop.origin.y * scale, sw * scale, sh * scale)];
+	}];
+	const std::string path = PickAbsolutePath(g_pickDest);
+	NSData* data = nil;
+	if (g_pickKind == 1)
+	{
+		data = UIImageJPEGRepresentation(small, 0.95);
+	}
+	else
+	{
+		// 24 bit BMP (sikistirmasiz: 16x12 imza bozulmasin)
+		CGImageRef cg = small.CGImage;
+		const int w = (int)tw, h = (int)th;
+		std::vector<unsigned char> rgba((size_t)w * h * 4);
+		CGColorSpaceRef cs = CGColorSpaceCreateDeviceRGB();
+		CGContextRef c = CGBitmapContextCreate(rgba.data(), w, h, 8, w * 4, cs, kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
+		CGContextDrawImage(c, CGRectMake(0, 0, w, h), cg);
+		CGContextRelease(c);
+		CGColorSpaceRelease(cs);
+		const int rowSize = (w * 3 + 3) & ~3;
+		const int dataSize = rowSize * h;
+		std::vector<unsigned char> bmp(54 + dataSize, 0);
+		unsigned char* p = bmp.data();
+		p[0] = 'B'; p[1] = 'M';
+		*(uint32_t*)(p + 2) = 54 + dataSize;
+		*(uint32_t*)(p + 10) = 54;
+		*(uint32_t*)(p + 14) = 40;
+		*(int32_t*)(p + 18) = w;
+		*(int32_t*)(p + 22) = h;		// alttan uste
+		*(uint16_t*)(p + 26) = 1;
+		*(uint16_t*)(p + 28) = 24;
+		*(uint32_t*)(p + 34) = dataSize;
+		for (int y = 0; y < h; y++)
+		{
+			unsigned char* row = p + 54 + (size_t)(h - 1 - y) * rowSize;
+			for (int x = 0; x < w; x++)
+			{
+				const unsigned char* px = &rgba[((size_t)y * w + x) * 4];
+				row[x * 3 + 0] = px[2];
+				row[x * 3 + 1] = px[1];
+				row[x * 3 + 2] = px[0];
+			}
+		}
+		data = [NSData dataWithBytes:bmp.data() length:bmp.size()];
+	}
+	if (!data) return false;
+	NSString* dir = [[NSString stringWithUTF8String:path.c_str()] stringByDeletingLastPathComponent];
+	[[NSFileManager defaultManager] createDirectoryAtPath:dir withIntermediateDirectories:YES attributes:nil error:nil];
+	return [data writeToFile:[NSString stringWithUTF8String:path.c_str()] atomically:YES];
+}
+
+@interface CynexImagePicker : NSObject <UIImagePickerControllerDelegate, UINavigationControllerDelegate>
+@end
+@implementation CynexImagePicker
+- (void)imagePickerController:(UIImagePickerController*)picker didFinishPickingMediaWithInfo:(NSDictionary<UIImagePickerControllerInfoKey, id>*)info
+{
+	UIImage* image = info[UIImagePickerControllerOriginalImage];
+	const bool ok = PickSave(image);
+	g_pickState = ok ? 2 : 3;
+	[picker dismissViewControllerAnimated:YES completion:nil];
+}
+- (void)imagePickerControllerDidCancel:(UIImagePickerController*)picker
+{
+	g_pickState = 3;
+	[picker dismissViewControllerAnimated:YES completion:nil];
+}
+@end
+
+static CynexImagePicker* g_picker = nil;
+
 // ------------------------------------------------------------------ CynexPlatform.h
 extern "C" {
 
@@ -435,6 +535,31 @@ void CynexPlatform_ShowKeyboard(int show)
 		if (show) [g_view becomeFirstResponder]; else [g_view resignFirstResponder];
 	});
 }
+
+
+void CynexPlatform_PickImage(int kind, int width, int height, const char* destPath)
+{
+	g_pickKind = kind;
+	g_pickW = width > 0 ? width : 16;
+	g_pickH = height > 0 ? height : 12;
+	g_pickDest = destPath ? destPath : "upload/ozel.bmp";
+	g_pickState = 1;
+	dispatch_async(dispatch_get_main_queue(), ^{
+		if (!g_view || !g_view.window.rootViewController)
+		{
+			g_pickState = 3;
+			return;
+		}
+		if (!g_picker) g_picker = [[CynexImagePicker alloc] init];
+		UIImagePickerController* p = [[UIImagePickerController alloc] init];
+		p.sourceType = UIImagePickerControllerSourceTypePhotoLibrary;
+		p.delegate = g_picker;
+		p.modalPresentationStyle = UIModalPresentationFullScreen;
+		[g_view.window.rootViewController presentViewController:p animated:YES completion:nil];
+	});
+}
+
+int CynexPlatform_PickImageState(void) { return g_pickState.load(); }
 
 void CynexPlatform_SetClipboardText(const char* utf8)
 {
