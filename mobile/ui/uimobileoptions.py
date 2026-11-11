@@ -90,22 +90,24 @@ def SetDogMode(value):
 		pass
 
 
-CAMERA_FILE = "akravon_kamera.cfg"
-CAMERA_NAMES = ("Çok Yakın", "Yakın", "Normal", "Uzak", "Çok Uzak")
-CAMERA_DISTANCES = (900.0, 1300.0, 1800.0, 2500.0, 3200.0)	# kademe -> kamera mesafesi (en yakin 200, en uzak 3500)
-CAMERA_DEFAULT = 3	# eski davranis: 2500 ust sinir
+CAMERA_FILE = "akravon_kamera2.cfg"
+CAMERA_PERCENTS = (30, 40, 50, 60, 70, 80, 90, 100)	# sürgü kademeleri
+CAMERA_MAX = 3200.0	# %100 = en uzak kamera mesafesi
+CAMERA_DISTANCES = tuple(CAMERA_MAX * percent / 100.0 for percent in CAMERA_PERCENTS)	# kademe -> kamera mesafesi (%30 = 960)
+CAMERA_DEFAULT = 5	# %80 = 2560 (eski varsayilan 2500'e en yakin)
+CAMERA_LAST = len(CAMERA_PERCENTS) - 1
 
 
 def GetCameraLevel():
 	try:
-		return max(0, min(4, int(open(CAMERA_FILE).read().strip())))
+		return max(0, min(CAMERA_LAST, int(open(CAMERA_FILE).read().strip())))
 	except Exception:
 		return CAMERA_DEFAULT
 
 
 def ApplyCameraLevel(level, move = True):
 	# parmakla uzaklastirma siniri + (move ise) kamerayi o mesafeye getirir
-	level = max(0, min(4, int(level)))
+	level = max(0, min(CAMERA_LAST, int(level)))
 	distance = CAMERA_DISTANCES[level]
 	try:
 		app.SetCameraMaxDistance(distance)
@@ -120,7 +122,7 @@ def ApplyCameraLevel(level, move = True):
 
 
 def SetCameraLevel(value):
-	level = max(0, min(4, int(round(value))))
+	level = max(0, min(CAMERA_LAST, int(round(value))))
 	try:
 		open(CAMERA_FILE, "w").write(str(level))
 	except Exception:
@@ -393,7 +395,7 @@ def GraphicsRows():
 
 def GameRows():
 	rows = []
-	rows.append(("step", "Kamera Mesafesi", GetCameraLevel, SetCameraLevel, 0.0, 4.0, 1.0, lambda v: CAMERA_NAMES[max(0, min(4, int(round(v))))]))
+	rows.append(("step", "Kamera Mesafesi", GetCameraLevel, SetCameraLevel, 0.0, float(CAMERA_LAST), 1.0, lambda v: "%%%d" % CAMERA_PERCENTS[max(0, min(CAMERA_LAST, int(round(v))))]))
 	rows.append(("toggle", "İsimleri Her Zaman Göster", lambda: bool(Call("IsAlwaysShowName", False)), lambda v: Call("SetAlwaysShowNameFlag", None, bool(v))))
 	rows.append(("toggle", "Hasarı Göster", lambda: bool(Call("IsShowDamage", True)), lambda v: Call("SetShowDamageFlag", None, bool(v))))
 	rows.append(("toggle", "Pazar Yazıları", lambda: bool(Call("IsShowSalesText", True)), lambda v: Call("SetShowSalesTextFlag", None, bool(v))))
@@ -516,6 +518,87 @@ class SmallBox(uiMobileStyle.Pressable):
 			self.label.SetPackedFontColor(uiAkravon.TEXT_COLOR)
 
 
+SLIDER_WIDTH = 250
+KNOB = 30
+
+
+class Slider(ui.Window):
+	# kademeli surgu: iz + altin dolgu + kare tutamak; parmakla basilip surulur, kademeye oturur (en az 44 px yuksekte dokunma alani)
+	def __init__(self, parent, x, y, width, height, low, high, step, event):
+		ui.Window.__init__(self)
+		self.SetParent(parent)
+		self.SetPosition(x, y)
+		self.SetSize(width, height)
+		self.low = low
+		self.high = high
+		self.step = step
+		self.event = event
+		self.value = low
+		self.dragging = False
+		self.boxWidth = width
+		self.boxHeight = height
+		mid = height // 2
+		self.trackX = KNOB // 2
+		self.trackW = width - KNOB
+		self.track = uiMobileStyle.CreateBar(self, uiMobileStyle.Color(44, 36, 24), self.trackX, mid - 3, self.trackW, 6)
+		self.fill = uiMobileStyle.CreateBar(self, uiMobileStyle.Color(190, 150, 72), self.trackX, mid - 3, 1, 6)
+		count = int(round((high - low) / step))
+		self.ticks = []
+		for i in range(count + 1):
+			tx = self.trackX + int(round(self.trackW * i / float(max(1, count))))
+			self.ticks.append(uiMobileStyle.CreateBar(self, uiMobileStyle.Color(120, 96, 52), tx - 1, mid - 9, 2, 18))
+		self.knobEdge = uiMobileStyle.CreateBar(self, uiMobileStyle.Color(222, 184, 110), 0, mid - KNOB // 2, KNOB, KNOB)
+		self.knob = uiMobileStyle.CreateBar(self, uiMobileStyle.Color(14, 24, 48), 2, mid - KNOB // 2 + 2, KNOB - 4, KNOB - 4)
+		self.Show()
+
+	def __del__(self):
+		ui.Window.__del__(self)
+
+	def Destroy(self):
+		self.event = None
+		self.Hide()
+
+	def SetValue(self, value):
+		value = max(self.low, min(self.high, value))
+		self.value = value
+		span = max(0.0001, self.high - self.low)
+		fraction = (value - self.low) / span
+		knobX = int(round(self.trackW * fraction))
+		mid = self.boxHeight // 2
+		self.fill.SetSize(max(1, knobX), 6)
+		self.knobEdge.SetPosition(knobX, mid - KNOB // 2)
+		self.knob.SetPosition(knobX + 2, mid - KNOB // 2 + 2)
+
+	def __Snap(self):
+		(mouseX, mouseY) = wndMgr.GetMousePosition()
+		(globalX, globalY) = self.GetGlobalPosition()
+		fraction = max(0.0, min(1.0, (mouseX - globalX - self.trackX) / float(max(1, self.trackW))))
+		raw = self.low + fraction * (self.high - self.low)
+		return max(self.low, min(self.high, round((raw - self.low) / self.step) * self.step + self.low))
+
+	def __Update(self, final):
+		value = self.__Snap()
+		if value != self.value:
+			self.SetValue(value)
+			if self.event:
+				self.event(value, False)
+		if final and self.event:
+			self.event(self.value, True)
+
+	def OnMouseLeftButtonDown(self):
+		self.dragging = True
+		self.__Update(False)
+
+	def OnMouseLeftButtonUp(self):
+		if self.dragging:
+			self.dragging = False
+			self.__Update(True)
+
+	def OnUpdate(self):
+		if self.dragging:
+			self.__Update(False)
+
+
 class OptionRow(ui.Window):
 	def __init__(self, parent, width, spec):
 		ui.Window.__init__(self)
@@ -558,18 +641,10 @@ class OptionRow(ui.Window):
 				x -= CHOICE_GAP
 		elif self.kind == "step":
 			(self.low, self.high, self.step, self.format) = spec[4:8]
-			self.plus = SmallBox(STEP_W, CHOICE_HEIGHT, "+", FONT_SIGN)
-			self.plus.SetParent(self)
-			self.plus.SetPosition(right - STEP_W, top)
-			self.plus.SetEvent(ui.__mem_func__(self.__OnStep), 1)
-			self.plus.Show()
-			self.value = uiMobileStyle.CreateText(self, "", right - STEP_W - VALUE_WIDTH // 2, ROW_HEIGHT // 2 - 9, uiMobileStyle.GOLD_COLOR, FONT_VALUE, "center")
-			self.minus = SmallBox(STEP_W, CHOICE_HEIGHT, "-", FONT_SIGN)
-			self.minus.SetParent(self)
-			self.minus.SetPosition(right - STEP_W * 2 - VALUE_WIDTH, top)
-			self.minus.SetEvent(ui.__mem_func__(self.__OnStep), -1)
-			self.minus.Show()
-			self.widgets += [self.plus, self.minus]
+			valueWidth = 84
+			self.value = uiMobileStyle.CreateText(self, "", right - valueWidth // 2, ROW_HEIGHT // 2 - 9, uiMobileStyle.GOLD_COLOR, FONT_VALUE, "center")
+			self.slider = Slider(self, right - valueWidth - 14 - SLIDER_WIDTH, 0, SLIDER_WIDTH, ROW_HEIGHT, self.low, self.high, self.step, ui.__mem_func__(self.__OnSlide))
+			self.widgets.append(self.slider)
 		elif self.kind == "action":
 			text = spec[4] if len(spec) > 4 else "Aç"
 			actionWidth = uiMobileStyle.TextWidth(text, FONT_CHOICE) + 40
@@ -608,14 +683,13 @@ class OptionRow(ui.Window):
 		Call("SaveConfig", None)	# AKRAVON: her degisiklikte kaydet (pencere kapanmadan oyun kapansa da sifirlanmasin)
 		self.Refresh()
 
-	def __OnStep(self, direction):
-		current = self.getter()
-		current = max(self.low, min(self.high, round((current + self.step * direction) / self.step) * self.step))
+	def __OnSlide(self, value, final):
 		if self.label.GetText() != "Grafik Kalitesi":
 			ManualChange()
-		self.setter(current)
-		Call("SaveConfig", None)
-		self.Refresh()
+		self.setter(value)
+		self.value.SetText(self.format(value))
+		if final:
+			Call("SaveConfig", None)	# birakinca kaydedilir
 
 	def Refresh(self):
 		try:
@@ -629,6 +703,7 @@ class OptionRow(ui.Window):
 			for (value, box) in self.choiceBoxes:
 				box.SetSelected(value == best)
 		elif self.kind == "step":
+			self.slider.SetValue(current)
 			self.value.SetText(self.format(current))
 
 
