@@ -438,6 +438,7 @@ bool CPythonEventManager::ProcessEventSet(TEventSet * pEventSet)
 				pEventSet->CurrentColor.a = 1.0f;
 
 				// AKRAVON: sunucu color256(255,230,186) -> [COLOR r;1|g;0.902|b;0.729] (0..1). Ilk satirda ise ortali gorev basligi
+				if (pEventSet->iyLocal == 0 && pEventSet->strCurrentLine.empty()) TraceError("QUESTCOLOR r=%.3f g=%.3f b=%.3f lines=%d", pEventSet->CurrentColor.r, pEventSet->CurrentColor.g, pEventSet->CurrentColor.b, (int)pEventSet->ScriptTextLineList.size());
 				if (!pEventSet->isTitleLine && pEventSet->iyLocal == 0 && pEventSet->strCurrentLine.empty()
 					&& fabs(pEventSet->CurrentColor.r - 1.0f) < 0.01f
 					&& fabs(pEventSet->CurrentColor.g - 0.902f) < 0.01f
