@@ -297,6 +297,8 @@ void CInstanceBase::__AttachEffectBoss()
 
 void CInstanceBase::__AttachEmpireEffect(DWORD eEmpire)
 {
+	return;	// AKRAVON: basin ustundeki krallik bayragi efekti kaldirildi; bayrak ismin yaninda ikon olarak cizilir (PythonTextTail)
+
 	if (!__IsExistMainInstance())
 		return;
 
