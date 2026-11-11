@@ -43,7 +43,7 @@ target_compile_definitions(cynexmobil PRIVATE CYNEX_MOBILE=1)
 target_link_libraries(cynexmobil PRIVATE
 	${CYNEX_CLIENT_LIBS} cynex_compat cynex_d3d8 cynex_mss cynex_speedtree cynex_granny cynex_lzo cynex_freetype cynex_cryptopp cynex_gif python27
 	"-framework UIKit" "-framework Foundation" "-framework OpenGLES" "-framework QuartzCore"
-	"-framework AudioToolbox" "-framework AVFoundation" "-framework CoreAudio" z)
+	"-framework AudioToolbox" "-framework AVFoundation" "-framework CoreAudio" "-framework CoreGraphics" z)
 
 set_target_properties(cynexmobil PROPERTIES
 	MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_LIST_DIR}/Info.plist.in
