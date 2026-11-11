@@ -448,7 +448,7 @@ bool CPythonEventManager::ProcessEventSet(TEventSet * pEventSet)
 					&& pEventSet->pCurrentTextLine)
 				{
 					pEventSet->isTitleLine = true;
-					CGraphicText* pkTitleFont = static_cast<CGraphicText*>(CResourceManager::Instance().GetTypeResourcePointer("Marcellus:26"));
+					CGraphicText* pkTitleFont = static_cast<CGraphicText*>(CResourceManager::Instance().GetTypeResourcePointer("Marcellus:26.fnt"));
 					if (pkTitleFont)
 						pEventSet->pCurrentTextLine->SetTextPointer(pkTitleFont);
 					pEventSet->pCurrentTextLine->SetHorizonalAlign(CGraphicTextInstance::HORIZONTAL_ALIGN_CENTER);
@@ -482,7 +482,7 @@ bool CPythonEventManager::ProcessEventSet(TEventSet * pEventSet)
 					&& pEventSet->pCurrentTextLine)
 				{
 					pEventSet->isTitleLine = true;
-					CGraphicText* pkTitleFont = static_cast<CGraphicText*>(CResourceManager::Instance().GetTypeResourcePointer("Marcellus:26"));
+					CGraphicText* pkTitleFont = static_cast<CGraphicText*>(CResourceManager::Instance().GetTypeResourcePointer("Marcellus:26.fnt"));
 					if (pkTitleFont)
 						pEventSet->pCurrentTextLine->SetTextPointer(pkTitleFont);
 					pEventSet->pCurrentTextLine->SetHorizonalAlign(CGraphicTextInstance::HORIZONTAL_ALIGN_CENTER);
