@@ -1,0 +1,3 @@
+AKRAVON: iPhone'da Lato / Cinzel / Noto Sans hic yuklenmedi; tasarimlar varsayilan fontla onaylandi.
+Android'in iPhone ile ayni gorunmesi icin bu fontlar data/fonts disina alindi (silinmedi).
+Lato'yu iki platforma da gercekten eklemek istenirse bu dosyalari data/fonts'a geri koy ve iOS'a da gonder.

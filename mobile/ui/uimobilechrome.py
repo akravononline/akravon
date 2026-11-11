@@ -60,7 +60,11 @@ HUD_ALERT_ASSET = "hudbtn_alert_%d"
 HUD_ALERT_SPEED = 5.0
 HUD_ALERT_MIN_ALPHA = 0.25
 # renk (r, g, b), yanip sonme hizi (0 = sabit), en dusuk saydamlik
-HUD_RING_STYLES = {"alert": (1.0, 0.3, 0.22, 4.0, 0.35), "run": (0.45, 1.0, 0.55, 2.0, 0.55), "open": (1.0, 0.96, 0.88, 0, 0.8)}
+RUN_WAVE_SECONDS = 2.8	# calisiyor efekti: dalga halkasinin dugme disina yayilma suresi
+RUN_WAVE_GROW = 0.34	# halka dugme boyunun en fazla bu kadar buyur
+RUN_BREATH = 1.5	# ic isima nefes hizi (rad / sn, ~4 sn / dongu)
+RUN_COLOR = (0.45, 1.0, 0.55)
+HUD_RING_STYLES = {"alert": (1.0, 0.3, 0.22, 4.0, 0.35), "run": (0.45, 1.0, 0.55, 1.1, 0.30), "open": (1.0, 0.96, 0.88, 0, 0.8)}
 
 CHAT_TITLE_TEXT = "S O H B E T"
 CHAT_TITLE_COLOR = uiMobileStyle.Color(190, 176, 148)
@@ -224,6 +228,10 @@ class HudButton(ui.Window):
 		ui.Window.Hide(self)
 		if getattr(self, "alert", None):
 			self.alert.Hide()
+		for name in ("runArc", "runArc2", "runGlow"):
+			image = getattr(self, name, None)
+			if image:
+				image.Hide()
 
 	def SetRunning(self, enabled):
 		self.running = enabled
@@ -252,6 +260,14 @@ class HudButton(ui.Window):
 			self.alert.AddFlag("float")
 			self.alert.LoadImage(HUD_PATH % "btn_alert")
 			self.alert.SetScale(self.alertScale, self.alertScale)
+		if kind == "run" and not getattr(self, "runArc", None):
+			for (name, asset) in (("runGlow", "btn_run_glow"), ("runArc", "btn_run_ring"), ("runArc2", "btn_run_ring")):
+				image = ui.ExpandedImageBox()
+				image.AddFlag("not_pick")
+				image.AddFlag("float")
+				image.LoadImage(HUD_PATH % asset)
+				image.SetScale(self.alertScale, self.alertScale)
+				setattr(self, name, image)
 		if not self.alert:
 			return
 		if kind:
@@ -259,6 +275,10 @@ class HudButton(ui.Window):
 			self.OnUpdate()
 		else:
 			self.alert.Hide()
+			for name in ("runArc", "runArc2", "runGlow"):
+				image = getattr(self, name, None)
+				if image:
+					image.Hide()
 
 	def EnablePressRipple(self, color = (1.0, 0.9, 0.6)):
 		if not getattr(self, "ripple", None):
@@ -271,13 +291,42 @@ class HudButton(ui.Window):
 		if not self.alert:
 			return
 		kind = self.__RingKind()
+		arc = getattr(self, "runArc", None)
+		arc2 = getattr(self, "runArc2", None)
+		glow = getattr(self, "runGlow", None)
 		if not kind or not self.IsShow():
 			self.alert.Hide()
+			if arc:
+				arc.Hide()
+				arc2.Hide()
+				glow.Hide()
 			return
 		(x, y) = self.GetGlobalPosition()
 		offset = int(round(20 * self.alertScale))
 		self.alert.SetPosition(x - offset, y - offset)
 		self.alert.Show()
+		if arc:
+			if kind == "run":
+				now = app.GetTime()
+				glow.SetPosition(x - offset, y - offset)
+				breath = 0.5 + 0.5 * math.sin(now * RUN_BREATH)
+				wndMgr.SetDiffuseColor(glow.hWnd, RUN_COLOR[0], RUN_COLOR[1], RUN_COLOR[2], 0.35 + 0.45 * breath)
+				glow.Show()
+				# dalga halkalari: dugme merkezinden disari buyuyup solar (iki halka yarim donem arayla)
+				(cx, cy) = (x + self.GetWidth() / 2.0, y + self.GetHeight() / 2.0)
+				full = 176.0 * self.alertScale
+				for (ring, phase) in ((arc, 0.0), (arc2, 0.5)):
+					t = ((now / RUN_WAVE_SECONDS) + phase) % 1.0
+					scale = self.alertScale * (1.0 + RUN_WAVE_GROW * t)
+					size = 176.0 * scale
+					ring.SetScale(scale, scale)
+					ring.SetPosition(int(cx - size / 2.0), int(cy - size / 2.0))
+					wndMgr.SetDiffuseColor(ring.hWnd, RUN_COLOR[0], RUN_COLOR[1], RUN_COLOR[2], 0.85 * (1.0 - t) ** 1.6)
+					ring.Show()
+			else:
+				arc.Hide()
+				arc2.Hide()
+				glow.Hide()
 		(red, green, blue, speed, low) = HUD_RING_STYLES[kind]
 		alpha = low
 		if speed:
@@ -445,13 +494,35 @@ class ExpSquares(object):
 			fill.Hide()
 			self.fills.append(fill)
 
+	FRAMES = 16
+	FRAME_SECONDS = 0.07
+
+	def Animate(self, now):
+		# cok yumusak 'nefes alma' isiltisi: gorsel degistirmez, yalniz parlaklik (takilma olmaz)
+		if self.ratio <= 0.0:
+			return
+		import math
+		shade = 0.86 + 0.14 * (0.5 + 0.5 * math.sin(now * 2.2))
+		for fill in self.fills:
+			if fill.IsShow():
+				wndMgr.SetDiffuseColor(fill.hWnd, shade, shade, shade, 1.0)
+		return
+		frame = int(now / self.FRAME_SECONDS) % self.FRAMES + 1
+		if frame == getattr(self, "frame", 0):
+			return
+		self.frame = frame
+		for (index, fill) in enumerate(self.fills):
+			if fill.IsShow():
+				part = max(0.0, min(1.0, self.ratio * self.COUNT - index))
+				fill.LoadImage(HUD_PATH % ("exp_fill_%d" % frame))
+				fill.SetScale(0.5, 0.5)
+				fill.SetRenderingRect(0.0, 0.0, part - 1.0, 0.0)
+
 	def SetValue(self, current, maximum):
 		ratio = max(0.0, min(1.0, float(current) / maximum)) if maximum > 0 else 1.0
 		if ratio == self.ratio:
 			return ratio
 		self.ratio = ratio
-		import dbg
-		dbg.TraceError('EXPDBG cur=%s max=%s ratio=%s' % (current, maximum, ratio))
 		for (index, fill) in enumerate(self.fills):
 			part = max(0.0, min(1.0, ratio * self.COUNT - index))
 			if part <= 0.0:
@@ -564,7 +635,7 @@ class StatusBar(ui.Window):
 
 	def OnUpdate(self):
 		now = app.GetTime()
-		for gauge in (self.hpGauge, self.spGauge, self.stGauge):
+		for gauge in (self.hpGauge, self.spGauge, self.stGauge, self.expGauge):
 			if gauge:
 				gauge.Animate(now)
 		if now < self.nextRefreshTime:

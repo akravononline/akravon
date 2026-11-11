@@ -2,6 +2,7 @@
 # portre halkasi + ondan uzanan egik uclu HP / SP cubuklari + ince EXP cizgisi
 # cikti: status_panel (yuvalar + halka), status_hp / status_sp / status_exp (dolgu parcalari), hepsi 2 kat cozunurluk
 import math
+import os
 import numpy as np
 import cv2
 from PIL import Image, ImageDraw, ImageFilter
@@ -174,9 +175,36 @@ def BuildExp(save):
 	fill = Image.new('RGBA', (fw * q, fh * q), (0, 0, 0, 0))
 	mask = Image.new('L', fill.size, 0)
 	ImageDraw.Draw(mask).rounded_rectangle([0, 0, fw * q - 1, fh * q - 1], radius = 2.0 * q, fill = 255)
-	grad = VGradBox((250, 214, 140), (180, 140, 70), fw * q, fh * q)
+	grad = OrbFill(fw * q, fh * q)
 	fill.paste(grad, (0, 0), mask)
 	save('exp_fill', fill.resize((fw * 2, fh * 2), Image.LANCZOS))
+
+
+def OrbFill(w, h):
+	# AKRAVON EXP dolgusu: zengin altin degrade + camsi ust parlaklik + alt isik yayi (orijinal kure rengine yakin, daha canli)
+	stops = ((0.00, (255, 236, 150)), (0.30, (250, 200, 70)), (0.62, (226, 150, 26)), (0.86, (176, 104, 10)), (1.00, (255, 214, 110)))
+	rows = np.zeros((h, 3), np.float32)
+	for y in range(h):
+		t = y / float(max(1, h - 1))
+		for n in range(len(stops) - 1):
+			t0, c0 = stops[n]
+			t1, c1 = stops[n + 1]
+			if t0 <= t <= t1:
+				f = (t - t0) / float(max(1e-6, t1 - t0))
+				rows[y] = np.array(c0, np.float32) * (1 - f) + np.array(c1, np.float32) * f
+				break
+	img = np.repeat(rows[:, None, :], w, axis = 1)
+	ys, xs = np.mgrid[0:h, 0:w].astype(np.float32)
+	# camsi parlaklik: ust %42, yatayda ortada guclu, kenarlara dogru sonuyor
+	gloss = np.clip(1.0 - ys / (h * 0.42), 0.0, 1.0) ** 1.4 * (0.55 + 0.45 * (1.0 - np.abs(xs - w * 0.5) / (w * 0.5)))
+	img = img + gloss[..., None] * (255.0 - img) * 0.45
+	# yan kenarlarda hafif koyulasma (derinlik)
+	edge = np.clip(np.minimum(xs, w - 1 - xs) / (w * 0.06), 0.0, 1.0)
+	img = img * (0.82 + 0.18 * edge[..., None])
+	out = np.zeros((h, w, 4), np.uint8)
+	out[..., :3] = np.clip(img, 0, 255)
+	out[..., 3] = 255
+	return Image.fromarray(out, 'RGBA')
 
 
 def VGradBox(top, bottom, w, h):

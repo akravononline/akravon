@@ -90,6 +90,44 @@ def SetDogMode(value):
 		pass
 
 
+CAMERA_FILE = "akravon_kamera.cfg"
+CAMERA_NAMES = ("Çok Yakın", "Yakın", "Normal", "Uzak", "Çok Uzak")
+CAMERA_DISTANCES = (900.0, 1300.0, 1800.0, 2500.0, 3200.0)	# kademe -> kamera mesafesi (en yakin 200, en uzak 3500)
+CAMERA_DEFAULT = 3	# eski davranis: 2500 ust sinir
+
+
+def GetCameraLevel():
+	try:
+		return max(0, min(4, int(open(CAMERA_FILE).read().strip())))
+	except Exception:
+		return CAMERA_DEFAULT
+
+
+def ApplyCameraLevel(level, move = True):
+	# parmakla uzaklastirma siniri + (move ise) kamerayi o mesafeye getirir
+	level = max(0, min(4, int(level)))
+	distance = CAMERA_DISTANCES[level]
+	try:
+		app.SetCameraMaxDistance(distance)
+	except Exception:
+		pass
+	if move:
+		try:
+			(oldDistance, pitch, rotation, height) = app.GetCamera()
+			app.SetCamera(distance, pitch, rotation, height)
+		except Exception:
+			pass
+
+
+def SetCameraLevel(value):
+	level = max(0, min(4, int(round(value))))
+	try:
+		open(CAMERA_FILE, "w").write(str(level))
+	except Exception:
+		pass
+	ApplyCameraLevel(level)
+
+
 def GetFarCamera():
 	try:
 		import constInfo
@@ -355,7 +393,7 @@ def GraphicsRows():
 
 def GameRows():
 	rows = []
-	rows.append(("toggle", "Uzak Kamera", GetFarCamera, SetFarCamera))
+	rows.append(("step", "Kamera Mesafesi", GetCameraLevel, SetCameraLevel, 0.0, 4.0, 1.0, lambda v: CAMERA_NAMES[max(0, min(4, int(round(v))))]))
 	rows.append(("toggle", "İsimleri Her Zaman Göster", lambda: bool(Call("IsAlwaysShowName", False)), lambda v: Call("SetAlwaysShowNameFlag", None, bool(v))))
 	rows.append(("toggle", "Hasarı Göster", lambda: bool(Call("IsShowDamage", True)), lambda v: Call("SetShowDamageFlag", None, bool(v))))
 	rows.append(("toggle", "Pazar Yazıları", lambda: bool(Call("IsShowSalesText", True)), lambda v: Call("SetShowSalesTextFlag", None, bool(v))))
