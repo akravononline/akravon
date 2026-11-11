@@ -172,12 +172,14 @@ def _StyleQuestDialog(window):
 		if getattr(board, "Base", None):
 			board.Base.Hide()
 		import uiAkravon
-		skin = BoardSkin()	# desenli lacivert doku (menu_board), hafif seffaf
+		skin = BoardSkin()	# desenli lacivert doku (menu_board): yalniz ic dolgu, kenar parcalari yok
 		skin.SetParent(board)
-		skin.SetPosition(2, 2)
-		skin.SetSize(max(1, board.GetWidth() - 4), max(1, board.GetHeight() - 4))
+		skin.SetPosition(6 - CORNER, 6 - CORNER)
+		skin.SetSize(max(1, board.GetWidth() - 12 + 2 * CORNER), max(1, board.GetHeight() - 12 + 2 * CORNER))
 		for key in skin.pieces:
 			skin.pieces[key][0].SetAlpha(0.93)
+			if key != "c":
+				skin.pieces[key][0].Hide()
 		skin.Show()
 		frame = uiAkravon.Frame(True)	# altin cerceve, kose susleri, elmaslar (zemin yok)
 		frame.SetParent(board)
@@ -192,7 +194,7 @@ def _StyleQuestDialog(window):
 		def SetSize(width, height):
 			original(width, height)
 			frame.SetSize(board.GetWidth(), board.GetHeight())
-			skin.SetSize(max(1, board.GetWidth() - 4), max(1, board.GetHeight() - 4))
+			skin.SetSize(max(1, board.GetWidth() - 12 + 2 * CORNER), max(1, board.GetHeight() - 12 + 2 * CORNER))
 		board.SetSize = SetSize
 	except Exception:
 		import dbg

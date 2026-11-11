@@ -22,6 +22,84 @@ STATE_FULL = 2
 BLOCKING_WINDOW_NAMES = ("wndInventory", "wndCharacter", "wndSpecialStorage", "wndMessenger", "wndDragonSoul", "dlgExchange", "dlgShop", "wndSafebox", "wndMall")
 QUICK_SLOT_REFRESH_INTERVAL = 0.5
 EVENT_BUTTON_NAMES = ("wheelShowButton", "wheelEventShowButton", "publisherShowButton")
+USE_AKR_CHAT = True	# sifirdan yazilan sohbet; False: onceki yollar
+USE_CHAT_BAR = False	# True: uiakravonchatbar (deneme); False: orijinal sohbet + balon dugmesi
+ORIGINAL_CHAT = True	# True: orijinal Metin2 sohbeti; False: mobil sohbet cubugu (geri almak icin tek satir)
+
+
+class NullChatPart(object):
+	def __getattr__(self, name):
+		return lambda *args, **kwargs: None
+
+
+class NullChatController(object):
+	def __init__(self, interface):
+		self.interface = proxy(interface)
+		# telefonda Enter tusu yok: dokununca orijinal sohbet yazi kutusunu acan kucuk dugme
+		self.button = uiMobileStyle.Pressable(52, 52)
+		self.icon = ui.ExpandedImageBox()
+		self.icon.SetParent(self.button)
+		self.icon.AddFlag("not_pick")
+		self.icon.LoadImage("mobile_ui/akravon/hud/chat_icon.png")
+		scale = 38.0 / max(1, self.icon.GetWidth())
+		self.icon.SetScale(scale, scale)
+		self.icon.SetPosition(7, 7)
+		self.icon.Show()
+		self.button.SetEvent(ui.__mem_func__(self.__Open))
+		self.button.Show()
+		self.placed = False
+
+	def __Open(self):
+		try:
+			window = self.interface.wndChat
+			window.Show()
+			window.OpenChat()
+		except Exception:
+			import dbg
+			dbg.TraceError("NullChat.Open hata")
+
+	def Restore(self):
+		try:
+			window = self.interface.wndChat
+			if window:
+				window.Show()
+				window.Refresh()
+				import uiAkravonChatStyle
+				uiAkravonChatStyle.Apply(window, self.interface)
+		except Exception:
+			pass
+
+	def Update(self):
+		try:
+			window = self.interface.wndChat
+			import uiAkravonChatStyle
+			uiAkravonChatStyle.Apply(window, self.interface)
+			uiAkravonChatStyle.Update(window)
+			# sohbet balonu: yazma kapaliyken joystigin altinda sol alt kosede; yazarken gizli
+			if window.IsEditMode():
+				self.button.Hide()
+			else:
+				self.button.SetPosition(8, wndMgr.GetScreenHeight() - 60)
+				self.button.Show()
+		except Exception:
+			pass
+
+	def Show(self):
+		self.Restore()
+		self.button.Show()
+
+	def Hide(self):
+		self.button.Hide()
+
+	def Destroy(self):
+		self.button.Destroy()
+		self.icon = None
+		self.button = None
+
+	def __getattr__(self, name):
+		return lambda *args, **kwargs: None
+
+
 AFFECT_TOGGLE_NAME = "AffectShowHideBtn"
 AFFECT_LABEL_NAME = "AffectShowHideLabel"
 AFFECT_SWITCH_IMAGE = "mobile_ui/cynex/affect_switch_%s.png"
@@ -260,12 +338,39 @@ class MobileHudController(object):
 		self.__AddMenuTile("system", self.__ToggleSystemMenu, "Ayarlar")
 		self.__AddMenuTile("autohunt", self.__OpenAutoHuntSettings, "Oto Av")
 
-		(pillX, pillY, pillWidth, pillHeight) = layout["chatPill"]
-		self.chatToggle = uiMobileChrome.ChatToggle(pillWidth, pillHeight)
-		self.chatToggle.SetPosition(pillX, pillY)
-		self.chatController = uiMobileChrome.ChatController(interface, self.chatToggle)
-		self.chatController.Place()
-		self.chatController.Collapse()
+		if USE_AKR_CHAT:
+			# AKRAVON: sifirdan yazilan mobil sohbet (uiakravonchat.py); hata olursa eski yola dusulur
+			self.chatToggle = NullChatPart()
+			try:
+				import uiAkravonChat
+				self.chatController = uiAkravonChat.Controller(interface)
+				self.chatController.SetAnchor(layout["joystick"])
+			except Exception:
+				import dbg
+				dbg.TraceError("uiAkravonChat kurulamadi")
+				self.chatController = NullChatController(interface)
+			self.chatController.Restore()
+		elif ORIGINAL_CHAT:
+			# AKRAVON deneme: oyunun kendi (orijinal Metin2) sohbet penceresi; mobil sohbet cubugu / paneli kurulmaz
+			self.chatToggle = NullChatPart()
+			try:
+				if not USE_CHAT_BAR:
+					raise RuntimeError("chat bar kapali")
+				import uiAkravonChatBar
+				self.chatController = uiAkravonChatBar.Controller(interface)
+			except Exception:
+				import dbg
+				import exception
+				dbg.TraceError("uiAkravonChatBar kurulamadi")
+				self.chatController = NullChatController(interface)
+			self.chatController.Restore()
+		else:
+			(pillX, pillY, pillWidth, pillHeight) = layout["chatPill"]
+			self.chatToggle = uiMobileChrome.ChatToggle(pillWidth, pillHeight)
+			self.chatToggle.SetPosition(pillX, pillY)
+			self.chatController = uiMobileChrome.ChatController(interface, self.chatToggle)
+			self.chatController.Place()
+			self.chatController.Collapse()
 
 		self.notifications = None
 		gameButtonWindow = getattr(interface, "wndGameButton", None)

@@ -18,14 +18,14 @@ SS = 4
 GOLD = (222, 184, 110, 255)
 
 # olculer (ui px) - uiakravoninventory.py ile ayni
-CELL = 50
-ROWS = 7						# AKRAVON: 5 sayfa x (5 x 7) goz; sunucu 180 yuva (175 gorunur)
+CELL = 58
+ROWS = 6						# AKRAVON: 5 sayfa x (6 x 6) goz = 180 yuva (sunucu izgarasi 6 sutun, sayfa 36)
 PAGES = 5
-IW = 5 * CELL + 40			# envanter penceresi
+IW = 6 * CELL + 40			# envanter penceresi
 EU = 50						# ekipman birimi
 ES = 60						# ekipman adimi
 EW = 4 * ES - 10 + 40		# ekipman penceresi
-EH = 330
+EH = 392
 TAB = 30					# cekmece kulpu
 GAP = 10
 W = TAB + EW + GAP + IW
@@ -308,7 +308,7 @@ window = {
 					"children" : ({ "name" : "TitleName", "type" : "text", "x" : 0, "y" : 3, "text" : "", "text_horizontal_align" : "center", "horizontal_align" : "center" },) },
 				{ "name" : "Inventory_Tab_Strip", "type" : "expanded_image", "x" : 20, "y" : %(ty)d, "image" : IMG + "inv_tab_strip.png" },
 %(tabs)s
-				{ "name" : "ItemSlot", "type" : "grid_table", "x" : 20, "y" : %(gy)d, "start_index" : 0, "x_count" : 5, "y_count" : %(rows)d,
+				{ "name" : "ItemSlot", "type" : "grid_table", "x" : 20, "y" : %(gy)d, "start_index" : 0, "x_count" : 6, "y_count" : %(rows)d,
 					"x_step" : %(cell)d, "y_step" : %(cell)d, "image" : IMG + "inv_cell.png" },
 				{ "name" : "Money_Slot", "type" : "button", "x" : 20, "y" : %(mny)d,
 					"default_image" : IMG + "inv_money.png", "over_image" : IMG + "inv_money.png", "down_image" : IMG + "inv_money.png",
@@ -354,7 +354,10 @@ def Build(out):
 		'inv_pull': PullTab(False),
 		'inv_chev_open': Chevron(out, False), 'inv_chev_close': Chevron(out, True),
 	}
+	KORUNAN = ('inv_depo_up', 'inv_depo_over', 'inv_depo_down', 'inv_kost_up', 'inv_kost_over', 'inv_kost_down')	# el yapimi sekizgen ikonlar (skin/korunan); uretimde ezilmez
 	for (name, im) in images.items():
+		if name in KORUNAN:
+			continue
 		im.save(os.path.join(folder, name + '.png'))
 	dst = os.path.join(out, 'uiscript', 'inventorywindowex.py')
 	os.makedirs(os.path.dirname(dst), exist_ok = True)

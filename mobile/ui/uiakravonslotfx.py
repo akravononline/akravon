@@ -11,7 +11,7 @@ import player
 import ui
 import wndMgr
 
-CELL = 50
+CELL = 58
 FRAMES = 13
 FPS = 14.0
 NEW_SECONDS = 8.0
@@ -124,7 +124,7 @@ def Refresh(inventory = None):
 			image.AddFlag("not_pick")
 			image.LoadImage(_File(kind, rows, 0))
 			image.SetScale(CELL / 64.0, CELL / 64.0)
-			image.SetPosition((local % 5) * CELL, (local // 5) * CELL)
+			image.SetPosition((local % 6) * CELL, (local // 6) * CELL)
 			image.Show()
 			image.SetTop()
 			overlays[local] = image

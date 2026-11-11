@@ -339,7 +339,7 @@ class QuestBoard(ui.Window):
 
 class QuestButton(uiMobileStyle.Pressable):
 	# diskli yuvarlak dugme yerine buyuk ferman ikonu; "Gorev" yazisi ikonun ALTINDA; sayi rozeti sag ustte
-	ICON_W = 46
+	ICON_W = 40
 
 	def __init__(self):
 		self.iconHeight = int(self.ICON_W * 138 / 128.0)
@@ -383,8 +383,8 @@ class QuestHud(object):
 		self.interface = proxy(interface)
 		self.seenCount = 0
 		self.count = 0
-		x = uiMobileHud.SCREEN_EDGE + 6
-		y = int(wndMgr.GetScreenHeight() * BUTTON_TOP_RATIO)
+		x = uiMobileHud.SCREEN_EDGE - 7	# ikonun sol kenari buff satirinin sol kenariyla ayni (ikon +7 icerde)
+		y = uiMobileHud.TOP_MARGIN + uiMobileHud.STATUS_BAR_HEIGHT + uiMobileHud.AFFECT_GAP + 2 * uiMobileHud.AFFECT_ROW_HEIGHT + 20	# 2 buff satirinin hemen alti
 		self.button = QuestButton()
 		self.button.SetPosition(x, y)
 		self.button.SetEvent(ui.__mem_func__(self.Toggle))
@@ -412,11 +412,32 @@ class QuestHud(object):
 			except ReferenceError:
 				pass
 		interface._Interface__ArrangeQuestButton = Arrange
+		# eski kagit mektuplar HIC gorunmesin: 'hepsini goster' komutu etkisiz, yeni mektup olusur olusmaz gizlenir
+		def NoShow():
+			try:
+				for button in list(getattr(interface, "questButtonList", []) or []):
+					button.Hide()
+			except Exception:
+				pass
+		interface.ShowAllQuestButton = NoShow
+		recv = getattr(interface, "BINARY_RecvQuest", None)
+		if recv:
+			def Recv(*args):
+				recv(*args)
+				NoShow()
+				try:
+					weakSelf.Refresh()
+				except ReferenceError:
+					pass
+			interface.BINARY_RecvQuest = Recv
 
 	def __Unhook(self):
 		try:
 			if "_Interface__ArrangeQuestButton" in self.interface.__dict__:
 				del self.interface.__dict__["_Interface__ArrangeQuestButton"]
+			for name in ("ShowAllQuestButton", "BINARY_RecvQuest"):
+				if name in self.interface.__dict__:
+					del self.interface.__dict__[name]
 		except (ReferenceError, AttributeError):
 			pass
 

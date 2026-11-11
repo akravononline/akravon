@@ -9,17 +9,21 @@ import ui
 import uiMobileStyle
 
 IMG = "d:/ymir work/ui/akravon_legacy/"
-CELL = 50
-ROWS = 7
+CELL = 58
+ROWS = 6
 PAGES = 5
-IW = 5 * CELL + 40
-EW = 4 * 60 - 10 + 40
+IW = 6 * CELL + 40
+ES = 60	# build_akravon_inventory.py ile ayni olmali (EU: yuva boyu, ES: yuva adimi)
+EU = 50
+EH = 392
+EW = 4 * ES - 10 + 40
 TAB = 30
 GAP = 10
 W = TAB + EW + GAP + IW
 RIGHT_MARGIN = 10
 TOP_Y = 0
-PULL_Y = 190
+PULL_H = 80	# kulp yuksekligi (gorsel 110; dikeyde kisaltilir)
+PULL_Y = EH - PULL_H - 18	# kulbun alt kenari ekipman tahtasinin alt kenarindan 18 yukarida (alt bosluk)
 SLIDE_TIME = 0.2
 ENTER_TIME = 0.28
 CFG = "akravon_envanter.cfg"
@@ -44,12 +48,13 @@ def SaveOpen(value):
 
 class PullTab(uiMobileStyle.Pressable):
 	def __init__(self, parent, event):
-		uiMobileStyle.Pressable.__init__(self, TAB + 10, 110)	# dokunma alani gorselden genis
+		uiMobileStyle.Pressable.__init__(self, TAB + 10, PULL_H)	# dokunma alani gorselden genis
 		self.SetParent(parent)
 		self.image = ui.ExpandedImageBox()
 		self.image.SetParent(self)
 		self.image.AddFlag("not_pick")
 		self.image.LoadImage(IMG + "inv_pull.png")
+		self.image.SetScale(1.0, PULL_H / 110.0)
 		self.image.Show()
 		self.chevron = ui.ExpandedImageBox()
 		self.chevron.SetParent(self)
@@ -61,7 +66,7 @@ class PullTab(uiMobileStyle.Pressable):
 
 	def SetOpened(self, opened):
 		self.chevron.LoadImage(IMG + ("inv_chev_close.png" if opened else "inv_chev_open.png"))
-		self.chevron.SetPosition((TAB - self.chevron.GetWidth()) // 2 + 1, (110 - self.chevron.GetHeight()) // 2)
+		self.chevron.SetPosition((TAB - self.chevron.GetWidth()) // 2 + 1, (PULL_H - self.chevron.GetHeight()) // 2)
 
 	def Destroy(self):
 		uiMobileStyle.Pressable.Destroy(self)
@@ -120,6 +125,7 @@ class DragHandle(ui.Window):
 		x = max(-W + 120, min(wndMgr.GetScreenWidth() - 120, mx - self.grab[0]))
 		y = max(0, min(wndMgr.GetScreenHeight() - 90, my - self.grab[1]))
 		self.owner.window.SetPosition(x, y)
+		self.owner.anchorRight = x + self.owner.window.GetWidth()	# surukleme sonrasi sag kenar sabit kalir
 
 
 class Slider(ui.Window):
@@ -159,13 +165,13 @@ class Skin(object):
 		# AKRAVON: kostum dugmesi simdilik kaldirildi (kostum penceresi ekrana sigmiyor); depo dugmesi silah yuvasinin altina,
 		# ayakkabi hizasina alindi
 		try:
-			for (buttonName, art, x) in (("MallButton", "depo", 74), ("CostumeButton", "kostum", 142)):
+			for (buttonName, art, x) in (("MallButton", "depo", (EW - 122) // 2), ("CostumeButton", "kostum", (EW - 122) // 2 + 68)):
 				button = window.GetChild(buttonName)
 				kind = "depo" if art == "depo" else "kost"
 				button.SetUpVisual(IMG + "inv_%s_up.png" % kind)
 				button.SetOverVisual(IMG + "inv_%s_over.png" % kind)
 				button.SetDownVisual(IMG + "inv_%s_down.png" % kind)
-				button.SetPosition(x, 315)
+				button.SetPosition(x, 62 + 4 * ES - 10 + 22)
 				button.Show()
 		except Exception:
 			pass
@@ -182,10 +188,10 @@ class Skin(object):
 			fx.SetParent(base)
 			fx.AddFlag("not_pick")
 			fx.LoadImage("mobile_ui/akravon/hud/akrfx_blue_1_00.png")
-			fx.SetScale(50 / 64.0, 50 / 64.0)
+			fx.SetScale(EU / 64.0, EU / 64.0)
 			fx.Hide()
 			self.ruzgarFx = fx
-			tap = uiMobileStyle.Pressable(50, 50)
+			tap = uiMobileStyle.Pressable(EU, EU)
 			tap.SetParent(base)
 			tap.SetEvent(self.RuzgarKapat)
 			tap.Hide()
@@ -249,7 +255,7 @@ class Skin(object):
 
 	def RuzgarInventorySlot(self):
 		import player
-		for slot in range(player.INVENTORY_PAGE_SIZE * 5):
+		for slot in range(player.INVENTORY_PAGE_SIZE * PAGES):
 			if player.GetItemIndex(slot) == 72701:
 				return slot
 		return -1
@@ -344,12 +350,12 @@ class Skin(object):
 			# mavi donen efekt + dokunma alani
 			if self.ruzgarFx and self.ruzgarTap:
 				if self.ruzgarSlot is not None:
-					x = 120 if self.ruzgarSlot == player.EQUIPMENT_SLOT_START + 7 else 180
+					x = 2 * ES if self.ruzgarSlot == player.EQUIPMENT_SLOT_START + 7 else 3 * ES
 					self.ruzgarFx.LoadImage("mobile_ui/akravon/hud/akrfx_blue_1_%02d.png" % (int(now * 14) % 13))
-					self.ruzgarFx.SetScale(50 / 64.0, 50 / 64.0)
-					self.ruzgarFx.SetPosition(x, 180)
+					self.ruzgarFx.SetScale(EU / 64.0, EU / 64.0)
+					self.ruzgarFx.SetPosition(x, 3 * ES)
 					self.ruzgarFx.Show()
-					self.ruzgarTap.SetPosition(x, 180)
+					self.ruzgarTap.SetPosition(x, 3 * ES)
 					self.ruzgarTap.Show()
 				else:
 					self.ruzgarFx.Hide()
@@ -364,7 +370,7 @@ class Skin(object):
 			if not self.equipBoard.IsShow():
 				(bx, by) = self.board.GetGlobalPosition()
 				(ex, ey) = (bx - EW - GAP, by)
-			left = ex - costume.GetWidth() - GAP
+			left = ex - costume.GetWidth() - GAP	# kostum-ekipman boslugu = ekipman-envanter boslugu (GAP)
 			costume.SetPosition(left if left >= 0 else ex, ey)
 			self.costumeShown = True
 		target = 1.0 if self.opened else 0.0
@@ -373,6 +379,13 @@ class Skin(object):
 		delta = dt / SLIDE_TIME
 		self.ratio = min(target, self.ratio + delta) if target > self.ratio else max(target, self.ratio - delta)
 		self.Layout()
+		# cekmece kayarken yuvalar parmagin altindan gecer: esya ozellik kutusu acilip kapanmasin
+		try:
+			tip = getattr(self.window, "tooltipItem", None)
+			if tip:
+				tip.HideToolTip()
+		except Exception:
+			pass
 
 	def Layout(self):
 		# envanter ekranda sabit; ekipman onun arkasindan sola kayar, kulp ekipmanin solunda gider
@@ -384,11 +397,17 @@ class Skin(object):
 		e = getattr(self, "enterT", 1.0)
 		newOff = int(round((1.0 - (1.0 - (1.0 - e) ** 3)) * (W + RIGHT_MARGIN + 40))) if e < 1.0 else 0
 		self.enterOff = newOff
-		right = x + self.window.GetWidth() - off + newOff
+		right = getattr(self, "anchorRight", None)
+		if right is None:
+			right = x + self.window.GetWidth() - off
+		right += newOff
 		if not getattr(self, "placed", False) or getattr(self, "needY", False):
 			import uiMobileHud
-			right = wndMgr.GetScreenWidth() - RIGHT_MARGIN - getattr(uiMobileHud, "SAFE_RIGHT", 0) + newOff	# kavisli kenar payi
+			# sag kenar = mini haritanin sag kenari (HUD'un kullandigi sag kenar payi ile ayni hesap)
+			edge = uiMobileHud.BASE_SCREEN_EDGE + int(getattr(uiMobileHud, "SAFE_RIGHT", 0) * uiMobileHud.RIGHT_SAFE_SHARE)
+			right = wndMgr.GetScreenWidth() - edge + newOff
 			self.placed = True
+			self.anchorRight = right - newOff
 		if getattr(self, "needY", False):
 			y = max(0, (wndMgr.GetScreenHeight() - self.board.GetHeight()) // 2)	# ustten / alttan esit bosluk
 			self.needY = False

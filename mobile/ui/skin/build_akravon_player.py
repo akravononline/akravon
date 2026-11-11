@@ -15,13 +15,13 @@ RING_CENTER = (34, 35)
 RING_RADIUS = 32.0
 RING_WIDTH = 2.6
 HAIR = 1.0	# cubuk yuvasinin bronz ince cizgisi
-FILL_X = 62	# dolgularin gorunen baslangici (halkanin hemen sagi)
+FILL_X = 70	# dolgularin gorunen baslangici (halkanin hemen sagi)
 
 # x0: yuvanin sol ucu (halkanin arkasinda), x1: ust sag kose, y/h: yuva, slant: sag ucun egimi
 BARS = {
-	'hp': {'x0': 44, 'x1': 252, 'y': 22, 'h': 12, 'slant': 8, 'top': (212, 62, 62), 'bottom': (122, 24, 34)},
-	'sp': {'x0': 44, 'x1': 252, 'y': 36, 'h': 12, 'slant': 8, 'top': (76, 124, 222), 'bottom': (30, 58, 146)},
-	'st': {'x0': 44, 'x1': 252, 'y': 50, 'h': 12, 'slant': 8, 'top': (244, 184, 72), 'bottom': (196, 122, 30)},
+	'hp': {'x0': 70, 'x1': 224, 'y': 20, 'h': 17, 'slant': 0, 'top': (212, 62, 62), 'bottom': (122, 24, 34)},
+	'sp': {'x0': 70, 'x1': 224, 'y': 39, 'h': 16, 'slant': 0, 'top': (76, 124, 222), 'bottom': (30, 58, 146)},
+	'st': {'x0': 70, 'x1': 224, 'y': 58, 'h': 10, 'slant': 0, 'top': (244, 184, 72), 'bottom': (196, 122, 30)},
 }
 BRONZE_LIGHT = (178, 142, 88)
 BRONZE_MID = (126, 96, 54)
@@ -48,9 +48,14 @@ def PolyMask(points):
 	return mask
 
 
+CORNER = 4.0	# portre cercevesi: yuvarlak kose kare (halka degil)
+
+
 def CircleMask(cx, cy, radius):
+	# AKRAVON: ad eski kaldi; artik yuvarlatilmis kare maske (portre kare)
 	mask = Image.new('L', Size(), 0)
-	ImageDraw.Draw(mask).ellipse([(cx - radius) * S, (cy - radius) * S, (cx + radius) * S, (cy + radius) * S], fill = 255)
+	corner = max(2.0, CORNER - (RING_RADIUS - radius))
+	ImageDraw.Draw(mask).rounded_rectangle([(cx - radius) * S, (cy - radius) * S, (cx + radius) * S, (cy + radius) * S], radius = corner * S, fill = 255)
 	return mask
 
 
@@ -154,6 +159,32 @@ def Slot(canvas, outer, inner, y, h):
 	Paint(canvas, Image.new('RGBA', Size(), (0, 0, 0, 90)), Image.fromarray(np.minimum(np.asarray(band), np.asarray(inner))))
 
 
+def BuildExp(save):
+	# 4 EXP kutusunun yuvasi ve dolgusu: mantiksal 54x16 / 52x14, 4x ornekleme, 2 kat cikti
+	w, h, q = 53, 16, 16
+	slot = Image.new('RGBA', (w * q, h * q), (0, 0, 0, 0))
+	dr = ImageDraw.Draw(slot)
+	dr.rounded_rectangle([0, 0, w * q - 1, h * q - 1], radius = 2.8 * q, fill = BRONZE_MID + (255,))
+	dr.rounded_rectangle([0.5 * q, 0.5 * q, w * q - 0.5 * q - 1, h * q - 0.5 * q - 1], radius = 2.4 * q, fill = BRONZE_LIGHT + (255,))
+	inner = Image.new('RGBA', slot.size, (0, 0, 0, 0))
+	ImageDraw.Draw(inner).rounded_rectangle([1.0 * q, 1.0 * q, w * q - 1.0 * q - 1, h * q - 1.0 * q - 1], radius = 2.0 * q, fill = NAVY_TOP + (255,))
+	slot.alpha_composite(inner)
+	save('exp_slot', slot.resize((w * 2, h * 2), Image.LANCZOS))
+	fw, fh = w - 2, h - 2
+	fill = Image.new('RGBA', (fw * q, fh * q), (0, 0, 0, 0))
+	mask = Image.new('L', fill.size, 0)
+	ImageDraw.Draw(mask).rounded_rectangle([0, 0, fw * q - 1, fh * q - 1], radius = 2.0 * q, fill = 255)
+	grad = VGradBox((250, 214, 140), (180, 140, 70), fw * q, fh * q)
+	fill.paste(grad, (0, 0), mask)
+	save('exp_fill', fill.resize((fw * 2, fh * 2), Image.LANCZOS))
+
+
+def VGradBox(top, bottom, w, h):
+	t = (np.arange(h, dtype = np.float32) / max(1, h - 1))[:, None, None]
+	row = np.array(top, np.float32) * (1 - t) + np.array(bottom, np.float32) * t
+	return Image.fromarray(np.repeat(row, w, axis = 1).astype(np.uint8), 'RGB').convert('RGBA')
+
+
 def BuildStatus(save):
 	canvas = Image.new('RGBA', Size(), (0, 0, 0, 0))
 	cx, cy = RING_CENTER
@@ -179,7 +210,7 @@ def BuildStatus(save):
 	Paint(canvas, Image.new('RGBA', Size(), (4, 6, 12, 200)), edge)
 	glow = Image.new('RGBA', Size(), (0, 0, 0, 0))
 	r = (RING_RADIUS - 0.7) * S
-	ImageDraw.Draw(glow).arc([cx * S - r, cy * S - r, cx * S + r, cy * S + r], 205, 300, fill = (236, 204, 150, 120), width = int(0.9 * S))
+	ImageDraw.Draw(glow).line([((cx - RING_RADIUS + CORNER) * S, (cy - RING_RADIUS + 0.8) * S), ((cx + RING_RADIUS - CORNER) * S, (cy - RING_RADIUS + 0.8) * S)], fill = (236, 204, 150, 120), width = int(0.9 * S))
 	canvas.alpha_composite(glow)
 
 	save('status_panel', canvas.resize((W * K, H * K), Image.LANCZOS))

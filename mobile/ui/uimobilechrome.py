@@ -14,10 +14,10 @@ import uiMobileChat
 from _weakref import proxy
 
 STATUS_WIDTH = 228
-STATUS_HEIGHT = 80
+STATUS_HEIGHT = 96
 # AKRAVON: konumlar durum panelinin (skin/build_akravon_player.py) 262x70 mantiksal olcegindedir
-FACE_CENTER = (35, 42)
-FACE_SIZE = 52
+FACE_CENTER = (34, 35)
+FACE_SIZE = 58
 NAME_X = 78
 NAME_CENTER_Y = 6
 BAR_LAYOUT = {"hp" : (70, 20, 154, 17), "sp" : (70, 39, 154, 16), "st" : (70, 58, 154, 10)}	# orijinal Metin2 gauge.sub yuvalari (x1.5)
@@ -67,6 +67,7 @@ CHAT_TITLE_COLOR = uiMobileStyle.Color(190, 176, 148)
 CHAT_TITLE_ACTIVE_COLOR = uiMobileStyle.Color(240, 228, 200)
 BADGE_LIMIT = 9
 SCREEN_GAP = 8
+STRIP_WIDTH = 420
 FLOAT_LINE_GAP = 8
 
 NOTIFICATION_ORDER = ("QUEST", "HELP", "BUILD", "EXIT_OBSERVER")
@@ -363,7 +364,7 @@ class Gauge(object):
 		x, y, width, height = BAR_LAYOUT[kind]
 		self.kind = kind
 		self.frame = 0
-		self.bg = HudImage(parent, "status_%s_bg" % kind, x, y)	# bos kisim: koyu oluk
+		# AKRAVON: eski lacivert "bos kisim" resmi kaldirildi; yuva panel gorselinin icinde
 		self.fill = HudImage(parent, "status_%s" % kind, x, y)
 		if showText:
 			self.text = uiMobileStyle.CreateText(parent, "", x + width // 2, y + height // 2 - 6, BAR_TEXT_COLOR, BAR_FONTS[kind], "center", True)
@@ -424,6 +425,43 @@ class ExpOrbs(object):
 		return ratio
 
 
+class ExpSquares(object):
+	# AKRAVON: HP/SP cubuklarinin hemen altinda 4 kare; her kare deneyimin %25'ini doldurur
+	COUNT = 4
+	WIDTH = 53
+	GAP = 4
+	HEIGHT = 16
+	X = 0
+	Y = 73
+
+	def __init__(self, parent):
+		self.ratio = -1.0
+		self.fills = []
+		self.parts = []	# pencere nesneleri saklanmazsa silinir
+		for index in range(self.COUNT):
+			x = self.X + index * (self.WIDTH + self.GAP)
+			self.parts.append(HudImage(parent, "exp_slot", x, self.Y))
+			fill = HudImage(parent, "exp_fill", x + 1, self.Y + 1)
+			fill.Hide()
+			self.fills.append(fill)
+
+	def SetValue(self, current, maximum):
+		ratio = max(0.0, min(1.0, float(current) / maximum)) if maximum > 0 else 1.0
+		if ratio == self.ratio:
+			return ratio
+		self.ratio = ratio
+		import dbg
+		dbg.TraceError('EXPDBG cur=%s max=%s ratio=%s' % (current, maximum, ratio))
+		for (index, fill) in enumerate(self.fills):
+			part = max(0.0, min(1.0, ratio * self.COUNT - index))
+			if part <= 0.0:
+				fill.Hide()
+				continue
+			fill.SetRenderingRect(0.0, 0.0, part - 1.0, 0.0)
+			fill.Show()
+		return ratio
+
+
 class StatusBar(ui.Window):
 	def __init__(self):
 		ui.Window.__init__(self, "UI")
@@ -448,7 +486,7 @@ class StatusBar(ui.Window):
 		self.hpGauge = Gauge(self, "hp", False)	# AKRAVON: cubuklarin ustunde yazi yok (orijinal Metin2 gibi)
 		self.spGauge = Gauge(self, "sp", False)
 		self.stGauge = Gauge(self, "st", False)
-		self.expGauge = Gauge(self, None, False)	# AKRAVON: EXP gostergesi kaldirildi (yeri yok)
+		self.expGauge = ExpSquares(self)	# AKRAVON: HP/SP altinda 4 EXP karesi
 
 		self.SetTouchTapEvent(ui.__mem_func__(self.__OnTap))
 		self.RefreshStatus()
@@ -587,22 +625,26 @@ class ChatToggle(uiMobileStyle.Pressable):
 	def __init__(self, width, height):
 		uiMobileStyle.Pressable.__init__(self, width, height)
 
-		self.frame = HudImage(self, "chat_dock_closed", 0, 0)
+		# AKRAVON: yalniz dugme - altin cerceveli lacivert kare + sohbet ikonu (mesajlar yanindaki seritte akar)
+		self.edge = uiMobileStyle.CreateBar(self, uiMobileStyle.Color(150, 118, 58), 0, 0, width, height)
+		self.fill = uiMobileStyle.CreateBar(self, uiMobileStyle.Color(12, 20, 40, 235), 2, 2, width - 4, height - 4)
+		self.frame = None
+		self.icon = HudImage(self, "chat_icon", (width - 22) // 2, (height - 22) // 2 + 1)
+		self.title = None
+		self.arrow = None
+		self.arrowLeft = width - 14
 
-		self.icon = HudImage(self, "chat_icon", 14, (height - 22) // 2 + 1)
-		self.title = uiMobileStyle.CreateText(self, CHAT_TITLE_TEXT, width // 2, height // 2 - 6, CHAT_TITLE_COLOR, "LatoBd:14", "center")
-		self.arrow = HudImage(self, "chat_arrow", width - 14 - 20, (height - 20) // 2 + 1, 0.5, 0.5)
-		self.arrowLeft = width - 14 - 20
-
-		self.badge = HudImage(self, "chat_badge_dot", self.arrowLeft - 34, (height - 22) // 2 + 1)
+		self.badge = HudImage(self, "chat_badge_dot", width - 22, 2)
 		self.badge.Hide()
-		self.badgeText = uiMobileStyle.CreateText(self, "", self.arrowLeft - 34 + 11, height // 2 - 6, uiMobileStyle.BRIGHT_COLOR, "LatoBd:14", "center")
+		self.badgeText = uiMobileStyle.CreateText(self, "", width - 22 + 11, 2 + 6, uiMobileStyle.BRIGHT_COLOR, "LatoBd:14", "center")
 		self.badgeText.Hide()
 		self.badgeValue = 0
 
 	def Destroy(self):
 		uiMobileStyle.Pressable.Destroy(self)
 		self.frame = None
+		self.edge = None
+		self.fill = None
 		self.icon = None
 		self.title = None
 		self.arrow = None
@@ -636,15 +678,39 @@ class FloatingChat(ui.Window):
 		self.SetSize(width, 1)
 		self.chatID = chat.CreateChatSet(uiMobileChat.FLOAT_CHAT_SET)
 		chat.SetBoardState(self.chatID, chat.BOARD_STATE_VIEW)
+		self.boxHeight = 0
 
 	def __del__(self):
 		ui.Window.__del__(self)
 
+	def SetBoxHeight(self, height):
+		# serit yuksekligi: yalniz sigan satir sayisi gosterilir; satirlar seridin altindan yukari dizilir
+		self.boxHeight = height
+
 	def OnRender(self):
 		(x, y) = self.GetGlobalPosition()
-		chat.SetPosition(self.chatID, x, y)
+		if self.boxHeight > 0:
+			step = max(1, chat.GetLineStep(self.chatID))
+			chat.SetHeight(self.chatID, max(0, self.boxHeight - step))
+			chat.ArrangeShowingChat(self.chatID)
+			chat.SetPosition(self.chatID, x, y + self.boxHeight)
+		else:
+			chat.SetPosition(self.chatID, x, y)
 		chat.Update(self.chatID)
 		chat.Render(self.chatID)
+
+
+class ChatStrip(uiMobileStyle.Pressable):
+	# AKRAVON: sohbet dugmesinin sagindaki karartilmis serit; son mesajlar burada akar, dokununca panel acilir
+	def __init__(self, width, height):
+		uiMobileStyle.Pressable.__init__(self, width, height)
+		self.back = uiMobileStyle.CreateBar(self, uiMobileStyle.Color(0, 0, 0, 0), 0, 0, width, height)	# gorunmez dokunma alani: sabit siyah serit yok, mesajlar orijinal Metin2 gibi gelince gorunur
+		self.line = None
+
+	def Destroy(self):
+		uiMobileStyle.Pressable.Destroy(self)
+		self.back = None
+		self.line = None
 
 
 class ChatController(object):
@@ -659,6 +725,9 @@ class ChatController(object):
 		self.panel.Hide()
 		self.floating = FloatingChat(uiMobileChat.FLOAT_WIDTH)
 		self.floating.Show()
+		self.strip = ChatStrip(min(uiMobileChat.FLOAT_WIDTH, STRIP_WIDTH), toggle.GetHeight() + 3 * 24)
+		self.strip.SetEvent(ui.__mem_func__(self.Expand))
+		self.strip.Show()
 		self.seenLineCount = self.__GetLineCount()
 		self.toggle.SetEvent(ui.__mem_func__(self.Expand))
 
@@ -680,10 +749,13 @@ class ChatController(object):
 	def Place(self):
 		(toggleX, toggleY) = self.toggle.GetGlobalPosition()
 		centerX = toggleX + self.toggle.GetWidth() // 2
-		x = max(SCREEN_GAP, min(wndMgr.GetScreenWidth() - SCREEN_GAP - uiMobileChat.PANEL_WIDTH, centerX - uiMobileChat.PANEL_WIDTH // 2))
+		x = max(SCREEN_GAP, min(wndMgr.GetScreenWidth() - SCREEN_GAP - uiMobileChat.PANEL_WIDTH, toggleX))	# panel dugmeden saga dogru acilir
 		self.panel.SetHomePosition(x, toggleY + self.toggle.GetHeight())
 		self.panel.SetCollapsedBox(toggleX, toggleY, self.toggle.GetWidth(), self.toggle.GetHeight())
-		self.floating.SetPosition(toggleX + 6, toggleY - FLOAT_LINE_GAP)
+		boxHeight = self.toggle.GetHeight() + 3 * 24
+		self.strip.SetPosition(toggleX + self.toggle.GetWidth() + 6, toggleY + self.toggle.GetHeight() - boxHeight)
+		self.floating.SetBoxHeight(boxHeight)
+		self.floating.SetPosition(toggleX + self.toggle.GetWidth() + 12, toggleY + self.toggle.GetHeight() - boxHeight)
 
 	def Restore(self):
 		window = self.__GetChatWindow()
@@ -697,6 +769,9 @@ class ChatController(object):
 		if self.floating:
 			self.floating.Hide()
 		self.floating = None
+		if self.strip:
+			self.strip.Destroy()
+		self.strip = None
 		self.panel = None
 		self.toggle = None
 		self.interface = None
@@ -705,6 +780,7 @@ class ChatController(object):
 		self.expanded = True
 		self.toggle.Hide()
 		self.floating.Hide()
+		self.strip.Hide()
 		self.panel.Open()
 		self.toggle.SetUnreadCount(0)
 
@@ -724,6 +800,7 @@ class ChatController(object):
 		if self.toggle and self.visible and not self.expanded:
 			self.toggle.Show()
 			self.floating.Show()
+			self.strip.Show()
 
 	def Hide(self):
 		self.visible = False
@@ -733,12 +810,14 @@ class ChatController(object):
 			self.panel.CloseNow()
 		self.toggle.Hide()
 		self.floating.Hide()
+		self.strip.Hide()
 
 	def Show(self):
 		self.visible = True
 		if not self.expanded and not (self.panel and self.panel.IsShow()):
 			self.toggle.Show()
 			self.floating.Show()
+			self.strip.Show()
 
 	def __ReleaseDesktopChat(self, window):
 		if window.IsEditMode():

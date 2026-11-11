@@ -75,17 +75,17 @@ UTILITY_COUNT = 3
 MINIMAP_RESERVED_WIDTH = 160
 MINIMAP_RESERVED_HEIGHT = 214
 
-STATUS_BAR_HEIGHT = 78	# panel 70 + orijinal EXP plakasi
+STATUS_BAR_HEIGHT = 92	# panel 70 + 4 EXP karesi; etki ikonlari bunun altinda
 NOTIFICATION_GAP = 12
 NOTIFICATION_HEIGHT = 48
 MENU_BUTTON_SIZE = 52
 MENU_BUTTON_GAP = 8
 MENU_BUTTON_COUNT = 4
 STATUS_BAR_WIDTH = 228
-AFFECT_GAP = 6
-AFFECT_ROW_HEIGHT = 44	# uiAffectShower MOBILE_IMAGE_STEP: 40 px ikon + 4 aralik
+AFFECT_GAP = 4
+AFFECT_ROW_HEIGHT = 38	# uiAffectShower MOBILE_IMAGE_STEP: 40 px ikon + 4 aralik
 
-CHAT_PILL_WIDTH = 380
+CHAT_PILL_WIDTH = 64	# yalniz sohbet dugmesi; mesaj seridi yaninda (uimobilechrome.ChatStrip)
 CHAT_PILL_HEIGHT = 38
 
 RUN_LOCK_SIZE = 64
@@ -545,7 +545,7 @@ def GetTouchLayout(screenWidth, screenHeight, useOverrides = True):
 	menuWidth = MENU_BUTTON_COUNT * MENU_BUTTON_SIZE + (MENU_BUTTON_COUNT - 1) * MENU_BUTTON_GAP
 
 	pillWidth = CHAT_PILL_WIDTH
-	pillX = int((screenWidth - pillWidth) / 2)
+	pillX = max(SCREEN_EDGE, int(joystickX))	# joystigin hemen altinda, sol hizada
 	pillY = screenHeight - CHAT_PILL_HEIGHT	# ekranin dibine yapisik
 
 	zoneY = notificationY + NOTIFICATION_HEIGHT + NOTIFICATION_GAP

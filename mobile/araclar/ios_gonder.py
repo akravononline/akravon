@@ -25,7 +25,7 @@ BID = 'com.akravon.online.5UDV2DSXPV'
 DEVICE_MOBILE = '/Documents/mobile'
 ESCAPE_NAMES = set(('uiakravonbulksell.py', 'uirank.py'))		# cp949 okuyan betikler: yuksek baytlar \xNN kacisi
 # orijinalden_degisen icinde cihazda alt klasore giden dosyalar
-SUBFOLDER = {'characterwindow.py': 'uiscript', 'inventorywindowex.py': 'uiscript'}
+SUBFOLDER = {'characterwindow.py': 'uiscript', 'inventorywindowex.py': 'uiscript', 'costumewindow.py': 'uiscript'}
 
 
 def Convert(name):

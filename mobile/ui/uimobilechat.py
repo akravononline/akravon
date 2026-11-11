@@ -357,6 +357,28 @@ class ChatLines(ui.Window):
 		chat.Render(self.chatID)
 
 
+class ModeButton(uiMobileStyle.Pressable):
+	# AKRAVON: sol dugme - dokundukca Normal > Grup > Lonca > Bagir doner (hem yazma hem gorunen sekme)
+	def __init__(self, width, height):
+		uiMobileStyle.Pressable.__init__(self, width, height)
+		self.box = InsetField(width, height)
+		self.box.SetParent(self)
+		self.box.Show()
+		self.label = uiMobileStyle.CreateText(self, "", width // 2, height // 2 - 12, uiMobileStyle.BRIGHT_COLOR, "LatoBd:18", "center")
+
+	def Destroy(self):
+		uiMobileStyle.Pressable.Destroy(self)
+		self.box = None
+		self.label = None
+
+	def SetMode(self, text, color):
+		self.label.SetText(uiMobileStyle.TrUpper(text))
+		self.label.SetPackedFontColor(uiMobileStyle.Color(color[0], color[1], color[2]))
+
+
+MODE_NAMES = ("Normal", "Grup", "Lonca", "Bağır")
+
+
 class ChatPanel(ui.Window):
 	def __init__(self, interface):
 		import uiMobileChrome
@@ -390,6 +412,7 @@ class ChatPanel(ui.Window):
 		self.collapseEvent = None
 		self.expandEvent = None
 		self.selectedTab = -1
+		self.sendMode = 0	# 0 Normal, 1 Grup, 2 Lonca, 3 Bagir (yalniz yazma onegi; gorunen mesajlar hep hepsi)
 		self.homeX = 0
 		self.homeBottom = 0
 		self.panelHeight = self.__LoadHeight()
@@ -414,6 +437,7 @@ class ChatPanel(ui.Window):
 
 		self.divider = uiMobileStyle.CreateBar(self, DIVIDER_COLOR, 14, HEADER_HEIGHT - 1, PANEL_WIDTH - 28, 1)
 
+		self.headerTitle = uiMobileStyle.CreateText(self, "S O H B E T", TAB_LEFT + 6, HEADER_HEIGHT // 2 - 10, uiMobileStyle.Color(222, 184, 110), "LatoBd:18")
 		self.tabs = []
 		x = TAB_LEFT
 		for (index, (labelName, modeName, prefix, color)) in enumerate(TABS):
@@ -421,7 +445,7 @@ class ChatPanel(ui.Window):
 			tab.SetParent(self)
 			tab.SetPosition(x, GRIP_HEIGHT)
 			tab.SetEvent(ui.__mem_func__(self.SelectTab), index)
-			tab.Show()
+			tab.Hide()	# AKRAVON: ust sekmeler yok - sol mod dugmesi var
 			x += tab.GetWidth() + TAB_GAP
 			self.tabs.append(tab)
 
@@ -431,19 +455,25 @@ class ChatPanel(ui.Window):
 		self.collapseButton.SetEvent(ui.__mem_func__(self.__OnCollapse))
 		self.collapseButton.Show()
 
+		self.linesBack = uiMobileStyle.CreateBar(self, uiMobileStyle.Color(0, 0, 0, 165), LINE_PADDING_X - 6, HEADER_HEIGHT + 2, PANEL_WIDTH - LINE_PADDING_X * 2 + 12, 40)	# orijinal Metin2 sohbet zemini (siyah, yari saydam)
 		self.lines = ChatLines(self.chatID)
 		self.lines.SetInterface(self.interface)
 		self.lines.SetParent(self)
 		self.lines.SetPosition(LINE_PADDING_X, HEADER_HEIGHT + LINE_PADDING_Y)
 		self.lines.Show()
 
+		self.modeButton = ModeButton(BUTTON_SIZE * 2, BUTTON_SIZE)
+		self.modeButton.SetParent(self)
+		self.modeButton.SetEvent(ui.__mem_func__(self.NextMode))
+		self.modeButton.Show()
+
 		self.linkButton = uiMobileChrome.HudButton(BUTTON_SIZE, "link")
 		self.linkButton.SetParent(self)
 		self.linkButton.SetEvent(ui.__mem_func__(self.RequestItemLink))
 		self.linkButton.Show()
 
-		fieldX = INPUT_SIDE + BUTTON_SIZE + INPUT_GAP
-		fieldWidth = PANEL_WIDTH - fieldX - INPUT_GAP - BUTTON_SIZE - INPUT_SIDE
+		fieldX = INPUT_SIDE + BUTTON_SIZE * 2 + INPUT_GAP
+		fieldWidth = PANEL_WIDTH - fieldX - INPUT_GAP - BUTTON_SIZE - INPUT_GAP - BUTTON_SIZE - INPUT_SIDE
 		self.field = uiMobileStyle.Pressable(fieldWidth, FIELD_HEIGHT)
 		self.field.SetParent(self)
 		self.field.SetPosition(fieldX, 0)
@@ -474,7 +504,7 @@ class ChatPanel(ui.Window):
 		self.sendButton.SetEvent(ui.__mem_func__(self.Send))
 		self.sendButton.Show()
 
-		self.contents = [self.grip, self.divider] + self.tabs + [self.collapseButton, self.lines, self.linkButton, self.field, self.sendButton]
+		self.contents = [self.grip, self.divider, self.headerTitle] + [self.collapseButton, self.linesBack, self.lines, self.modeButton, self.linkButton, self.field, self.sendButton]
 		self.collapsedBox = (0, 0, PANEL_WIDTH, COLLAPSED_HEIGHT)
 		self.animation = None
 		self.closedEvent = None
@@ -523,9 +553,12 @@ class ChatPanel(ui.Window):
 		if not self.animation:
 			self.frame.SetSize(PANEL_WIDTH, height)
 		self.lines.SetSize(PANEL_WIDTH - LINE_PADDING_X * 2, height - INPUT_ROW_HEIGHT - 2 - HEADER_HEIGHT - LINE_PADDING_Y)
+		self.linesBack.SetPosition(LINE_PADDING_X - 6, HEADER_HEIGHT + 4)
+		self.linesBack.SetSize(PANEL_WIDTH - LINE_PADDING_X * 2 + 12, max(10, height - INPUT_ROW_HEIGHT - HEADER_HEIGHT - 6))
 		inputY = height - FIELD_HEIGHT - INPUT_BOTTOM_PAD
-		self.linkButton.SetPosition(INPUT_SIDE, inputY)
-		self.field.SetPosition(INPUT_SIDE + BUTTON_SIZE + INPUT_GAP, inputY)
+		self.modeButton.SetPosition(INPUT_SIDE, inputY)
+		self.field.SetPosition(INPUT_SIDE + BUTTON_SIZE * 2 + INPUT_GAP, inputY)
+		self.linkButton.SetPosition(PANEL_WIDTH - INPUT_SIDE - BUTTON_SIZE * 2 - INPUT_GAP, inputY)
 		self.sendButton.SetPosition(PANEL_WIDTH - INPUT_SIDE - BUTTON_SIZE, inputY)
 
 	def Destroy(self):
@@ -544,14 +577,17 @@ class ChatPanel(ui.Window):
 		self.collapseButton.Destroy()
 		self.sendButton.Destroy()
 		self.linkButton.Destroy()
+		self.modeButton.Destroy()
 		self.field.Destroy()
 		self.collapseButton = None
 		self.sendButton = None
 		self.linkButton = None
+		self.modeButton = None
 		self.field = None
 		self.fieldPanel = None
 		self.input = None
 		self.lines = None
+		self.linesBack = None
 		self.frame = None
 		self.divider = None
 		self.grip.Destroy()
@@ -682,8 +718,16 @@ class ChatPanel(ui.Window):
 				chat.DisableChatMode(self.chatID, mode)
 		for (position, tab) in enumerate(self.tabs):
 			tab.SetSelected(position == index)
-		self.input.SetPrefix(prefix)
+		self.ApplySendMode()
 		self.lines.ResetScroll()
+
+	def ApplySendMode(self):
+		self.input.SetPrefix(TABS[self.sendMode + 1][2])
+		self.modeButton.SetMode(MODE_NAMES[self.sendMode], TABS[self.sendMode + 1][3])
+
+	def NextMode(self):
+		self.sendMode = (self.sendMode + 1) % 4
+		self.ApplySendMode()
 
 	def FocusInput(self):
 		import dbg
