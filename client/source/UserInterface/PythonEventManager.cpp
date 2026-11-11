@@ -448,7 +448,7 @@ bool CPythonEventManager::ProcessEventSet(TEventSet * pEventSet)
 					&& pEventSet->pCurrentTextLine)
 				{
 					pEventSet->isTitleLine = true;
-					CGraphicText* pkTitleFont = static_cast<CGraphicText*>(CResourceManager::Instance().GetTypeResourcePointer("Marcellus:22"));
+					CGraphicText* pkTitleFont = static_cast<CGraphicText*>(CResourceManager::Instance().GetTypeResourcePointer("Marcellus:26"));
 					if (pkTitleFont)
 						pEventSet->pCurrentTextLine->SetTextPointer(pkTitleFont);
 					pEventSet->pCurrentTextLine->SetHorizonalAlign(CGraphicTextInstance::HORIZONTAL_ALIGN_CENTER);
@@ -482,7 +482,7 @@ bool CPythonEventManager::ProcessEventSet(TEventSet * pEventSet)
 					&& pEventSet->pCurrentTextLine)
 				{
 					pEventSet->isTitleLine = true;
-					CGraphicText* pkTitleFont = static_cast<CGraphicText*>(CResourceManager::Instance().GetTypeResourcePointer("Marcellus:22"));
+					CGraphicText* pkTitleFont = static_cast<CGraphicText*>(CResourceManager::Instance().GetTypeResourcePointer("Marcellus:26"));
 					if (pkTitleFont)
 						pEventSet->pCurrentTextLine->SetTextPointer(pkTitleFont);
 					pEventSet->pCurrentTextLine->SetHorizonalAlign(CGraphicTextInstance::HORIZONTAL_ALIGN_CENTER);
@@ -1139,7 +1139,7 @@ void CPythonEventManager::__InsertLine(TEventSet& rEventSet, BOOL isCenter, int 
 		if (rEventSet.isTitleLine)
 		{
 			rEventSet.isTitleLine = false;
-			__AddSpace(rEventSet, 16);	// AKRAVON: baslik ile ayirici/metin arasi bosluk
+			__AddSpace(rEventSet, 34);	// AKRAVON: baslik ile ayirici/metin arasi bosluk
 		}
 	}
 
