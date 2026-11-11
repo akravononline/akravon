@@ -100,6 +100,7 @@ void CPythonEventManager::__InitEventSet(TEventSet& rEventSet)
 
 	rEventSet.isTextCenterMode = false;
 	rEventSet.isTitleLine = false;
+	rEventSet.isTextStarted = false;
 	rEventSet.isWaitFlag = false;
 
 	__InsertLine(rEventSet);
@@ -406,6 +407,9 @@ bool CPythonEventManager::ProcessEventSet(TEventSet * pEventSet)
 		{
 			const std::string& c_rstValue = GetArgumentString("value", ScriptCommand.argList);
 			pEventSet->strCurrentLine.append(c_rstValue);
+			if (c_rstValue.find_first_not_of(" 	
+") != std::string::npos)
+				pEventSet->isTextStarted = true;
 			pEventSet->pCurrentTextLine->SetValueString(pEventSet->strCurrentLine);
 			pEventSet->pCurrentTextLine->SetColor(pEventSet->CurrentColor.r,pEventSet->CurrentColor.g,pEventSet->CurrentColor.b);
 			pEventSet->iCurrentLetter+=c_rstValue.length();
@@ -438,8 +442,7 @@ bool CPythonEventManager::ProcessEventSet(TEventSet * pEventSet)
 				pEventSet->CurrentColor.a = 1.0f;
 
 				// AKRAVON: sunucu color256(255,230,186) -> [COLOR r;1|g;0.902|b;0.729] (0..1). Ilk satirda ise ortali gorev basligi
-				if (pEventSet->iyLocal == 0 && pEventSet->strCurrentLine.empty()) TraceError("QUESTCOLOR r=%.3f g=%.3f b=%.3f lines=%d", pEventSet->CurrentColor.r, pEventSet->CurrentColor.g, pEventSet->CurrentColor.b, (int)pEventSet->ScriptTextLineList.size());
-				if (!pEventSet->isTitleLine && pEventSet->iyLocal == 0 && pEventSet->strCurrentLine.empty()
+				if (!pEventSet->isTitleLine && !pEventSet->isTextStarted
 					&& fabs(pEventSet->CurrentColor.r - 1.0f) < 0.01f
 					&& fabs(pEventSet->CurrentColor.g - 0.902f) < 0.01f
 					&& fabs(pEventSet->CurrentColor.b - 0.729f) < 0.01f
@@ -450,7 +453,7 @@ bool CPythonEventManager::ProcessEventSet(TEventSet * pEventSet)
 					if (pkTitleFont)
 						pEventSet->pCurrentTextLine->SetTextPointer(pkTitleFont);
 					pEventSet->pCurrentTextLine->SetHorizonalAlign(CGraphicTextInstance::HORIZONTAL_ALIGN_CENTER);
-					PyCallClassMemberFunc(pEventSet->poEventHandler, "OnQuestTitleLine", Py_BuildValue("()"));
+					PyCallClassMemberFunc(pEventSet->poEventHandler, "OnQuestTitleLine", Py_BuildValue("(i)", pEventSet->iyLocal));
 				}
 			}
 			else
@@ -473,7 +476,7 @@ bool CPythonEventManager::ProcessEventSet(TEventSet * pEventSet)
 				pEventSet->CurrentColor.a = 1.0f;
 
 				// AKRAVON: say_title() ciktisi (255,230,186) ilk satirsa -> ortali gorev basligi
-				if (!pEventSet->isTitleLine && pEventSet->iyLocal == 0 && pEventSet->strCurrentLine.empty()
+				if (!pEventSet->isTitleLine && !pEventSet->isTextStarted
 					&& atoi(GetArgument("r", ScriptCommand.argList)) == 255
 					&& atoi(GetArgument("g", ScriptCommand.argList)) == 230
 					&& atoi(GetArgument("b", ScriptCommand.argList)) == 186
@@ -484,7 +487,7 @@ bool CPythonEventManager::ProcessEventSet(TEventSet * pEventSet)
 					if (pkTitleFont)
 						pEventSet->pCurrentTextLine->SetTextPointer(pkTitleFont);
 					pEventSet->pCurrentTextLine->SetHorizonalAlign(CGraphicTextInstance::HORIZONTAL_ALIGN_CENTER);
-					PyCallClassMemberFunc(pEventSet->poEventHandler, "OnQuestTitleLine", Py_BuildValue("()"));
+					PyCallClassMemberFunc(pEventSet->poEventHandler, "OnQuestTitleLine", Py_BuildValue("(i)", pEventSet->iyLocal));
 				}
 			}
 			else
@@ -1074,6 +1077,8 @@ void CPythonEventManager::ClearLine(TEventSet * pEventSet)
 {
 	if (!pEventSet)
 		return;
+
+	pEventSet->isTextStarted = false;
 
 	for (auto & rkLine : pEventSet->ScriptTextLineList)
 	{

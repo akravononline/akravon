@@ -141,6 +141,7 @@ class CPythonEventManager : public CSingleton<CPythonEventManager>
 
 			bool isTextCenterMode;
 			bool isTitleLine;	// AKRAVON: gorev basligi satiri (ortali, ayiriciyla)
+			bool isTextStarted;	// AKRAVON: ilk gorunur yazi geldi mi (oncesindeki bos satirlar basligi engellemesin)
 			bool isWaitFlag;
 			#ifdef ENABLE_NEW_EVENT_STRUCT
 			int iTotalLineCount{0};
