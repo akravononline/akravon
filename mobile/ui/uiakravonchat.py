@@ -124,7 +124,7 @@ class ChatButton(uiMobileStyle.Pressable):
 		self.icon.SetScale(scale, scale)
 		self.icon.SetPosition(7, 0)
 		self.icon.Show()
-		self.label = uiMobileStyle.CreateText(self, "Sohbet", self.GetWidth() // 2, self.iconHeight + 2, self.LABEL_COLOR, "LatoBd:14", "center", True)
+		self.label = uiMobileStyle.CreateText(self, "Sohbet", self.GetWidth() // 2, self.iconHeight + 2, self.LABEL_COLOR, "LatoBd:15", "center", True)
 		self.alert = False
 		self.unread = 0
 		# sayi rozeti: ikonun sag ust kosesi; rakam arttikca genisler (9, 10, 99+)

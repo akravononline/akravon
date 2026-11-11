@@ -36,7 +36,7 @@ def Envelope(tint = None):
 	a[..., 3] = np.where(keep, a[..., 3], 0)
 	ys, xs = np.where(a[..., 3] > 0)
 	art = Image.fromarray(a.astype(np.uint8), 'RGBA').crop((xs.min(), ys.min(), xs.max() + 1, ys.max() + 1))
-	width = 46
+	width = 40
 	height = int(round(art.size[1] * width / float(art.size[0])))
 	art = art.resize((width, height), Image.LANCZOS)
 	px = np.array(art).astype(np.float32)
@@ -48,7 +48,10 @@ def Envelope(tint = None):
 	if tint:
 		for channel in range(3):
 			px[..., channel] = np.clip(px[..., channel] * 0.45 + tint[channel] * 0.75, 0, 255)
-	return Image.fromarray(px.astype(np.uint8), 'RGBA')
+	icon = Image.fromarray(px.astype(np.uint8), 'RGBA')
+	canvas = Image.new('RGBA', (54, 40), (0, 0, 0, 0))	# Gorev / Sohbet ikon sutunuyla ayni genislik (54): hizali
+	canvas.alpha_composite(icon, ((54 - icon.size[0]) // 2, (40 - icon.size[1]) // 2))
+	return canvas
 
 
 def Minimize(state):

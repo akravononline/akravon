@@ -679,6 +679,7 @@ class MobileHudController(object):
 		if y is None:
 			y = 260
 		y += 62 + 8
+		column = 54	# Gorev / Sohbet ikon sutunu genisligi: ikonlar bu sutunun ortasina hizalanir
 		now = app.GetTime()
 		for button in buttons:
 			name = str(getattr(button, "name", ""))
@@ -699,15 +700,19 @@ class MobileHudController(object):
 					button.SetToolTipText("")
 				button.akrIsGM = isGM
 				shown = name if len(name) <= 9 else name[:8] + ".."
-				button.akrLabel = uiMobileStyle.CreateText(button, shown, button.GetWidth() // 2, button.GetHeight() + 2, uiMobileStyle.Color(250, 228, 176), "LatoBd:13", "center", True)
+				button.akrLabel = uiMobileStyle.CreateText(button, shown, button.GetWidth() // 2, button.GetHeight() + 2, uiMobileStyle.Color(250, 228, 176), "LatoBd:15", "center", True)
 				red = ui.ExpandedImageBox()
 				red.SetParent(button)
 				red.AddFlag("not_pick")
 				red.LoadImage(self.WHISPER_ICON_RED)
 				red.Hide()
 				button.akrRed = red
-			if button.GetLocalPosition() != (x, y):
-				button.SetPosition(x, y)
+			tip = getattr(button, "ToolTipText", None)
+			if tip:
+				tip.Hide()	# oyunun kendi isim ipucu: bizim etiketle ust uste biniyordu
+			bx = x + (column - button.GetWidth()) // 2
+			if button.GetLocalPosition() != (bx, y):
+				button.SetPosition(bx, y)
 			button.Show()
 			red = getattr(button, "akrRed", None)
 			if red and not button.akrIsGM:
