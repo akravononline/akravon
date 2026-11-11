@@ -38,16 +38,16 @@ constexpr DWORD c_FileName_Max_Length = 128;
 constexpr DWORD c_Short_Name_Max_Length = 32;
 
 constexpr DWORD c_Inventory_Page_Column = 5;
-constexpr DWORD c_Inventory_Page_Row = 7;	// AKRAVON: 5x7 goz, 5 sayfa; sunucunun esya izgarasi 5 sutun genisliginde - 6 sutun ancak sunucu da degisince
+constexpr DWORD c_Inventory_Page_Row = 9;	// AKRAVON: 5x9 goz, 4 sayfa = sunucunun envanter izgarasi (INVENTORY_MAX_NUM/4 = 45 yuva/sayfa; cok yuvali esya sayfa sinirini asamaz)
 constexpr DWORD c_Inventory_Page_Size = c_Inventory_Page_Column*c_Inventory_Page_Row; // x*y
 
 #ifdef ENABLE_EXTEND_INVEN_SYSTEM
-constexpr DWORD c_Inventory_Page_Count = 5;
+constexpr DWORD c_Inventory_Page_Count = 4;
 #else
 constexpr DWORD c_Inventory_Page_Count = 2;
 #endif
 
-constexpr DWORD c_ItemSlot_Count = 180;	// sunucu yuva sayisi (gorunen 5x7x5 = 175; son 5 yuva gizli)
+constexpr DWORD c_ItemSlot_Count = 180;	// sunucu yuva sayisi (gorunen 5x9x4 = 180)
 constexpr DWORD c_Equipment_Count = 12;
 
 constexpr DWORD c_Equipment_Start = 180;	// sunucu ile ayni: ekipman 180'den baslar (envanter 175 yuva gorunur)
