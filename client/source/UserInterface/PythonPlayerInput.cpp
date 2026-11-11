@@ -303,6 +303,10 @@ void CPythonPlayer::__OnClickActor(CInstanceBase& rkInstMain, DWORD dwPickedActo
 	if (!pkInstVictim)
 		return;
 
+	// AKRAVON: mobilde sag tik yok; dost (saldirilamaz) oyuncuya dokununca oyuncu menusu (fisilda / ticaret / grup / arkadas) acilir
+	if (pkInstVictim->IsPC() && dwPickedActorID != GetMainCharacterIndex() && !rkInstMain.IsAttackableInstance(*pkInstVictim))
+		OpenCharacterMenu(dwPickedActorID);
+
 	// 2005.01.28.myevan
 	if (rkInstMain.IsAttackableInstance(*pkInstVictim))
 		if (!__CanAttack())
