@@ -25,6 +25,14 @@ void CGridSlotWindow::OnRenderPickingSlot()
 			if (GetSlotPointer(pSlot->dwCenterSlotNumber, &pCenterSlot))
 			if (pCenterSlot->isItem)
 			{
+#ifdef CYNEX_MOBILE
+				{
+					std::list<TSlot*> useSlots;
+					useSlots.push_back(pCenterSlot);
+					AkrRenderDropTarget(useSlots, m_isUsableItem ? 2 : 3);
+					return;
+				}
+#endif
 				if (m_isUsableItem)
 					CPythonGraphic::Instance().SetDiffuseColor(1.0f, 1.0f, 0.0f, 0.5f);
 				else
@@ -38,6 +46,10 @@ void CGridSlotWindow::OnRenderPickingSlot()
 			}
 		}
 
+#ifdef CYNEX_MOBILE
+		AkrRenderDropTarget(SlotList, CheckMoving(dwSlotNumber, dwItemIndex, SlotList) ? 0 : 1);
+		return;
+#endif
 		if (CheckMoving(dwSlotNumber, dwItemIndex, SlotList))
 			CPythonGraphic::Instance().SetDiffuseColor(1.0f, 1.0f, 1.0f, 0.5f);
 		else

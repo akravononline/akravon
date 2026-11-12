@@ -1318,22 +1318,25 @@ void CSlotWindow::OnRender()
 		#endif
 
 		#ifdef ENABLE_TRADE_DELETE_SLOT_EFFECT
-		if (IS_SET(rSlot.dwState, SLOT_STATE_HIGHLIGHT_GREEN))
+		if (IS_SET(rSlot.dwState, SLOT_STATE_HIGHLIGHT_GREEN) || IS_SET(rSlot.dwState, SLOT_STATE_HIGHLIGHT_RED))
 		{
-			CPythonGraphic::Instance().SetDiffuseColor(74.0f / 255.f, 1.0f, 74.0f / 255.0f, 0.3f);
-			CPythonGraphic::Instance().RenderBar2d(m_rect.left + rSlot.ixPosition,
-				m_rect.top + rSlot.iyPosition,
-				m_rect.left + rSlot.ixPosition + rSlot.byxPlacedItemSize * rSlot.ixCellSize,
-				m_rect.top + rSlot.iyPosition + rSlot.byyPlacedItemSize * rSlot.iyCellSize);
-		}
-
-		if (IS_SET(rSlot.dwState, SLOT_STATE_HIGHLIGHT_RED))
-		{
-			CPythonGraphic::Instance().SetDiffuseColor(1.0f, 0.0f, 0.0f, 0.3f);
-			CPythonGraphic::Instance().RenderBar2d(m_rect.left + rSlot.ixPosition,
-				m_rect.top + rSlot.iyPosition,
-				m_rect.left + rSlot.ixPosition + rSlot.byxPlacedItemSize * rSlot.ixCellSize,
-				m_rect.top + rSlot.iyPosition + rSlot.byyPlacedItemSize * rSlot.iyCellSize);
+			// AKRAVON: yesil / kirmizi vurgu - bizim hucre olcusu, yuvarlak kose, ince cerceve (eski ham kare yerine)
+			const bool greenState = IS_SET(rSlot.dwState, SLOT_STATE_HIGHLIGHT_GREEN);
+			float fw = float(rSlot.byxPlacedItemSize * ITEM_WIDTH), fh = float(rSlot.byyPlacedItemSize * ITEM_HEIGHT);
+			CynexSlot_CellSize(this, rSlot.dwSlotNumber, rSlot.byxPlacedItemSize, rSlot.byyPlacedItemSize, &fw, &fh);
+			if (fw < float(rSlot.ixCellSize)) fw = float(rSlot.ixCellSize);
+			if (fh < float(rSlot.iyCellSize)) fh = float(rSlot.iyCellSize);
+			const float hx = float(m_rect.left + rSlot.ixPosition) + 1.0f, hy = float(m_rect.top + rSlot.iyPosition) + 1.0f;
+			if (greenState)
+				CPythonGraphic::Instance().SetDiffuseColor(0.29f, 1.0f, 0.29f, 0.12f);
+			else
+				CPythonGraphic::Instance().SetDiffuseColor(1.0f, 0.1f, 0.1f, 0.12f);
+			CynexFillRound(hx, hy, hx + fw - 2.0f, hy + fh - 2.0f, 6.0f);
+			if (greenState)
+				CPythonGraphic::Instance().SetDiffuseColor(0.35f, 1.0f, 0.35f, 0.75f);
+			else
+				CPythonGraphic::Instance().SetDiffuseColor(1.0f, 0.25f, 0.25f, 0.75f);
+			CynexFrameRound(hx, hy, hx + fw - 2.0f, hy + fh - 2.0f, 6.0f, 1.0f);
 		}
 		#endif
 
@@ -1537,6 +1540,34 @@ void CSlotWindow::RenderSlotBaseImage()
 #endif
 		m_pBaseImageInstance->Render();
 	}
+}
+
+void CSlotWindow::AkrRenderDropTarget(std::list<TSlot*> & rSlots, int iMode)
+{
+	// AKRAVON: eski ham kare (32 px hucre, beyaz / kirmizi) yerine bizim hucre olcumuz + yuvarlak kose + ince cerceve
+	float left = 1.0e9f, top = 1.0e9f, right = -1.0e9f, bottom = -1.0e9f;
+	for (std::list<TSlot*>::iterator itor = rSlots.begin(); itor != rSlots.end(); ++itor)
+	{
+		TSlot * pSlot = *itor;
+		float fw = float(pSlot->ixCellSize * pSlot->byxPlacedItemSize), fh = float(pSlot->iyCellSize * pSlot->byyPlacedItemSize);
+		CynexSlot_CellSize(this, pSlot->dwSlotNumber, pSlot->byxPlacedItemSize, pSlot->byyPlacedItemSize, &fw, &fh);
+		if (fw < float(pSlot->ixCellSize)) fw = float(pSlot->ixCellSize);
+		if (fh < float(pSlot->iyCellSize)) fh = float(pSlot->iyCellSize);
+		const float x0 = float(m_rect.left + pSlot->ixPosition), y0 = float(m_rect.top + pSlot->iyPosition);
+		if (x0 < left) left = x0;
+		if (y0 < top) top = y0;
+		if (x0 + fw > right) right = x0 + fw;
+		if (y0 + fh > bottom) bottom = y0 + fh;
+	}
+	if (right <= left || bottom <= top)
+		return;
+	float r = 1.0f, g = 1.0f, b = 1.0f;
+	if (iMode == 1 || iMode == 3) { r = 1.0f; g = 0.2f; b = 0.2f; }
+	else if (iMode == 2) { r = 1.0f; g = 0.88f; b = 0.25f; }
+	CPythonGraphic::Instance().SetDiffuseColor(r, g, b, 0.12f);
+	CynexFillRound(left + 1.0f, top + 1.0f, right - 1.0f, bottom - 1.0f, 6.0f);
+	CPythonGraphic::Instance().SetDiffuseColor(r, g, b, 0.75f);
+	CynexFrameRound(left + 1.0f, top + 1.0f, right - 1.0f, bottom - 1.0f, 6.0f, 1.0f);
 }
 
 void CSlotWindow::OnRenderPickingSlot()

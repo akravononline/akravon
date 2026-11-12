@@ -207,6 +207,7 @@ namespace UI
 			void OnMouseOver();
 			void RenderSlotBaseImage();
 			void RenderLockedSlot();
+			void AkrRenderDropTarget(std::list<TSlot*> & rSlots, int iMode);	// AKRAVON: surukleme hedefi (0 uygun, 1 uygun degil, 2 kullan uygun, 3 kullan uygun degil)
 			virtual void OnRenderPickingSlot();
 			virtual void OnRenderSelectedSlot();
 
