@@ -6,6 +6,7 @@
 #   - Karakter yuruyunce "yuruyunce kapanir" isaretli pencereler kapanir (Guncelle her karede cagrilir).
 # Her AKRAVON penceresi kendi Ac / Kapat'inda Acildi(ad, pencere) / Kapandi(ad) cagirir. Tahmin (her karede tarama) yok.
 import player
+import app
 
 # ad -> birlikte acik kalabilecegi pencereler (iki yonlu sayilir)
 BAGLANTI = {
@@ -19,6 +20,7 @@ YURUME_ESIGI = 150	# oyun birimi (1.5 m): bu kadar yer degisince "yurudu" sayili
 
 acik = {}	# ad -> pencere
 sonKonum = None
+depoKontrol = 0.0	# depo acilinca bu zamana kadar envanter acik / ekipman kapali tutulur
 
 
 def _Bagli(a, b):
@@ -75,9 +77,28 @@ def _Konum():
 		return None
 
 
+def _DepoYaninda():
+	# depo / nesne market acildiktan kisa sure sonra: envanter acik, ekipman kapali (baska bir kod kapatsa bile geri getirir)
+	if not arayuz:
+		return
+	if "depo" not in acik and "nesne_market" not in acik and "ticaret" not in acik:
+		return
+	envanter = getattr(arayuz[0], "wndInventory", None)
+	if not envanter:
+		return
+	if not envanter.IsShow():
+		envanter.Show()
+	try:
+		envanter.akravonSkin.EkipmaniKapat()
+	except Exception:
+		pass
+
+
 def Guncelle():
 	# her karede (HUD guncellemesinden): karakter yuruduyse oturumsuz pencereler kapanir
 	global sonKonum
+	if depoKontrol and app.GetTime() < depoKontrol:
+		_DepoYaninda()
 	if not acik:
 		sonKonum = None
 		return
@@ -107,7 +128,10 @@ def _Bagla1(pencere, ad):
 	def Show(*args, **kwargs):
 		sonuc = eskiShow(*args, **kwargs)
 		Acildi(ad, pencere)
-		if ad in ("depo", "nesne_market") and arayuz:	# depo acilinca envanter yaninda acilir (esya tasimak icin)
+		if ad in ("depo", "nesne_market", "ticaret"):
+			global depoKontrol
+			depoKontrol = app.GetTime() + 1.5
+		if ad in ("depo", "nesne_market", "ticaret") and arayuz:	# depo acilinca envanter yaninda acilir (esya tasimak icin)
 			envanter = getattr(arayuz[0], "wndInventory", None)
 			if envanter and not envanter.IsShow():
 				envanter.Show()

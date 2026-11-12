@@ -1,4 +1,5 @@
-#include "StdAfx.h"	// Cynex: pch'den onceki satirlari msvc zaten yok sayiyor
+#include "StdAfx.h"
+#include <algorithm>	// Cynex: pch'den onceki satirlari msvc zaten yok sayiyor
 #include "InstanceBase.h"
 #include "PythonPlayerEventHandler.h"
 #include "PythonApplication.h"
@@ -2172,6 +2173,15 @@ void CPythonPlayer::AkravonAutoHuntStart(int hpPct, int spPct, const std::vector
 	m_bAutoHuntMob = true;
 	m_bAutoHuntStone = false;	// AKRAVON: ekonomi - metin tasina otomatik saldiri yok
 	m_bAutoHuntRangeStatus = true;	// hedef bulununca baslangic noktasi karakterle ilerler (sabit alan yok)
+	// AKRAVON: oyuncunun hizli erisim yuvalarindaki yetenekler (en fazla 6) oto av sirasinda kullanilir
+	for (int q = 0; q < QUICKSLOT_MAX_NUM && m_vecAutoSkills.size() < 6; ++q)
+	{
+		if (m_playerStatus.aQuickSlot[q].Type != SLOT_TYPE_SKILL)
+			continue;
+		const BYTE skillSlot = (BYTE) m_playerStatus.aQuickSlot[q].Position;
+		if (std::find(m_vecAutoSkills.begin(), m_vecAutoSkills.end(), skillSlot) == m_vecAutoSkills.end())
+			m_vecAutoSkills.emplace_back(skillSlot);
+	}
 	m_bAutoHuntStatus = true;
 	CInstanceBase* pkInstMain = NEW_GetMainActorPtr();
 	if (pkInstMain)

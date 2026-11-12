@@ -121,7 +121,7 @@ def _LayoutBoard(board):
 		piece.Hide()
 	width = board.GetWidth()
 	height = board.GetHeight()
-	found = _BoardFile(width, height)
+	found = None if getattr(board, "akrExact", False) else _BoardFile(width, height)
 	base = getattr(board, "Base", None)
 	if found is None or base is None or not hasattr(base, "LoadImage"):
 		# TEK KURAL: hazir resmi olmayan HER boyut icin tahta parcali cizimle (menu_board + altin cerceve) uretilir.
@@ -359,8 +359,8 @@ REFINE_EXTRA_W = 50
 REFINE_SHIFT = 23	# materyal satirlari ozellik grubuyla ayni hizada
 REFINE_EXTRA_H = 78
 REFINE_TOP = 72	# icerik baslik cizgisinin altindan baslar
-REFINE_TIP_WIDTH = 230	# ozellik kutusu: sikismaz ama cok genis degil
-REFINE_SLOT = 54	# hedef esya kutucugu
+REFINE_TIP_WIDTH = 206	# ozellik kutusu: sikismaz ama cok genis degil
+REFINE_SLOT = 38	# hedef esya kutucugu ve resmi (kucultuldu)
 REFINE_GAP = 10
 
 
@@ -410,13 +410,16 @@ def _RefineAfter(window):
 			window.GetChild("SuccessPercentage").Hide()
 		except Exception:
 			pass
-		height = max(BOARD_MIN_H, min(BOARD_MAX_H, ((height - BOARD_MIN_H + BOARD_STEP - 1) // BOARD_STEP) * BOARD_STEP + BOARD_MIN_H))
+		height = max(BOARD_MIN_H, min(BOARD_MAX_H, height))	# tam gereken yukseklik: hazir tahta adimina yuvarlanmaz (fazladan bosluk birakiyordu)
+		board.akrExact = True	# tahta bu boyutta parcali cizimle (menu_board + altin cerceve) uretilir
 		board.SetSize(width, height)
 		window.SetSize(width, height)
 		for child in getattr(window, "children", []) or []:
 			if id(child) in shifted:
 				continue
 			shifted.add(id(child))
+			if getattr(child, "akrNoShift", False):
+				continue	# malzeme satiri parcalari kesin konumlandi: kayma uygulanmaz
 			try:
 				(x, y) = child.GetLocalPosition()
 				child.SetPosition(x + REFINE_SHIFT, y)
@@ -464,6 +467,10 @@ def _WidenRefineTip(window):
 	# ozellik kutusu: dar varsayilan (190) yerine genis; ilk acilista icerik yeniden yazilir
 	import player
 	tip = getattr(window, "toolTip", None)
+	if tip:
+		# demirci ozellik cercevesi kucuk: yazi 15 punto, satir 20 px, cerceve dar (pencere ekrana rahat sigar); tas satirlarina dokunulmaz
+		tip.SetFontName("Lato:15")
+		tip.TEXT_LINE_HEIGHT = 20
 	if not tip or getattr(tip, "TOOL_TIP_WIDTH", 0) == REFINE_TIP_WIDTH:
 		return
 	tip.TOOL_TIP_WIDTH = REFINE_TIP_WIDTH

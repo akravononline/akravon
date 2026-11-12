@@ -673,7 +673,7 @@ class Pressable(ui.Window):
 	def Run(self):
 		import app
 		now = app.GetTime()	# AKRAVON: cift tetiklenme (dokunma + fare) yutulur
-		if now - getattr(self, "lastRunTime", -10.0) < 0.35:
+		if now - getattr(self, "lastRunTime", -10.0) < getattr(self, "minGap", 0.35):
 			return
 		self.lastRunTime = now
 		if self.enabled and self.eventFunction:

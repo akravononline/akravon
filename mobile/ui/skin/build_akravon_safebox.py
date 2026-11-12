@@ -96,7 +96,8 @@ def Build(out):
 	for n in (1, 2, 3, 4, 5):
 		tw = GRID_W // n
 		images['sb_strip_%d' % n] = inv.TabStrip(GRID_W, 42, n)
-		images['sb_tab_on_%d' % n] = inv.TabGlow(tw, 42)
+		goldFile = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'gorseller', 'ymir work', 'ui', 'akravon_legacy', 'inv_tab_on.png')
+		images['sb_tab_on_%d' % n] = Image.open(goldFile).convert('RGBA').resize((tw, 42), Image.LANCZOS) if os.path.exists(goldFile) else inv.TabGlow(tw, 42)	# secili sekme = envanterle ayni altin kapsul
 		images['sb_tab_empty_%d' % n] = Image.new('RGBA', (tw, 42), (0, 0, 0, 0))
 	for w in (120, 140, 170):
 		for (i, state) in ((1, 'up'), (2, 'over'), (3, 'down')):
