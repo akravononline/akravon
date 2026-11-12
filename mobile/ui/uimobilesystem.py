@@ -185,11 +185,15 @@ class SystemMenu(uiMobileStyle.Pressable):
 		self.titleLine = None
 
 	def Open(self):
+		import uiAkravonPencere
+		uiAkravonPencere.Acildi("ayarlar", self)
 		self.__ShowPage("menu")
 		self.Show()
 		self.SetTop()
 
 	def Close(self):
+		import uiAkravonPencere
+		uiAkravonPencere.Kapandi("ayarlar")
 		self.Hide()
 
 	def OnPressEscapeKey(self):

@@ -35,11 +35,11 @@ ROW_HEIGHT = 36
 ROWS = 10
 BOTTOM = 20
 
-FONT_TITLE = "Marcellus:26"
+FONT_TITLE = "Marcellus:22"
 FONT_HEAD = "Marcellus:18"
 FONT_ROW = "Lato:20"
 FONT_TAB = "Marcellus:18"
-FONT_SIDE = "Marcellus:16"
+FONT_SIDE = "Marcellus:17"
 FONT_RACE = "Marcellus:16"
 
 GOLD = uiMobileStyle.Color(236, 206, 140)
@@ -135,6 +135,16 @@ def NumberText(value):
 	return ".".join(parts)
 
 
+def Dugme(width, height, text, font):
+	# AKRAVON tema: ortak dokunmatik dugme (lacivert, secili / basili altin)
+	import uiAkravonDugme
+	button = uiAkravonDugme.YaziDugme(width, height, text, font)
+	button.SetSelected = button.SeciliAyarla
+	button.SetEvent = button.OlayAyarla
+	button.Destroy = button.Yok
+	return button
+
+
 class RankRow(ui.Window):
 	def __init__(self, parent, y, index):
 		ui.Window.__init__(self)
@@ -200,19 +210,13 @@ class RankingWindow(ui.Window):
 		self.panel.Show()
 		uiAkravon.SkinFrame(self.panel, "panel_thin")
 		self.title = uiMobileStyle.CreateText(self.panel, "Sıralama", PANEL_WIDTH // 2, TITLE_Y, uiAkravon.HEADER_COLOR, FONT_TITLE, "center")
-		self.closeButton = ui.Button()
-		self.closeButton.SetParent(self.panel)
-		self.closeButton.SetUpVisual(CLOSE[0])
-		self.closeButton.SetOverVisual(CLOSE[1])
-		self.closeButton.SetDownVisual(CLOSE[2])
-		self.closeButton.SetPosition(PANEL_WIDTH - 52, 12)
-		self.closeButton.SAFE_SetEvent(self.Close)
-		self.closeButton.Show()
+		import uiAkravonInventory
+		self.closeButton = uiAkravonInventory.CloseButton(self.panel, PANEL_WIDTH - 12 - 34, 12, ui.__mem_func__(self.Close))	# ortak carpi, basinca altin
 
 		# ust sekmeler: Genel / Zindanlar / Patronlar (solda, kategori listesinin ustunde)
 		tabWidth = (SIDE_WIDTH - 8) // 3
 		for index in range(3):
-			tab = uiMobileOptions.SkinButton(tabWidth, TAB_HEIGHT, TYPE_NAMES[index], "Marcellus:16")
+			tab = Dugme(tabWidth, TAB_HEIGHT, TYPE_NAMES[index], "Marcellus:16")
 			tab.SetParent(self.panel)
 			tab.SetPosition(SIDE_X + index * (tabWidth + 4), CONTENT_TOP)
 			tab.SetEvent(ui.__mem_func__(self.SelectType), index)
@@ -222,7 +226,7 @@ class RankingWindow(ui.Window):
 		# sag ust: irk filtresi
 		raceWidth = (LIST_WIDTH - 4 * 6) // 5
 		for index in range(5):
-			button = uiMobileOptions.SkinButton(raceWidth, RACE_HEIGHT, RACE_NAMES[index], FONT_RACE)
+			button = Dugme(raceWidth, RACE_HEIGHT, RACE_NAMES[index], FONT_RACE)
 			button.SetParent(self.panel)
 			button.SetPosition(LIST_X + index * (raceWidth + 6), CONTENT_TOP)
 			button.SetEvent(ui.__mem_func__(self.SelectRace), index)
@@ -287,7 +291,7 @@ class RankingWindow(ui.Window):
 		self.sideButtons = []
 		import uiMobileOptions
 		for (position, (key, name)) in enumerate(self.names[self.typeIndex]):
-			button = uiMobileOptions.SkinButton(SIDE_WIDTH, SIDE_HEIGHT, name, FONT_SIDE)
+			button = Dugme(SIDE_WIDTH, SIDE_HEIGHT, name, FONT_SIDE)
 			button.SetParent(self.panel)
 			button.SetPosition(SIDE_X, self.sideTop + position * SIDE_STEP)
 			button.SetEvent(ui.__mem_func__(self.SelectRank), key)
@@ -402,6 +406,8 @@ class RankingWindow(ui.Window):
 		self.SetPosition((wndMgr.GetScreenWidth() - PANEL_WIDTH) // 2, max(8, (wndMgr.GetScreenHeight() - self.GetHeight()) // 2))
 		self.Show()
 		self.SetTop()
+		import uiAkravonPencere
+		uiAkravonPencere.Acildi("siralama", self)
 		try:
 			renderTarget.SetBackground(RENDER_TARGET_INDEX, "rank_window/render.png")
 			renderTarget.SetVisibility(RENDER_TARGET_INDEX, True)
@@ -418,6 +424,8 @@ class RankingWindow(ui.Window):
 	def Close(self):
 		self.__HideModel()
 		self.Hide()
+		import uiAkravonPencere
+		uiAkravonPencere.Kapandi("siralama")
 
 	def OnPressEscapeKey(self):
 		self.Close()

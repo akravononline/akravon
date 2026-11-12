@@ -28,8 +28,8 @@ SLIDE_TIME = 0.2
 ENTER_TIME = 0.28
 CFG = "akravon_envanter.cfg"
 GOLD = uiMobileStyle.Color(222, 184, 110)
-TAB_ON = uiMobileStyle.Color(255, 238, 190)
-TAB_OFF = uiMobileStyle.Color(104, 98, 88)
+TAB_ON = uiMobileStyle.Color(40, 24, 8)	# altin sekmede koyu yazi (market deposuyla ayni)
+TAB_OFF = uiMobileStyle.Color(176, 160, 128)
 
 
 def LoadOpen():
@@ -85,11 +85,28 @@ class CloseButton(uiMobileStyle.Pressable):
 		self.image.SetPosition(4, 4)
 		self.image.LoadImage(IMG + "inv_close_1.png")
 		self.image.Show()
-		self.SetEvent(event)
+		self.closeEvent = event
+		self.closeAt = 0.0
+		self.SetEvent(self.__Basildi)
 		self.Show()
 
+	def __Basildi(self):
+		# basili (altin) gorunum gorulsun, sonra kapat
+		import app
+		self.closeAt = app.GetTime() + 0.15
+		self.image.LoadImage(IMG + "inv_close_3.png")
+
+	def OnUpdate(self):
+		if self.closeAt:
+			import app
+			if app.GetTime() >= self.closeAt:
+				self.closeAt = 0.0
+				self.image.LoadImage(IMG + "inv_close_1.png")
+				if self.closeEvent:
+					self.closeEvent()
+
 	def RefreshVisual(self):
-		if getattr(self, "image", None):
+		if getattr(self, "image", None) and not getattr(self, "closeAt", 0):
 			self.image.LoadImage(IMG + ("inv_close_3.png" if self.pressed else "inv_close_1.png"))
 
 	def Destroy(self):
@@ -292,6 +309,10 @@ class Skin(object):
 		self.activeTab = page
 		for (i, label) in enumerate(getattr(self, "tabLabels", [])):
 			label.SetPackedFontColor(TAB_ON if i == page else TAB_OFF)
+
+	def EkipmaniKapat(self):
+		if self.opened:
+			self.Toggle()
 
 	def Toggle(self):
 		self.opened = not self.opened

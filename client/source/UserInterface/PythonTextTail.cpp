@@ -511,19 +511,17 @@ void CPythonTextTail::RenderTextTailBox(TTextTail * pTextTail)
 	#if defined(ENABLE_IKASHOP_RENEWAL) && defined(ENABLE_IKASHOP_ENTITIES)
 	if (pTextTail->bIsShop)
 	{
-		return;	// AKRAVON: pazar yazisi kutusuz - yazinin kendi konturu yeter (cizim yuku az)
-		CPythonGraphic::Instance().SetDiffuseColor(0.0f, 0.0f, 0.0f, 1.0f);
-		CPythonGraphic::Instance().RenderBox2d(pTextTail->x + pTextTail->xStart - 10.f,
-			pTextTail->y + pTextTail->yStart - 10.f,
-			pTextTail->x + pTextTail->xEnd + 10.f,
-			pTextTail->y + pTextTail->yEnd + 10.f,
-			pTextTail->z);
-		CPythonGraphic::Instance().SetDiffuseColor(0.0f, 0.0f, 0.0f, 0.3f);
-		CPythonGraphic::Instance().RenderBar2d(pTextTail->x + pTextTail->xStart - 10.f,
-			pTextTail->y + pTextTail->yStart - 10.f,
-			pTextTail->x + pTextTail->xEnd + 10.f,
-			pTextTail->y + pTextTail->yEnd + 10.f,
-			pTextTail->z);
+		// AKRAVON: pazar tabelasi - pencerelerle ayni dil: koyu lacivert zemin + altin cerceve (cift cizgi)
+		const float l = pTextTail->x + pTextTail->xStart - 10.f;
+		const float t = pTextTail->y + pTextTail->yStart - 5.f;
+		const float r = pTextTail->x + pTextTail->xEnd + 10.f;
+		const float b = pTextTail->y + pTextTail->yEnd + 5.f;
+		CPythonGraphic::Instance().SetDiffuseColor(0.03f, 0.05f, 0.11f, 0.86f);
+		CPythonGraphic::Instance().RenderBar2d(l, t, r, b, pTextTail->z);
+		CPythonGraphic::Instance().SetDiffuseColor(0.87f, 0.72f, 0.43f, 1.0f);
+		CPythonGraphic::Instance().RenderBox2d(l, t, r, b, pTextTail->z);
+		CPythonGraphic::Instance().SetDiffuseColor(0.44f, 0.34f, 0.18f, 1.0f);
+		CPythonGraphic::Instance().RenderBox2d(l + 2.f, t + 2.f, r - 2.f, b - 2.f, pTextTail->z);
 		return;
 	}
 	#endif

@@ -13,11 +13,11 @@ import build_akravon_inventory as inv
 IMG = 'd:/ymir work/ui/akravon_legacy/'
 SS = 4
 GOLD = (222, 184, 110, 255)
-CELL = inv.CELL
-COLS = 9
-ROWS = 5
-IW = 40 + COLS * CELL		# 454
-GRID_W = COLS * CELL		# 414
+CELL = 58
+COLS = 5	# sunucu deposu 5 sutun x 9 satir (orijinal); 9x5 cizilince cok yuvali esyalar kayiyordu
+ROWS = 5	# depo sayfasi 5x5 (uiakravonsafebox: sayfa = 25 yuva)
+IW = 40 + COLS * CELL
+GRID_W = COLS * CELL
 IH = 116 + ROWS * CELL + 16 + 44 + 14
 BTN_Y = 116 + ROWS * CELL + 16
 PW, PH = 340, 316
@@ -52,8 +52,8 @@ def Field(w, h):
 	return inv.Slot(w, h)
 
 
-def TextEl(name, text, x, y, align = 'center'):
-	return '{ "name" : "%s", "type" : "text", "x" : %d, "y" : %d, "text" : "%s", "text_horizontal_align" : "%s" },' % (name, x, y, text, align)
+def TextEl(name, text, x, y, align = 'center', font = 'Lato:19'):
+	return '{ "name" : "%s", "type" : "text", "x" : %d, "y" : %d, "text" : "%s", "fontname" : "%s", "r" : 0.91, "g" : 0.87, "b" : 0.77, "a" : 1.0, "text_horizontal_align" : "%s" },' % (name, x, y, text, font, align)
 
 
 def Btn(name, x, y, w, kind, extra = ''):
@@ -129,7 +129,7 @@ def Build(out):
 	# --- depo sifresi (iki adim: secim / sifre)
 	Save('passworddialog.py', Window('PasswordDialog', PW, PH, 'sb_pw_board', [
 		closeBtn('titlebar', PW - 46),
-		TextEl('TitleName', 'Depo Kilidi', PW // 2, 14),
+		TextEl('TitleName', 'Depo Kilidi', PW // 2, 14, font = 'Marcellus:22'),
 		TextEl('Desc1', 'Depoyu açmak için', PW // 2, 74),
 		TextEl('Desc2', 'gizli şifreni gir.', PW // 2, 94),
 		'{ "name" : "password_slot", "type" : "image", "x" : 95, "y" : 122, "image" : IMG + "sb_field.png",\n\t"children" : ({ "name" : "password_value", "type" : "editline", "x" : 14, "y" : 10, "width" : 122, "height" : 22, "input_limit" : 6, "secret_flag" : 1 },) },',
@@ -145,14 +145,14 @@ def Build(out):
 	field = lambda n, vn, y: ('{ "name" : "%s", "type" : "image", "x" : 150, "y" : %d, "image" : IMG + "sb_field.png",\n\t"children" : ({ "name" : "%s", "type" : "editline", "x" : 14, "y" : 10, "width" : 122, "height" : 22, "input_limit" : 6, "secret_flag" : 1 },) },' % (n, y, vn))
 	Save('changepassworddialog.py', Window('ChangePasswordDialog', PW, 296, 'sb_cp_board', [
 		closeBtn('titlebar', PW - 46),
-		TextEl('TitleName', 'Şifre Yenile', PW // 2, 14),
+		TextEl('TitleName', 'Şifre Yenile', PW // 2, 14, font = 'Marcellus:22'),
 		TextEl('old_password_name', 'Mevcut şifre', 24, 82, 'left'),
 		field('old_password_slot', 'old_password_value', 70),
 		TextEl('new_password_name', 'Yeni şifre', 24, 128, 'left'),
 		field('new_password_slot', 'new_password_value', 116),
 		TextEl('new_password_check_name', 'Yeni şifre (tekrar)', 24, 174, 'left'),
 		field('new_password_check_slot', 'new_password_check_value', 162),
-		Btn('accept_button', (PW - 254) // 2, 232, 120, 'button'),
+		Btn('accept_button', (PW - 254) // 2, 236, 120, 'button'),
 		Btn('cancel_button', (PW - 254) // 2 + 134, 232, 120, 'button'),
 	]).replace('"x" : 100, "y" : 60,', '"x" : 0, "y" : 0,').replace('"style" : ("float",),', '"style" : ("movable", "float",),'))
 	print('depo: %d gorsel + 4 uiscript' % len(images))

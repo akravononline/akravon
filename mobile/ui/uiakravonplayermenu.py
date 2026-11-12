@@ -16,18 +16,63 @@ import uiMobileStyle
 import uiAkravonQuest
 import uiAkravonInventory
 import uiAkravonOffer
+import uiAkravon
 
-W = 320
-PAD = 14
+W = 440
+PAD = 22
 TITLE_H = 50
-BTN_W = (W - PAD * 2 - 10) // 2
-BTN_H = 46
+INNER_W = W - PAD * 2
+BTN_W = (INNER_W - 10) // 2
+ICON = 28
+IMG = "d:/ymir work/ui/akravon_legacy/"
+HUD_ICON = "mobile_ui/akravon/hud/btn_%s_flat_normal_xs.png"
+ICONS = {"whisper" : "chat", "exchange" : "market", "pvp" : "swords", "friend" : "messenger", "party_invite" : "character", "party_request" : "character", "party_exit" : "send", "party_remove" : "send", "guild" : "guild", "block" : "shield", "unblock" : "shield"}
+BTN_H = 44
 GAP = 10
 MAX = 8
 EXCHANGE_RANGE = 3000
 CLOSE_DISTANCE = 6000	# hedeften bu kadar uzaklasinca menu kapanir
 
 menu = None
+
+
+class MenuButton(uiMobileStyle.Pressable):
+	# ikonlu dugme: sistem menusundeki satirlarla ayni cerceve (picker_row); ikon + yazi dugmenin ortasinda
+	def __init__(self):
+		uiMobileStyle.Pressable.__init__(self, BTN_W, BTN_H)
+		self.panel = ui.ExpandedImageBox()
+		self.panel.SetParent(self)
+		self.panel.AddFlag("not_pick")
+		self.panel.LoadImage(IMG + "pm_btn%d_1.png" % BTN_W)
+		self.panel.Show()
+		self.icon = ui.ExpandedImageBox()
+		self.icon.SetParent(self)
+		self.icon.AddFlag("not_pick")
+		self.icon.Show()
+		self.label = uiMobileStyle.CreateText(self, "", 0, BTN_H // 2 - 11, uiAkravonOffer.CREAM, "Marcellus:17", "left")
+
+	def Destroy(self):
+		uiMobileStyle.Pressable.Destroy(self)
+		self.panel = None
+		self.icon = None
+		self.label = None
+
+	def Setup(self, text, iconName):
+		# sola dayali: ikon + yazi; yazi sigmazsa kucuk punto
+		self.icon.LoadImage(HUD_ICON % iconName)
+		self.icon.SetScale(float(ICON) / max(1, self.icon.GetWidth()), float(ICON) / max(1, self.icon.GetHeight()))
+		self.icon.SetPosition(12, (BTN_H - ICON) // 2)
+		textX = 12 + ICON + 8
+		limit = BTN_W - textX - 10
+		self.label.SetText(uiMobileStyle.TrUpper(text))
+		self.label.SetPosition(textX, BTN_H // 2 - 11)
+		self.RefreshVisual()
+
+	def RefreshVisual(self):
+		if not getattr(self, "panel", None):
+			return
+		self.panel.LoadImage(IMG + "pm_btn%d_%d.png" % (BTN_W, 3 if self.pressed else 1))
+		self.label.SetPackedFontColor(uiMobileStyle.GOLD_COLOR if self.pressed else uiMobileStyle.BRIGHT_COLOR)
 
 
 class PlayerMenu(ui.Window):
@@ -43,7 +88,7 @@ class PlayerMenu(ui.Window):
 		self.closeButton = uiAkravonInventory.CloseButton(self, W - PAD - 34, 8, ui.__mem_func__(self.Close))
 		self.buttons = []
 		for index in range(MAX):
-			button = uiAkravonOffer.FlatButton(BTN_W, BTN_H, "", False, "Marcellus:17")
+			button = MenuButton()
 			button.SetParent(self)
 			button.SetEvent(ui.__mem_func__(getattr(self, "OnButton%d" % index)))
 			button.Hide()
@@ -128,7 +173,7 @@ class PlayerMenu(ui.Window):
 				if player.IsRevengeInstance(vid):
 					entries.append(("İntikam Al", "pvp"))
 				elif player.IsChallengeInstance(vid):
-					entries.append(("Düelloyu Kabul Et", "pvp"))
+					entries.append(("Düello Kabul", "pvp"))
 				else:
 					entries.append(("Düello", "pvp"))
 			if sameEmpire:
@@ -160,18 +205,24 @@ class PlayerMenu(ui.Window):
 		self.actions = [None] * MAX
 		for (index, (label, action)) in enumerate(entries):
 			button = self.buttons[index]
-			button.label.SetText(uiMobileStyle.TrUpper(label))
-			row = index // 2
-			column = index % 2
-			button.SetPosition(PAD + column * (BTN_W + 10), TITLE_H + 14 + row * (BTN_H + GAP))
-			button.Show()
+			button.Setup(label, ICONS.get(action, "whisper"))
 			self.actions[index] = action
-		rows = (len(entries) + 1) // 2
-		height = TITLE_H + 14 + rows * (BTN_H + GAP) + PAD - GAP + 4
-		self.SetSize(W, height)
-		self.frame.SetSize(W, height)
+		count = len(entries)
+		width = W
+		y = TITLE_H + 16
+		for index in range(count):
+			button = self.buttons[index]
+			button.SetPosition(PAD + (index % 2) * (BTN_W + GAP), y + (index // 2) * (BTN_H + GAP))	# tek kalan dugme solda
+			button.Show()
+		rows = (count + 1) // 2
+		height = y + rows * (BTN_H + GAP) - GAP + PAD
+		self.SetSize(width, height)
+		self.frame.SetSize(width, height)
+		self.title.SetPosition(width // 2, 13)
+		self.divider.SetSize(width - PAD * 2, 1)
+		self.closeButton.SetPosition(width - PAD - 34, 8)
 		self.title.SetText(self.name)
-		self.SetPosition((wndMgr.GetScreenWidth() - W) // 2, 56)
+		self.SetPosition((wndMgr.GetScreenWidth() - width) // 2, 56)
 		self.Show()
 		self.SetTop()
 

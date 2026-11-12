@@ -271,7 +271,7 @@ class Scroller(ui.Window):
 	def __init__(self, page, count, relayout, ontap):
 		ui.Window.__init__(self)
 		self.SetParent(page)
-		self.SetPosition(0, 24)
+		self.SetPosition(0, 6)
 		self.SetSize(RW, VISIBLE_ROWS * ROW_STEP)
 		KEEP.append(self)
 		self.offset = 0
@@ -282,7 +282,7 @@ class Scroller(ui.Window):
 		self.moved = False
 		self.dragY = 0
 		self.dragOffset = 0
-		self.label = Text(page, "", RW // 2, 24 + VISIBLE_ROWS * ROW_STEP + 6, DIM, "Lato:15", "center")
+		self.label = Text(page, "", RW // 2, 6 + VISIBLE_ROWS * ROW_STEP + 6, DIM, "Lato:16", "center")
 		self.Refresh()
 		self.Show()
 
@@ -291,7 +291,7 @@ class Scroller(ui.Window):
 
 	def Refresh(self):
 		last = min(self.count, self.offset + VISIBLE_ROWS)
-		self.label.SetText("%d - %d / %d   (parmakla kaydır)" % (self.offset + 1, last, self.count))
+		self.label.SetText("%d - %d / %d" % (self.offset + 1, last, self.count))
 
 	def OnMouseLeftButtonDown(self):
 		self.dragging = True
@@ -388,15 +388,20 @@ class AutoHuntPanel(ui.Window):
 		Text(self, "Otomatik Av", W // 2, 13, GOLD, "Marcellus:22", "center")
 		KEEP.append(uiMobileStyle.CreateBar(self, uiMobileStyle.Color(96, 74, 42), 16, 52, W - 32, 1))
 		import uiAkravonInventory
-		self.close = uiAkravonInventory.CloseButton(self, W - 46, 12, self.Close)	# kare X (diger pencerelerle ayni)
+		self.close = uiAkravonInventory.CloseButton(self, W - 12 - 34, 12, self.Close)	# sag ve ust bosluk esit (12)	# kare X (diger pencerelerle ayni)
 		KEEP.append(self.close)
 		KEEP.append(uiMobileStyle.CreateBar(self, uiMobileStyle.Color(96, 74, 42), SIDE, 66, 1, H - 90))
 
 		self.tabs = []
 		for (index, name) in enumerate(TABS):
 			# AKRAVON: karakter penceresi kenar sekmesi (altin dolgu / lacivert), ok yok
-			tab = Button(self, 14, 70 + index * 44, 122, 40, "oa_tab%d_off" % index)
-			tab.SetEvent(self.SelectTab, index)
+			import uiAkravonDugme
+			tab = uiAkravonDugme.YaziDugme(122, 40, name, uiAkravonDugme.YAZI_SEKME)
+			tab.SetParent(self)
+			tab.SetPosition(14, 70 + index * 44)
+			tab.OlayAyarla(self.SelectTab, index)
+			tab.Show()
+			KEEP.append(tab)
 			self.tabs.append(tab)
 
 		self.pages = [self.__BuildHunt(), self.__BuildPotion(), self.__BuildDew(), self.__BuildWater()]
@@ -414,8 +419,8 @@ class AutoHuntPanel(ui.Window):
 
 	def __Row(self, page, y, title, sub, onTap):
 		row = Button(page, 0, y, RW, 50, "oa_row")
-		Text(row, title, 14, 5, TEXT, "Lato:17")
-		Text(row, sub, 14, 27, DIM, "Lato:15")
+		Text(row, title, 14, 5, TEXT, "Lato:18")
+		Text(row, sub, 14, 28, DIM, "Lato:15")
 		row.toggle = Image(row, "oa_toggle_off", RW - 62, 12)
 		row.SetEvent(onTap)
 		return row
@@ -423,14 +428,13 @@ class AutoHuntPanel(ui.Window):
 	def __BuildHunt(self):
 		page = self.__Page()
 		row = Button(page, 0, 8, RW, 50, "oa_row")
-		Text(row, "Yakındaki canavarlara saldırır", 14, 6, TEXT, "Lato:17")
-		Text(row, "Metin taşı ve patronlara saldırmaz", 14, 27, DIM, "Lato:15")
+		Text(row, "Yakındaki canavarlara saldırır", 14, 5, TEXT, "Lato:18")
+		Text(row, "Metin taşı ve patron hariç", 14, 28, DIM, "Lato:15")
 		row = Button(page, 0, 66, RW, 50, "oa_row")
-		Text(row, "Ölünce şehre döner", 14, 6, TEXT, "Lato:17")
-		Text(row, "%d sn içinde dirilmezsen" % DEATH_SECONDS, 14, 27, DIM, "Lato:15")
-		Text(page, "Yalnızca envanterdeki iksir ve şebnemler kullanılır.", 0, 132, DIM, "Lato:15")
-		self.summary = Text(page, "", 0, 152, GOLD, "Lato:15")
-		self.status = Text(page, "", 0, 190, GREEN, "LatoBd:15")
+		Text(row, "Ölünce şehre döner", 14, 5, TEXT, "Lato:18")
+		Text(row, "%d sn içinde dirilmezsen" % DEATH_SECONDS, 14, 28, DIM, "Lato:15")
+		self.summary = Text(page, "", 0, 136, GOLD, "Lato:17")
+		self.status = Text(page, "", 0, 166, GREEN, "LatoBd:17")
 		return page
 
 	def __BuildPotion(self):
@@ -438,18 +442,17 @@ class AutoHuntPanel(ui.Window):
 		self.potionRows = []
 		for (index, (label, attribute)) in enumerate((("HP iksiri", "hp"), ("SP iksiri", "sp"))):
 			y = index * 140 + 8
-			row = self.__Row(page, y, label + " kullan", "Değer düşünce envanterden içer", self.__TogglePotion)
+			row = self.__Row(page, y, label + " kullan", "Değer düşünce içer", self.__TogglePotion)
 			row.SetEvent(self.__TogglePotion, attribute)
 			box = Image(page, "oa_row_tall", 0, y + 58)
-			Text(box, "%s yüzdesi" % label.split()[0], 14, 8, TEXT, "Lato:15")
-			value = Text(box, "", RW - 14, 8, GOLD, "LatoBd:16", "right")
+			Text(box, "%s yüzdesi" % label.split()[0], 14, 8, TEXT, "Lato:17")
+			value = Text(box, "", RW - 14, 8, GOLD, "LatoBd:17", "right")
 			slider = Slider(page, 14, y + 58 + 28, lambda v, a = attribute: self.__SetPercent(a, v))
 			self.potionRows.append((attribute, row, value, slider))
 		return page
 
 	def __BuildDew(self):
 		page = self.__Page()
-		Text(page, "İşaretli olanlar süresi bitince kendiliğinden kullanılır", 0, 2, GOLD, "LatoBd:15")
 		self.dewCards = []
 		self.dewScroll = Scroller(page, len(DEWS), self.__LayoutDews, self.__TapDew)
 		for (index, (vnum, name)) in enumerate(DEWS):
@@ -461,7 +464,6 @@ class AutoHuntPanel(ui.Window):
 			check = Image(card, "oa_check", 36, 9)
 			title = Text(card, name + " Şebnem", 62, 8, TEXT, "Lato:19")
 			state = Text(card, "", 62, 34, GREEN, "LatoBd:16")
-			Text(card, "Süresi bitince yeniden kullanılır", RW - 16, 20, DIM, "Lato:16", "right")
 			chipText = None
 			self.dewCards.append((vnum, card, icon, check, title, state, chipText))
 		self.__LayoutDews()
@@ -493,7 +495,6 @@ class AutoHuntPanel(ui.Window):
 
 	def __BuildWater(self):
 		page = self.__Page()
-		Text(page, "Kullanmak istediğine dokun  ·  etki süresi 3 dk, bitince yeniden içilir", 0, 2, GOLD, "LatoBd:15")
 		self.waterCards = []
 		self.waterScroll = Scroller(page, len(WATERS), self.__LayoutWaters, self.__TapWater)
 		for (index, (vnum, name, desc)) in enumerate(WATERS):
@@ -504,7 +505,7 @@ class AutoHuntPanel(ui.Window):
 			check = Image(card, "oa_check", 36, 9)
 			title = Text(card, name, 62, 8, TEXT, "Lato:19")
 			state = Text(card, "", 62, 34, GREEN, "LatoBd:16")
-			Text(card, desc + "  ·  3 dk", RW - 16, 20, DIM, "Lato:16", "right")
+			Text(card, desc, RW - 16, 20, DIM, "Lato:16", "right")
 			self.waterCards.append((vnum, card, icon, check, title, state))
 		self.__LayoutWaters()
 		return page
@@ -514,7 +515,7 @@ class AutoHuntPanel(ui.Window):
 		self.tab = index
 		for (i, tab) in enumerate(self.tabs):
 			active = i == index
-			tab.SetImages("oa_tab%d_on" % i if active else "oa_tab%d_off" % i)
+			tab.SeciliAyarla(active)
 		for (i, page) in enumerate(self.pages):
 			if i == index:
 				page.Show()
@@ -588,7 +589,7 @@ class AutoHuntPanel(ui.Window):
 		parts.append("%d şebnem/su" % sum(1 for v in s.dews.values() if v[0]))
 		self.summary.SetText("  ·  ".join(parts))
 		running = IsRunning()
-		self.status.SetText("Oto Av çalışıyor - HUD düğmesinden durdurabilirsin" if running else "Başlatmak için ekrandaki Oto Av düğmesine bas")
+		self.status.SetText("Çalışıyor" if running else "Durdu")
 		self.status.SetPackedFontColor(GREEN if running else DIM)
 
 	def OnUpdate(self):
@@ -601,9 +602,13 @@ class AutoHuntPanel(ui.Window):
 		self.Refresh()
 		self.Show()
 		self.SetTop()
+		import uiAkravonPencere
+		uiAkravonPencere.Acildi("oto_av", self)
 
 	def Close(self):
 		self.Hide()
+		import uiAkravonPencere
+		uiAkravonPencere.Kapandi("oto_av")
 
 	def OnPressEscapeKey(self):
 		self.Close()

@@ -31,7 +31,7 @@ STEP_W = 44
 VALUE_WIDTH = 110
 CHOICE_HEIGHT = 40
 CHOICE_GAP = 4
-FONT_TITLE = "Marcellus:24"
+FONT_TITLE = "Marcellus:22"
 FONT_TAB = "Marcellus:20"
 FONT_ROW = "Lato:19"
 FONT_VALUE = "LatoBd:18"
@@ -518,25 +518,49 @@ class SmallBox(uiMobileStyle.Pressable):
 
 
 class RoundBox(uiMobileStyle.Pressable):
-	# yuvarlak + / - dugmesi (kare SmallBox yerine)
-	def __init__(self, size, text, font):
+	# AKRAVON tema: + / - (karakter penceresindeki artiyla ayni); basinca altin. Gorseller onceden yuklenir.
+	def __init__(self, size, text, font = None):
 		uiMobileStyle.Pressable.__init__(self, size, size)
-		self.image = ui.ExpandedImageBox()
-		self.image.SetParent(self)
-		self.image.AddFlag("not_pick")
-		self.image.LoadImage("d:/ymir work/ui/akravon_legacy/opt_round_1.png")
-		self.image.SetScale(size / 40.0, size / 40.0)
-		self.image.Show()
-		self.label = uiMobileStyle.CreateText(self, text, size // 2, size // 2 - int(font.split(":")[1]) // 2 - 1, uiAkravon.TEXT_COLOR, font, "center")
+		kind = "minus" if text.strip() == "-" else "plus"
+		self.images = []
+		for state in ("normal", "gold"):
+			image = ui.ExpandedImageBox()
+			image.SetParent(self)
+			image.AddFlag("not_pick")
+			image.LoadImage("d:/ymir work/ui/akravon_legacy/akr_%s_%s.png" % (kind, state))
+			image.SetScale(size / 64.0, size / 64.0)
+			image.Hide()
+			self.images.append(image)
+		self.images[0].Show()
 
 	def Destroy(self):
 		uiMobileStyle.Pressable.Destroy(self)
-		self.image = None
-		self.label = None
+		self.images = []
+
+	def Run(self):
+		# dokunmatikte "basili" durumu gelmeyebilir: her calismada 0.15 sn altin goster
+		import app
+		self.goldUntil = app.GetTime() + 0.15
+		self.RefreshVisual()
+		uiMobileStyle.Pressable.Run(self)
+
+	def OnUpdate(self):
+		until = getattr(self, "goldUntil", 0)
+		if until:
+			import app
+			if app.GetTime() >= until:
+				self.goldUntil = 0
+				self.RefreshVisual()
 
 	def RefreshVisual(self):
-		if getattr(self, "image", None):
-			self.image.LoadImage("d:/ymir work/ui/akravon_legacy/opt_round_%d.png" % (3 if self.pressed else 1))
+		if getattr(self, "images", None):
+			gold = self.pressed or bool(getattr(self, "goldUntil", 0))
+			if gold:
+				self.images[0].Hide()
+				self.images[1].Show()
+			else:
+				self.images[1].Hide()
+				self.images[0].Show()
 
 
 class OptionRow(ui.Window):
@@ -655,9 +679,14 @@ class OptionRow(ui.Window):
 			self.value.SetText(self.format(current))
 
 
-class TabButton(SkinButton):
-	def __init__(self, width, text):
-		SkinButton.__init__(self, width, TAB_HEIGHT, text, FONT_TAB)
+def TabButton(width, text):
+	# AKRAVON tema: ortak dokunmatik sekme (lacivert, secili / basili altin)
+	import uiAkravonDugme
+	tab = uiAkravonDugme.YaziDugme(width, TAB_HEIGHT, text, uiAkravonDugme.YAZI_SEKME)
+	tab.SetSelected = tab.SeciliAyarla
+	tab.SetEvent = tab.OlayAyarla
+	tab.Destroy = tab.Yok
+	return tab
 
 
 class OptionsWindow(uiMobileStyle.Pressable):
@@ -746,11 +775,15 @@ class OptionsWindow(uiMobileStyle.Pressable):
 					row.Hide()
 
 	def Open(self, tab = 0):
+		import uiAkravonPencere
+		uiAkravonPencere.Acildi("secenekler", self)
 		self.SelectTab(tab)
 		self.Show()
 		self.SetTop()
 
 	def Close(self):
+		import uiAkravonPencere
+		uiAkravonPencere.Kapandi("secenekler")
 		Call("SaveConfig", None)
 		self.Hide()
 
@@ -764,9 +797,13 @@ window = None
 
 def Open(tab = 0):
 	global window
-	if window is None:
-		window = OptionsWindow()
-	window.Open(tab)
+	try:
+		if window is None:
+			window = OptionsWindow()
+		window.Open(tab)
+	except Exception:
+		import dbg, traceback
+		dbg.TraceError("uiMobileOptions.Open: " + traceback.format_exc())
 
 
 def Hide():

@@ -75,6 +75,7 @@ class PickMoneyDialog(ui.ScriptWindow):
 		self.unitValue = 100
 		self.built = False
 		self.titleName = "Yatırım"
+		self.infoText = "Tecrübe puanın"
 		self.maxLength = 9
 
 	def __del__(self):
@@ -93,6 +94,9 @@ class PickMoneyDialog(ui.ScriptWindow):
 		self.titleName = text
 		if self.built:
 			self.title.SetText(text)
+
+	def SetInfoText(self, text):
+		self.infoText = text
 
 	def SetAcceptEvent(self, event):
 		self.eventAccept = event
@@ -176,7 +180,7 @@ class PickMoneyDialog(ui.ScriptWindow):
 			self.__Build()
 		self.maxValue = long(maxValue)
 		self.unitValue = unitValue if unitValue else 100
-		self.info.SetText("Tecrübe puanın")
+		self.info.SetText(self.infoText)
 		self.maxText.SetText("%s" % localeInfo.NumberToString(self.maxValue) if hasattr(localeInfo, "NumberToString") else str(self.maxValue))
 		self.input.SetText(str(self.unitValue))
 		# ust yarida: klavye acilinca kutu klavyenin ustunde kalsin

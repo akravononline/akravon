@@ -1,0 +1,267 @@
+{
+  "version": 2,
+  "assets": {
+    "button_normal": {
+      "file": "assets/button_normal.png",
+      "size": [
+        400,
+        128
+      ],
+      "nine_slice_ltrb": [
+        32,
+        28,
+        32,
+        28
+      ],
+      "scaling": "9-slice"
+    },
+    "button_selected": {
+      "file": "assets/button_selected.png",
+      "size": [
+        400,
+        128
+      ],
+      "nine_slice_ltrb": [
+        32,
+        28,
+        32,
+        28
+      ],
+      "scaling": "9-slice"
+    },
+    "button_pressed": {
+      "file": "assets/button_pressed.png",
+      "size": [
+        400,
+        128
+      ],
+      "nine_slice_ltrb": [
+        32,
+        28,
+        32,
+        28
+      ],
+      "scaling": "9-slice"
+    },
+    "button_disabled": {
+      "file": "assets/button_disabled.png",
+      "size": [
+        400,
+        128
+      ],
+      "nine_slice_ltrb": [
+        32,
+        28,
+        32,
+        28
+      ],
+      "scaling": "9-slice"
+    },
+    "input_normal": {
+      "file": "assets/input_normal.png",
+      "size": [
+        400,
+        128
+      ],
+      "nine_slice_ltrb": [
+        20,
+        20,
+        20,
+        20
+      ],
+      "scaling": "9-slice"
+    },
+    "portrait_frame": {
+      "file": "assets/portrait_frame.png",
+      "size": [
+        256,
+        256
+      ],
+      "nine_slice_ltrb": [
+        24,
+        24,
+        24,
+        24
+      ],
+      "scaling": "9-slice"
+    },
+    "plus_normal": {
+      "file": "assets/plus_normal.png",
+      "size": [
+        200,
+        200
+      ],
+      "nine_slice_ltrb": null,
+      "scaling": "uniform"
+    },
+    "plus_pressed": {
+      "file": "assets/plus_pressed.png",
+      "size": [
+        200,
+        200
+      ],
+      "nine_slice_ltrb": null,
+      "scaling": "uniform"
+    },
+    "plus_disabled": {
+      "file": "assets/plus_disabled.png",
+      "size": [
+        200,
+        200
+      ],
+      "nine_slice_ltrb": null,
+      "scaling": "uniform"
+    },
+    "close_normal": {
+      "file": "assets/close_normal.png",
+      "size": [
+        200,
+        200
+      ],
+      "nine_slice_ltrb": null,
+      "scaling": "uniform"
+    },
+    "close_pressed": {
+      "file": "assets/close_pressed.png",
+      "size": [
+        200,
+        200
+      ],
+      "nine_slice_ltrb": null,
+      "scaling": "uniform"
+    },
+    "panel_frame": {
+      "file": "assets/panel_frame.png",
+      "size": [
+        440,
+        220
+      ],
+      "nine_slice_ltrb": [
+        40,
+        40,
+        40,
+        40
+      ],
+      "scaling": "9-slice"
+    },
+    "minus_normal": {
+      "file": "assets/minus_normal.png",
+      "size": [
+        200,
+        200
+      ],
+      "nine_slice_ltrb": null,
+      "scaling": "uniform"
+    },
+    "minus_pressed": {
+      "file": "assets/minus_pressed.png",
+      "size": [
+        200,
+        200
+      ],
+      "nine_slice_ltrb": null,
+      "scaling": "uniform"
+    },
+    "minus_disabled": {
+      "file": "assets/minus_disabled.png",
+      "size": [
+        200,
+        200
+      ],
+      "nine_slice_ltrb": null,
+      "scaling": "uniform"
+    },
+    "arrow_left_normal": {
+      "file": "assets/arrow_left_normal.png",
+      "size": [
+        200,
+        200
+      ],
+      "nine_slice_ltrb": null,
+      "scaling": "uniform"
+    },
+    "arrow_right_normal": {
+      "file": "assets/arrow_right_normal.png",
+      "size": [
+        200,
+        200
+      ],
+      "nine_slice_ltrb": null,
+      "scaling": "uniform"
+    },
+    "arrow_left_pressed": {
+      "file": "assets/arrow_left_pressed.png",
+      "size": [
+        200,
+        200
+      ],
+      "nine_slice_ltrb": null,
+      "scaling": "uniform"
+    },
+    "arrow_right_pressed": {
+      "file": "assets/arrow_right_pressed.png",
+      "size": [
+        200,
+        200
+      ],
+      "nine_slice_ltrb": null,
+      "scaling": "uniform"
+    },
+    "checkbox_off": {
+      "file": "assets/checkbox_off.png",
+      "size": [
+        200,
+        200
+      ],
+      "nine_slice_ltrb": null,
+      "scaling": "uniform"
+    },
+    "checkbox_on": {
+      "file": "assets/checkbox_on.png",
+      "size": [
+        200,
+        200
+      ],
+      "nine_slice_ltrb": null,
+      "scaling": "uniform"
+    },
+    "slot_normal": {
+      "file": "assets/slot_normal.png",
+      "size": [
+        200,
+        200
+      ],
+      "nine_slice_ltrb": null,
+      "scaling": "uniform"
+    },
+    "slot_selected": {
+      "file": "assets/slot_selected.png",
+      "size": [
+        200,
+        200
+      ],
+      "nine_slice_ltrb": null,
+      "scaling": "uniform"
+    },
+    "list_selected": {
+      "file": "assets/list_selected.png",
+      "size": [
+        400,
+        128
+      ],
+      "nine_slice_ltrb": [
+        32,
+        28,
+        32,
+        28
+      ],
+      "scaling": "9-slice"
+    }
+  },
+  "colors": {
+    "navy": "#071521",
+    "gold": "#B58A58",
+    "text": "#E8DDC5"
+  },
+  "notes": "Reconstructed matching assets, not exact screenshot crops. Insets use output PNG pixels."
+}

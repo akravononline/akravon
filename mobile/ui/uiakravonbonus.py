@@ -17,7 +17,7 @@ TAB_W, TAB_H, TAB_GAP = 66, 36, 4	# sagdaki kapat (X) dugmesine degmesin
 ROW_H, ROW_GAP = 30, 2	# AKRAVON: telefonda okunakli; sigmayan satirlar parmakla kaydirilir
 NAME_MAX = 250
 FONT_ROW = "Lato:19"
-FONT_TAB = "Marcellus:17"
+FONT_TAB = "Marcellus:20"
 
 
 def _BonusName(applyType):
@@ -67,29 +67,14 @@ def _Image(parent, x, y, name):
 	return img
 
 
-class CategoryTab(uiMobileStyle.Pressable):
-	# karakter penceresi sekme gorseli, dugme genisligine gore uzatilir; secili = altin
-	def __init__(self, width, height, text):
-		uiMobileStyle.Pressable.__init__(self, width, height)
-		self.images = []
-		for name in ("cw_tab_normal.png", "cw_tab_down.png"):
-			image = ui.ExpandedImageBox()
-			image.SetParent(self)
-			image.AddFlag("not_pick")
-			image.LoadImage(IMG + name)
-			image.SetScale(width / 66.0, height / 34.0)
-			self.images.append(image)
-		self.images[0].Show()
-		self.label = _Text(self, width // 2, (height - 17) // 2 - 1, text, FONT_TAB, C_TEXT, "center")
-
-	def SetSelected(self, selected):
-		if selected:
-			self.images[0].Hide()
-			self.images[1].Show()
-		else:
-			self.images[1].Hide()
-			self.images[0].Show()
-		self.label.SetPackedFontColor(C_DARK if selected else C_TEXT)
+def CategoryTab(width, height, text):
+	# ortak dokunmatik dugme (uiAkravonDugme.YaziDugme); BonusPanel'in bekledigi label / SetSelected adlari
+	import uiAkravonDugme
+	dugme = uiAkravonDugme.YaziDugme(width, height, text, uiAkravonDugme.YAZI_DUGME)
+	dugme.label = dugme.etiket
+	dugme.SetSelected = dugme.SeciliAyarla
+	dugme.SetEvent = dugme.OlayAyarla
+	return dugme
 
 
 class BonusPanel(ui.Window):

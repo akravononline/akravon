@@ -901,6 +901,9 @@ class MobileHudController(object):
 			return False
 
 	def __IsCombatBlocked(self):
+		import uiAkravonPencere
+		if uiAkravonPencere.AcikVarMi():
+			return True	# AKRAVON penceresi acik: savas HUD'u gizli
 		for name in BLOCKING_WINDOW_NAMES:
 			if self.__IsWindowOpen(name):
 				return True
@@ -1158,6 +1161,9 @@ class MobileHudController(object):
 			pass
 		import uiAkravonAtlas
 		uiAkravonAtlas.Update(bool(self.joystick.isActive or getattr(self.attackButton, "isActive", False)))
+		import uiAkravonPencere
+		uiAkravonPencere.Bagla(self.interface)	# hazir pencereler (envanter, depo ...) tek pencere kuralina
+		uiAkravonPencere.Guncelle()	# yuruyunce oturumsuz pencereler kapanir
 		if uiMobileHud.IsEditing():
 			self.joystick.Stop()
 			self.attackButton.Stop()

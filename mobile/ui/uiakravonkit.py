@@ -74,7 +74,7 @@ def _Children(window):
 BOARD_STEP = 24
 BOARD_MIN_H = 288
 BOARD_MAX_H = 744
-BOARD_FIXED = ((290, 558), (376, 356), (700, 520), (720, 480), (460, 230))	# npc dukkani
+BOARD_FIXED = ((668, 380), (290, 558), (376, 356), (700, 520), (720, 480), (460, 230))	# npc dukkani
 BOARD_WIDTHS = (380, 630)	# demirci: yukseklik 24 adimla
 
 

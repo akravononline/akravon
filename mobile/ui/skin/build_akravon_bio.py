@@ -16,7 +16,7 @@ SS = 4
 
 
 def F(size, bold = False):
-	return ImageFont.truetype(os.path.join(FONTS, 'latobd.ttf' if bold else 'lato.ttf'), size)
+	return ImageFont.truetype(os.path.join(FONTS, 'LiberationSans-Bold.ttf' if bold else 'LiberationSans-Regular.ttf'), size)
 
 
 def M(size):
@@ -95,8 +95,8 @@ def Build(out):
 
 
 # --- AKRAVON v2: sifirdan yerlesim (uiakravonbio koordinatlariyla ayni) ---
-CW, CH = 528, 340
-X0, RW = 200, 328
+CW, CH = 608, 340
+X0, RW = 200, 408	# AKRAVON: genis (yazilar tasmasin)
 
 
 def Background2(src):
@@ -117,10 +117,10 @@ def Background2(src):
 	d = ImageDraw.Draw(bg)
 	d.text((X0 + RW - 105, 85), u'Öz', font = F(14, True), fill = (200, 176, 120, 255), anchor = 'mm')
 	d.text((X0 + RW - 41, 85), u'Unutkanlık', font = F(14, True), fill = (200, 176, 120, 255), anchor = 'mm')
-	bg.alpha_composite(Box(206, 22), (X0, 106))
-	bg.alpha_composite(Box(206, 24), (X0, 132))
+	bg.alpha_composite(Box(286, 22), (X0, 106))
+	bg.alpha_composite(Box(286, 24), (X0, 132))
 	d = ImageDraw.Draw(bg)
-	d.text((X0 + 103, 117), u'İlerleme Durumu', font = F(15, True), fill = GOLD, anchor = 'mm')
+	d.text((X0 + 143, 117), u'İlerleme Durumu', font = F(15, True), fill = GOLD, anchor = 'mm')
 	bg.alpha_composite(Box(RW, 28, (6, 9, 20, 245)), (X0, 168))
 	d = ImageDraw.Draw(bg)
 	Disc(bg, X0 + 16, 182, '?')

@@ -10,15 +10,15 @@ import uiAkravonInventory
 IMG = "d:/ymir work/ui/akravon_legacy/"
 GOLD = uiMobileStyle.Color(222, 184, 110)
 TEXT = uiMobileStyle.Color(250, 236, 210)
-TAB_ON = uiMobileStyle.Color(255, 238, 190)
-TAB_OFF = uiMobileStyle.Color(104, 98, 88)
-CELL = 46
+TAB_ON = uiMobileStyle.Color(40, 24, 8)	# altin sekmede koyu yazi (market deposuyla ayni)
+TAB_OFF = uiMobileStyle.Color(176, 160, 128)
+CELL = 58	# envanterle ayni
 GRID_X = 20
 GRID_Y = 116
-GRID_W = 414
-W = 454
-H = 420
-COLS = 9
+GRID_W = 290
+W = 330
+H = 480
+COLS = 5
 ROWS = 5
 
 
@@ -82,11 +82,13 @@ def ApplyBox(window, title, paged):
 
 	def SetTableSize(size):
 		cols = COLS
-		rows = ROWS
+		rows = 5 if paged else ROWS
 		slotRows = safebox.SAFEBOX_SLOT_Y_COUNT
 		# sunucu sayfa sayisini (kucuk sayi) ya da yuva sayisini gonderebilir
 		pages = size if size <= 5 else size // slotRows
-		pageCount = max(1, min(5, pages)) if paged else 1
+		pageCount = 4 if paged else 1	# AKRAVON: depo 4 sayfa x 5x5 (sunucu: 5 sutunluk tek izgara, size = 3 -> 27 satir)
+		if paged:
+			safebox.SAFEBOX_PAGE_SIZE = cols * rows	# sayfa = 25 yuva: sunucunun surekli izgarasindan 5 satirlik dilim
 		window.pageCount = pageCount
 		window.curPageIndex = 0
 		for button in getattr(window, "pageButtonList", []):
@@ -105,7 +107,7 @@ def ApplyBox(window, title, paged):
 		strip.Show()
 		window.akrStrip = strip
 		tabWidth = GRID_W // pageCount
-		names = ("I", "II", "III", "IV", "V") if paged else (title,)
+		names = ("I", "II", "III", "IV") if paged else (title,)
 		for i in range(pageCount):
 			button = ui.RadioButton()
 			button.SetParent(board)
@@ -131,6 +133,10 @@ def ApplyBox(window, title, paged):
 			wndMgr.SetSlotUnitSize(item.hWnd, CELL, CELL, 4)
 		window.SetSize(W, H)
 		window.UpdateRect()
+		# envanterin solunda, arada bosluk; dikeyde ortada
+		sw = wndMgr.GetScreenWidth()
+		sh = wndMgr.GetScreenHeight()
+		window.SetPosition((sw - W) // 2, max(8, (sh - H) // 2))	# ekranin ortasi
 
 	window.SetTableSize = SetTableSize
 
@@ -177,7 +183,7 @@ def ApplyDialog(dialog, buttons):
 
 SUB = uiMobileStyle.Color(214, 204, 184)
 YELLOW = uiMobileStyle.Color(255, 214, 90)
-BODY_FONT = "Lato:16"
+BODY_FONT = "Lato:19"	# bilgi yazilari telefonda okunur boy
 PW = 340
 
 
@@ -228,17 +234,20 @@ def ChoiceFlow(dialog, keep):
 			total = sum(w[2] for w in row) + space * (len(row) - 1)
 			x = PW // 2 - total // 2
 			for item in row:
-				line = uiMobileStyle.CreateText(board, item[0], x, y + i * 22, item[1], BODY_FONT, "left")
+				line = uiMobileStyle.CreateText(board, item[0], x, y + i * 26, item[1], BODY_FONT, "left")
 				state["lines"].append(line)
 				x += item[2] + space
 		return len(rows)
 
-	def Resize(height, image):
+	def Resize(height, image, top = False):
 		board.LoadImage(IMG + image)
 		dialog.SetSize(PW, height)
 		board.SetSize(PW, height)
 		try:
-			dialog.SetCenterPosition()
+			if top:	# sifre: klavyenin ustunde (ekranin ust kismi)
+				dialog.SetPosition((wndMgr.GetScreenWidth() - PW) // 2, max(10, int(wndMgr.GetScreenHeight() * 0.04)))
+			else:
+				dialog.SetCenterPosition()
 		except Exception:
 			pass
 
@@ -257,6 +266,13 @@ def ChoiceFlow(dialog, keep):
 		normal.SetUp()
 		nesne.SetUp()
 		Resize(200, "sb_pw_board_1.png")
+		try:	# secim adiminda klavye acilmaz
+			dialog.passwordValue.KillFocus()
+			import app
+			if hasattr(app, "ShowKeyboard"):
+				app.ShowKeyboard(0)
+		except Exception:
+			pass
 
 	def Step2(name):
 		state["step"] = 2
@@ -274,7 +290,7 @@ def ChoiceFlow(dialog, keep):
 		accept.SetPosition(43, buttonY)
 		cancel.SetPosition(177, buttonY)
 		dialog.akrCancelLabel.SetText("GERİ")
-		Resize(buttonY + 44 + 24, "sb_pw_board_%d.png" % (count + 0))
+		Resize(buttonY + 44 + 24, "sb_pw_board_%d.png" % (count + 0), True)
 		try:
 			dialog.passwordValue.Show()
 			dialog.passwordValue.SetTop()

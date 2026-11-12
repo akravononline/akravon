@@ -394,3 +394,201 @@ class IkarusShopWindow(ui.Window):
 			self.titleText.SetPosition(width/2, getattr(self, 'akrTitleY', 3))
 >>>
 
+
+@@ uiikashop.py
+<<<
+		self.SetSize(372, 470)
+		self.SetCloseEvent(self.Close)
+		self.AddFlag("movable")
+		self.AddFlag("float")
+		self.SetCenterPosition()
+		x,y = self.GetLocalPosition()
+		self.SetPosition(x+100,y)
+
+	def _LoadIkarusShopGuestBoard(self):
+===
+		self.SetSize(372, 556)
+		self.SetCloseEvent(self.Close)
+		self.AddFlag("movable")
+		self.AddFlag("float")
+		self.SetCenterPosition()
+
+	def _LoadIkarusShopGuestBoard(self):
+		import uiAkravonPazar
+		uiAkravonPazar.BuildGuest(self)	# AKRAVON: Marketim ile ayni tasarim, dokunmatik
+		return
+>>>
+
+@@ uiikashop.py
+<<<
+			self.buyItemInfo = self.shopInfo['id'], data['id'], data['price'] + data.get('cheque', 0) * YANG_PER_CHEQUE
+			message = locale.IKASHOP_SHOP_GUEST_BUY_ITEM_QUESTION.format(itemName, itemPrice)
+			self.OpenQuestionDialog(message, self._OnAcceptBuyItemQuestion)
+===
+			self.buyItemInfo = self.shopInfo['id'], data['id'], data['price'] + data.get('cheque', 0) * YANG_PER_CHEQUE
+			self.akrBuyMessage = locale.IKASHOP_SHOP_GUEST_BUY_ITEM_QUESTION.format(itemName, itemPrice)
+			self.offerInfo = data['id'], data['price'], data.get('cheque', 0)
+			self.akrOfferItem = data['vnum'], data['count']
+			# AKRAVON: dokunmatik urun karti (bilgi + SATIN AL / TEKLIF VER); satin alma yine onay sorar
+			import uiAkravonPazar
+			uiAkravonPazar.GuestSelect(self, slot)
+
+	def _AkrBuy(self):
+		self.OpenQuestionDialog(self.akrBuyMessage, self._OnAcceptBuyItemQuestion)
+
+	def _AkrOfferAccept(self):
+		import dbg
+		dbg.TraceError("AKROFFER yazi=%s info=%s shop=%s" % (self.moneyInputDialog.GetText(), getattr(self, "offerInfo", None), dict((k, v) for (k, v) in self.shopInfo.items() if k != 'items')))
+		import ikashop as akrIka
+		eski = akrIka.SendOfferCreate
+		def Kayit(*args):
+			dbg.TraceError("AKROFFER gonderildi %s" % (args,))
+			sonuc = eski(*args)
+			# AKRAVON: teklif saticiya fisilti olarak da gider (pazar adi "sahip@pazar")
+			try:
+				import net as akrNet
+				sahip = str(self.shopInfo.get('name', '')).split('@')[0]
+				(vnum, count) = self.akrOfferItem
+				item.SelectItem(vnum)
+				if sahip:
+					akrNet.SendWhisperPacket(sahip, "[Pazar teklifi] %s icin %s Yang teklif veriyorum. #T%d:%d:%d" % (item.GetItemName(), locale.NumberToString(args[2]), args[1], args[2], vnum))
+			except Exception:
+				import traceback
+				dbg.TraceError("AKROFFER fisilti: " + traceback.format_exc())
+			return sonuc
+		akrIka.SendOfferCreate = Kayit
+		try:
+			return self._OnAcceptMakeOfferInput()
+		finally:
+			akrIka.SendOfferCreate = eski
+
+	def _AkrOffer(self):
+		# AKRAVON: teklif penceresi = satis fiyati penceresiyle ayni tasarim, baslik "Teklif Ver"
+		(vnum, count) = self.akrOfferItem
+		self.OpenMoneyInputDialog(self._AkrOfferAccept, itemVnum = vnum, itemCount = max(1, count))
+		try:
+			self.moneyInputDialog.SetHeader("Teklif Ver")
+		except Exception:
+			pass
+>>>
+
+@@ uiikashop.py
+<<<
+	def Close(self):
+		self.Hide()
+		ikashop.SendCloseShopGuestBoard()
+===
+	def Close(self):
+		import uiAkravonPazar
+		uiAkravonPazar.HideItemCard()
+		self.Hide()
+		ikashop.SendCloseShopGuestBoard()
+>>>
+
+@@ uiikashop.py
+<<<
+			tooltip.AppendTextLine(locale.IKASHOP_SHOP_GUEST_BUY_ITEM_TOOLTIP)
+			# tooltip.AppendTextLine(locale.IKASHOP_SHOP_GUEST_OFFER_ITEM_TOOLTIP)
+===
+			pass	# AKRAVON: "tikla satin al" (fare) ipucu yok; satin alma alttaki dugmeyle
+>>>
+
+@@ uiikashop.py
+<<<
+		self._RefreshItems()
+
+		if chr.IsGameMaster(player.GetMainCharacterIndex()):
+			self.closeGmButton.Show()
+===
+		self._RefreshItems()
+		import uiAkravonPazar
+		uiAkravonPazar.GuestSelect(self, None)	# yeni pazar: secim yok, dugmeler gizli
+
+		if chr.IsGameMaster(player.GetMainCharacterIndex()):
+			self.closeGmButton.Show()
+>>>
+
+@@ uiikashop.py
+<<<
+	def _LoadIkarusShopOffersBoard(self):
+		self._LoadIkarusShopListBoard()
+		self._MakeListElements(IkarusShopOfferView, self.OFFER_VIEW_COUNT)
+===
+	def _LoadIkarusShopOffersBoard(self):
+		import uiAkravonPazar
+		uiAkravonPazar.BuildOffers(self)	# AKRAVON: dokunmatik teklif listesi (KABUL / REDDET)
+>>>
+
+@@ uiikashop.py
+<<<
+	def _SettingUpBoard(self):
+		self.SetSize(395, 399)
+		self.SetTitleName(locale.IKASHOP_OFFER_LIST_BOARD_TITLE)
+		super(IkarusShopOffersBoard, self)._SettingUpBoard()
+===
+	def _SettingUpBoard(self):
+		self.SetSize(372, 556)
+		self.SetCloseEvent(self.Close)
+		self.AddFlag("movable")
+		self.AddFlag("float")
+		self.SetCenterPosition()
+>>>
+
+@@ uiikashop.py
+<<<
+	def Open(self):
+		ikashop.SendOfferListRequest()
+===
+	def Open(self):
+		ikashop.SendOfferListRequest()
+		self.Show()	# AKRAVON: sunucu bos liste yollamasa da pencere acilir ("Teklif yok")
+		self.SetTop()
+		import uiAkravonPazar
+		uiAkravonPazar.OffersOpened(self)
+>>>
+
+
+@@ uiikashop.py
+<<<
+		ikashop.SendOfferCreate(self.data['owner'], id, *value)
+===
+		ikashop.SendOfferCreate(self.data['owner'], id, *value)
+		# AKRAVON: teklif saticiya fisilti olarak da gider
+		try:
+			import net as akrNet
+			item.SelectItem(self.data['vnum'])
+			akrNet.SendWhisperPacket(self.data['seller_name'], "[Pazar teklifi] %s icin %s Yang teklif veriyorum. #T%d:%d:%d" % (item.GetItemName(), locale.NumberToString(value[0]), id, value[0], self.data['vnum']))
+		except Exception:
+			import dbg, traceback
+			dbg.TraceError("AKROFFER fisilti: " + traceback.format_exc())
+>>>
+
+@@ uiikashop.py
+<<<
+			# checking for edit item request
+			if IsPressingSHIFT():
+				self.insertingPriceInfo = data
+				self.OpenMoneyInputDialog(self._OnAcceptEditingItemPrice)
+===
+			# AKRAVON: dokunmatik - urune dokun = secim; alt satirda FIYAT / GERI AL / VAZGEC
+			import uiAkravonPazar
+			uiAkravonPazar.MarketSelect(self, slot)
+>>>
+
+@@ uiikashop.py
+<<<
+			# checking shop isn't expired
+			tooltip.AppendTextLine(locale.IKASHOP_BUSINESS_EDIT_ITEM_TOOLTIP)
+			tooltip.AppendTextLine(locale.IKASHOP_BUSINESS_REMOVE_ITEM_TOOLTIP)
+			tooltip.ShowToolTip()
+===
+			tooltip.ShowToolTip()	# AKRAVON: "Shift + tikla / sag tik" (fare) ipuclari yok
+>>>
+
+@@ uiikashop.py
+<<<
+			tooltip.AppendTextLine(locale.IKASHOP_SAFEBOX_CLAIM_ITEM_TOOLTIP)
+			tooltip.ShowToolTip()
+===
+			tooltip.ShowToolTip()	# AKRAVON: "tikla al" (fare) ipucu yok
+>>>

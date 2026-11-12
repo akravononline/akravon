@@ -14,7 +14,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT_ZIP = os.path.join(HERE, '..', '..', '..', '..', '2_Oyun_Dosyalari', 'files', 'mobile', '10_root_1.zip')
 FONTS = os.path.join(HERE, '..', '..', 'data', 'fonts')
 DY = 44				# AKRAVON: ust baslik (Karakter) + ayirici cizgi
-W, H = 620, 476 + DY
+W, H = 660, 476 + DY	# AKRAVON: genis (dokunma: kartlar / artilar sikismasin)
 SKILL_STEP = 54
 SB = 150				# kenar cubugu genisligi
 X0 = SB + 20			# sag alan
@@ -437,6 +437,9 @@ def L1(s):
 	return s.encode('cp1254').decode('latin1')
 
 
+THEME_MAP = [('cw_nav_0.png', 'akr_clear.png'), ('cw_nav_1.png', 'akr_clear.png'), ('cw_nav_2.png', 'akr_clear.png'), ('cw_nav_3.png', 'akr_clear.png'), ('cw_nav_4.png', 'akr_clear.png')]	# sol sekmeler kodla (uiAkravonTheme.AttachRadio)
+
+
 def BuildScript(out):
 	text = zipfile.ZipFile(ROOT_ZIP).read('uiscript/characterwindow.py').decode('latin1').replace('\r\n', '\n')
 	text = Replace(text, 'Character_Page', L1(CharacterPage()))
@@ -456,6 +459,8 @@ def BuildScript(out):
 	# kenar cubugu ayirici cizgi (board'un ilk cocugu)
 	text = text.replace('"y_scale" : %f,' % (H / 1028.0), '"y_scale" : %f,' % (H / 1028.0), 1)
 	text = '# AKRAVON: otomatik uretildi (skin/build_akravon_charwin.py)\n' + text
+	for (old, new) in THEME_MAP:	# AKRAVON ortak tema (skin/build_akravon_theme.py)
+		text = text.replace(old, new)
 	dst = os.path.join(out, 'uiscript', 'characterwindow.py')
 	os.makedirs(os.path.dirname(dst), exist_ok = True)
 	open(dst, 'wb').write(text.replace('\n', '\r\n').encode('latin1'))
