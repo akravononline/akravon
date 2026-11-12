@@ -185,7 +185,7 @@ class PickMoneyDialog(ui.ScriptWindow):
 		self.maxText.SetText("%s" % localeInfo.NumberToString(self.maxValue) if hasattr(localeInfo, "NumberToString") else str(self.maxValue))
 		self.input.SetText(str(self.unitValue))
 		# ust yarida: klavye acilinca kutu klavyenin ustunde kalsin
-		top = max(10, int(wndMgr.GetScreenHeight() * 0.04))
+		top = uiMobileStyle.InputTop(self.GetHeight())
 		self.SetPosition((wndMgr.GetScreenWidth() - W) // 2, top)
 		self.Show()
 		self.SetTop()

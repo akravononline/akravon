@@ -5,8 +5,8 @@ class CPythonSafeBox : public CSingleton<CPythonSafeBox>
 	public:
 		enum
 		{
-			SAFEBOX_SLOT_X_COUNT = 5,
-			SAFEBOX_SLOT_Y_COUNT = 9,
+			SAFEBOX_SLOT_X_COUNT = 6,	// AKRAVON: depo 6 sutun x 6 satir x 5 sayfa
+			SAFEBOX_SLOT_Y_COUNT = 6,
 			SAFEBOX_PAGE_SIZE = SAFEBOX_SLOT_X_COUNT * SAFEBOX_SLOT_Y_COUNT,
 		};
 		typedef std::vector<TItemData> TItemInstanceVector;

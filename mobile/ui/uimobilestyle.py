@@ -71,6 +71,12 @@ def Asset(name):
 	return ASSET_PATH % name
 
 
+def InputTop(height):
+	# giris pencereleri (depo sifresi, miktar, rutbe adi ...): klavye ekranin alt %48'ini kaplar; pencerenin alt kenari klavyenin 10 px ustunde
+	keyboardTop = int(wndMgr.GetScreenHeight() * 0.52)
+	return max(8, keyboardTop - height - 10)
+
+
 def TrUpper(text):
 	# AKRAVON: dugme yazilari her yerde BUYUK harf; Turkce i -> I (noktali), dotless -> I kuralina gore
 	try:

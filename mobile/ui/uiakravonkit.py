@@ -112,6 +112,7 @@ def _NineSliceBoard(board, width, height):
 		board.akrFrame9 = frame
 	frame.SetPosition(0, 0)
 	frame.SetSize(max(1, width), max(1, height))
+	frame.Show()
 
 
 def _LayoutBoard(board):
@@ -135,6 +136,9 @@ def _LayoutBoard(board):
 		base.SetScale(1.0, 1.0)
 		base.SetPosition(0, 0)
 		base.Show()
+		stale = getattr(board, "akrFrame9", None)
+		if stale is not None:
+			stale.Hide()	# eski boyutta cizilmis ikinci cerceve (ustune binen) gorunmesin
 	title = getattr(board, "akrTitle", None)
 	if title:
 		title.SetPosition(width // 2, 13)
@@ -427,7 +431,25 @@ def _RefineAfter(window):
 		if hasattr(window, "AkrLayout"):
 			window.AkrLayout(costY - 26, height)	# basari sansi ve bedel biraz yukarida
 		import wndMgr
-		window.SetPosition((wndMgr.GetScreenWidth() - width) // 2, max(10, (wndMgr.GetScreenHeight() - height) // 2))
+		x = (wndMgr.GetScreenWidth() - width) // 2
+		try:	# envanter / ekipman aciksa onlarin SOLUNDA (ustune binmez)
+			import uiToolTip
+			for anchor in uiToolTip.ANCHOR_WINDOWS:
+				if not anchor.IsShow():
+					continue
+				left = anchor.GetGlobalPosition()[0]
+				try:
+					equip = anchor.GetChild("EquipBoard")
+					if equip.IsShow():
+						left = min(left, equip.GetGlobalPosition()[0])
+				except Exception:
+					pass
+				if left - width - 12 >= 4:
+					x = left - width - 12
+				break
+		except Exception:
+			pass
+		window.SetPosition(x, max(10, (wndMgr.GetScreenHeight() - height) // 2))
 	window.UpdateDialog = UpdateDialog
 	originalOpen = window.Open
 

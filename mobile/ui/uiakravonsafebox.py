@@ -15,11 +15,11 @@ TAB_OFF = uiMobileStyle.Color(176, 160, 128)
 CELL = 58	# envanterle ayni
 GRID_X = 20
 GRID_Y = 116
-GRID_W = 290
-W = 330
-H = 480
-COLS = 5
-ROWS = 5
+GRID_W = 348
+W = 388
+H = 538
+COLS = 6
+ROWS = 6
 
 
 class Owner(object):
@@ -82,13 +82,13 @@ def ApplyBox(window, title, paged):
 
 	def SetTableSize(size):
 		cols = COLS
-		rows = 5 if paged else ROWS
+		rows = ROWS
 		slotRows = safebox.SAFEBOX_SLOT_Y_COUNT
 		# sunucu sayfa sayisini (kucuk sayi) ya da yuva sayisini gonderebilir
 		pages = size if size <= 5 else size // slotRows
-		pageCount = 4 if paged else 1	# AKRAVON: depo 4 sayfa x 5x5 (sunucu: 5 sutunluk tek izgara, size = 3 -> 27 satir)
+		pageCount = 5 if paged else 1	# AKRAVON: depo 5 sayfa x 6x6 (sunucu: 6 sutunluk tek izgara, 30 satir)
 		if paged:
-			safebox.SAFEBOX_PAGE_SIZE = cols * rows	# sayfa = 25 yuva: sunucunun surekli izgarasindan 5 satirlik dilim
+			safebox.SAFEBOX_PAGE_SIZE = cols * rows	# sayfa = 36 yuva: sunucunun surekli izgarasindan 6 satirlik dilim
 		window.pageCount = pageCount
 		window.curPageIndex = 0
 		for button in getattr(window, "pageButtonList", []):
@@ -107,7 +107,7 @@ def ApplyBox(window, title, paged):
 		strip.Show()
 		window.akrStrip = strip
 		tabWidth = GRID_W // pageCount
-		names = ("I", "II", "III", "IV") if paged else (title,)
+		names = ("I", "II", "III", "IV", "V") if paged else (title,)
 		for i in range(pageCount):
 			button = ui.RadioButton()
 			button.SetParent(board)
@@ -133,10 +133,28 @@ def ApplyBox(window, title, paged):
 			wndMgr.SetSlotUnitSize(item.hWnd, CELL, CELL, 4)
 		window.SetSize(W, H)
 		window.UpdateRect()
-		# envanterin solunda, arada bosluk; dikeyde ortada
+		# envanter aciksa onun (ekipman aciksa ekipmanin) SOLUNDA, dikeyde ortada; degilse ekranin ortasinda
 		sw = wndMgr.GetScreenWidth()
 		sh = wndMgr.GetScreenHeight()
-		window.SetPosition((sw - W) // 2, max(8, (sh - H) // 2))	# ekranin ortasi
+		x = (sw - W) // 2
+		try:
+			import uiToolTip
+			for anchor in uiToolTip.ANCHOR_WINDOWS:
+				if not anchor.IsShow():
+					continue
+				left = anchor.GetGlobalPosition()[0]
+				try:
+					equip = anchor.GetChild("EquipBoard")
+					if equip.IsShow():
+						left = min(left, equip.GetGlobalPosition()[0])
+				except Exception:
+					pass
+				if left - W - 12 >= 4:
+					x = left - W - 12
+				break
+		except Exception:
+			pass
+		window.SetPosition(x, max(8, (sh - H) // 2))
 
 	window.SetTableSize = SetTableSize
 
@@ -245,7 +263,7 @@ def ChoiceFlow(dialog, keep):
 		board.SetSize(PW, height)
 		try:
 			if top:	# sifre: klavyenin ustunde (ekranin ust kismi)
-				dialog.SetPosition((wndMgr.GetScreenWidth() - PW) // 2, max(10, int(wndMgr.GetScreenHeight() * 0.04)))
+				dialog.SetPosition((wndMgr.GetScreenWidth() - PW) // 2, uiMobileStyle.InputTop(height))
 			else:
 				dialog.SetCenterPosition()
 		except Exception:

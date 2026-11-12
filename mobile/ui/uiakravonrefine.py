@@ -64,7 +64,7 @@ class Skin(object):
 		self.frame.Show()
 		self.title = uiMobileStyle.CreateText(board, "Yükseltme", W // 2, 13, GOLD, "Marcellus:24", "center")
 		self.divider = uiMobileStyle.CreateBar(board, LINE_COLOR, 18, TITLE_H, W - 36, 1)
-		self.close = uiAkravonInventory.CloseButton(board, W - 12 - 34, 12, ui.__mem_func__(dialog.CancelRefine))
+		self.close = uiAkravonInventory.CloseButton(board, W - 50, 8, ui.__mem_func__(dialog.CancelRefine))	# ortak kural: dokunma alani 40 px, gorsel (W-46, 12)
 		# 1) silah slotu
 		self.slot = uiAkravon.Box()
 		self.slot.SetParent(board)
@@ -381,7 +381,26 @@ class Skin(object):
 			box.Show = lambda *args: None
 		except Exception:
 			pass
-		dialog.SetPosition((wndMgr.GetScreenWidth() - W) // 2, max(4, (wndMgr.GetScreenHeight() - height) // 2))
+		# envanter / ekipman aciksa onlarin SOLUNDA (ustune binmez), degilse ekranin ortasinda
+		x = (wndMgr.GetScreenWidth() - W) // 2
+		try:
+			import uiToolTip
+			for anchor in uiToolTip.ANCHOR_WINDOWS:
+				if not anchor.IsShow():
+					continue
+				left = anchor.GetGlobalPosition()[0]
+				try:
+					equip = anchor.GetChild("EquipBoard")
+					if equip.IsShow():
+						left = min(left, equip.GetGlobalPosition()[0])
+				except Exception:
+					pass
+				if left - W - 12 >= 4:
+					x = left - W - 12
+				break
+		except Exception:
+			pass
+		dialog.SetPosition(x, max(4, (wndMgr.GetScreenHeight() - height) // 2))
 
 
 def Attach(dialog):

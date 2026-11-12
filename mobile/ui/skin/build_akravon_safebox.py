@@ -14,8 +14,8 @@ IMG = 'd:/ymir work/ui/akravon_legacy/'
 SS = 4
 GOLD = (222, 184, 110, 255)
 CELL = 58
-COLS = 5	# sunucu deposu 5 sutun x 9 satir (orijinal); 9x5 cizilince cok yuvali esyalar kayiyordu
-ROWS = 5	# depo sayfasi 5x5 (uiakravonsafebox: sayfa = 25 yuva)
+COLS = 6	# AKRAVON: depo 6 sutun x 6 satir / sayfa x 5 sayfa (sunucu ve istemci ayni)
+ROWS = 6	# depo sayfasi 6x6 (uiakravonsafebox: sayfa = 36 yuva)
 IW = 40 + COLS * CELL
 GRID_W = COLS * CELL
 IH = 116 + ROWS * CELL + 16 + 44 + 14
