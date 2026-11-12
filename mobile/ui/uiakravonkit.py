@@ -88,6 +88,32 @@ def _BoardFile(width, height):
 	return None
 
 
+def _NineSliceBoard(board, width, height):
+	# zemin = tahtanin KENDI en alt katmani (Base): menu_board dokusu pencere boyuna gerilir, icerigi orter
+	# cerceve = ince altin dis cizgi + kose susleri (zemin yok), ustte kalabilir
+	import uiAkravon
+	base = getattr(board, "Base", None)
+	if base is not None and hasattr(base, "LoadImage"):
+		base.LoadImage(BOARD % "c")
+		if hasattr(base, "SetRenderingRect"):
+			base.SetRenderingRect(0.0, 0.0, 0.0, 0.0)
+		iw = max(1, base.GetWidth())
+		ih = max(1, base.GetHeight())
+		base.SetScale(float(width) / iw, float(height) / ih)
+		base.SetPosition(0, 0)
+		base.Show()
+	frame = getattr(board, "akrFrame9", None)
+	if frame is None:
+		frame = uiAkravon.Frame(True)	# altin cerceve, kose susleri, elmaslar
+		frame.SetParent(board)
+		frame.AddFlag("not_pick")
+		frame.fill.Hide()
+		frame.Show()
+		board.akrFrame9 = frame
+	frame.SetPosition(0, 0)
+	frame.SetSize(max(1, width), max(1, height))
+
+
 def _LayoutBoard(board):
 	# eski tahta parcalari gizli; yerine tek parca hazir tahta gorseli (katman ustune katman yok)
 	for piece in (getattr(board, "Corners", []) or []) + (getattr(board, "Lines", []) or []):
@@ -95,19 +121,20 @@ def _LayoutBoard(board):
 	width = board.GetWidth()
 	height = board.GetHeight()
 	found = _BoardFile(width, height)
-	if found is None:
-		return
-	fileName = found[0] if isinstance(found, tuple) else found
-	# en alttaki katman = tahtanin kendi zemini (Base): yeni gorsel buraya, icerik ustunde kalir
 	base = getattr(board, "Base", None)
-	if base is None or not hasattr(base, "LoadImage"):
-		return
-	base.LoadImage(fileName)
-	if hasattr(base, "SetRenderingRect"):
-		base.SetRenderingRect(0.0, 0.0, 0.0, 0.0)
-	base.SetScale(1.0, 1.0)
-	base.SetPosition(0, 0)
-	base.Show()
+	if found is None or base is None or not hasattr(base, "LoadImage"):
+		# TEK KURAL: hazir resmi olmayan HER boyut icin tahta parcali cizimle (menu_board + altin cerceve) uretilir.
+		# Pencere boyutu yalniz betikte tanimlidir; tahta ona uyar, ayri liste tutulmaz.
+		_NineSliceBoard(board, width, height)
+	else:
+		fileName = found[0] if isinstance(found, tuple) else found
+		# en alttaki katman = tahtanin kendi zemini (Base): yeni gorsel buraya, icerik ustunde kalir
+		base.LoadImage(fileName)
+		if hasattr(base, "SetRenderingRect"):
+			base.SetRenderingRect(0.0, 0.0, 0.0, 0.0)
+		base.SetScale(1.0, 1.0)
+		base.SetPosition(0, 0)
+		base.Show()
 	title = getattr(board, "akrTitle", None)
 	if title:
 		title.SetPosition(width // 2, 13)
@@ -115,6 +142,9 @@ def _LayoutBoard(board):
 	if closeInfo:
 		(close, tbx, tby) = closeInfo
 		close.SetPosition(width - tbx - 12 - close.GetWidth(), 16 - tby)
+		touch = getattr(board, "akrTouchClose", None)
+		if touch:
+			touch.SetPosition(width - 46 - 4, 12 - 4)
 	divider = getattr(board, "akrDivider", None)
 	if divider:
 		divider.SetSize(max(1, width - 32), 1)
@@ -145,6 +175,23 @@ def _StyleTitleBar(titleBar, keep):
 		if board is not None:
 			close.SetPosition(board.GetWidth() - tbx - 12 - close.GetWidth(), 16 - tby)	# envanterle ayni: icerde
 			board.akrClose = (close, tbx, tby)
+			try:	# TEK KURAL: kapat = envanterdeki dokunmatik (40x40) kare carpi; motorun kucuk fare dugmesi kullanilmaz
+				import uiAkravonInventory
+				touch = uiAkravonInventory.CloseButton(board, board.GetWidth() - 46, 12, None)
+				oldEvent = getattr(close, "eventFunc", None)
+				oldArgs = getattr(close, "eventArgs", ())
+				if oldEvent:
+					touch.closeEvent = lambda: oldEvent(*oldArgs)
+				close.Hide()
+				originalSet = titleBar.SetCloseEvent
+
+				def SetCloseEvent(event, touch = touch, originalSet = originalSet):
+					touch.closeEvent = event
+					originalSet(event)
+				titleBar.SetCloseEvent = SetCloseEvent
+				board.akrTouchClose = touch
+			except Exception:
+				pass
 		else:
 			close.SetPosition(max(0, titleBar.GetWidth() - close.GetWidth()), 0)
 	board = getattr(titleBar, "akrBoard", None)
@@ -278,10 +325,24 @@ DIVIDER_Y = {"shopdialog.py" : 51, "refinedialog.py" : 58, "guildwindow.py" : 52
 DIVIDER_SCRIPTS = set(("shopdialog.py", "refinedialog.py", "guildwindow.py", "declareguildwardialog.py", "changegradenamedialog.py"))	# envanter gibi baslik alti cizgi
 
 
+SLOT_CELL = 58	# TEK KURAL: envanter / depo / dukkan / ticaret ayni kutucuk (inv_cell.png 58x58). Baska yerde 50 yazilmaz.
+
+
+def _ExchangeAfter(window):
+	import wndMgr
+	try:	# eski PC "?" (malzeme deposu bilgisi) dugmesi: mobilde fare ipucu yok
+		window.GetChild("MalzemeDeposuInfo").Hide()
+	except Exception:
+		pass
+	if hasattr(wndMgr, "SetSlotUnitSize"):
+		for name in ("Owner_Slot", "Target_Slot"):
+			wndMgr.SetSlotUnitSize(window.GetChild(name).hWnd, SLOT_CELL, SLOT_CELL, 4)
+
+
 def _ShopAfter(window):
 	import wndMgr
 	if hasattr(wndMgr, "SetSlotUnitSize"):
-		wndMgr.SetSlotUnitSize(window.GetChild("ItemSlot").hWnd, 50, 50, 4)	# envanterle ayni 50 px kutucuk
+		wndMgr.SetSlotUnitSize(window.GetChild("ItemSlot").hWnd, SLOT_CELL, SLOT_CELL, 4)
 	try:
 		import uiAkravonBulkSell
 		uiAkravonBulkSell.Attach(window)	# toplu satis
@@ -458,7 +519,7 @@ def _HideRefineCheck(window):
 	check.Hide()
 	check.Show = lambda *args: None
 
-AFTER = {"shopdialog.py" : _ShopAfter, "refinedialog.py" : _RefineAfter}
+AFTER = {"shopdialog.py" : _ShopAfter, "exchangedialog.py" : _ExchangeAfter, "refinedialog.py" : _RefineAfter}
 
 
 def StyleWindow(window, name = ""):

@@ -97,7 +97,7 @@ def Guncelle():
 
 # oyunun hazir pencereleri (interfacemodule): Show / Hide yoneticiye bildirilir
 HAZIR = (("wndInventory", "envanter"), ("wndSafebox", "depo"), ("wndMall", "nesne_market"), ("dlgExchange", "ticaret"),
-	("dlgShop", "dukkan"), ("wndSpecialStorage", "ozel_envanter"), ("wndDragonSoul", "ejderha_tasi"), ("wndMessenger", "mesajlar"), ("wndGuild", "lonca"))
+	("dlgShop", "dukkan"), ("wndSpecialStorage", "ozel_envanter"), ("wndDragonSoul", "ejderha_tasi"), ("wndMessenger", "mesajlar"), ("wndGuild", "lonca"), ("dlgRefineNew", "yukseltme"))
 
 
 def _Bagla1(pencere, ad):

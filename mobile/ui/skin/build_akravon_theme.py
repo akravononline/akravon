@@ -21,7 +21,7 @@ OUT = os.path.join(HERE, '..', '..', 'gorseller', 'ymir work', 'ui', 'akravon_le
 MANIFEST = json.load(open(os.path.join(PACK, 'manifest.json'), encoding = 'utf-8'))['assets']
 
 # yazili dugme boyutlari (oyundaki): sol sekme, beceri grubu, gorev sekmeleri, bonus sekmeleri
-BUTTON_SIZES = ((122, 40), (84, 36), (150, 36), (110, 36), (100, 36), (125, 36), (142, 44), (67, 42), (97, 36), (210, 36))
+BUTTON_SIZES = ((122, 40), (84, 36), (150, 36), (110, 36), (100, 36), (125, 36), (142, 44), (67, 42), (97, 36), (210, 36), (126, 44), (190, 44))
 
 # bizim cerceve altini (cw_board2 kenari olculdu): ton 0.108, doygunluk 0.50; paket metali 0.104 / 0.68 (bronza kaciyor)
 TARGET_HUE = 0.108
@@ -104,6 +104,31 @@ def Gold(name):
 	return Image.fromarray(a.clip(0, 255).astype(np.uint8), 'RGBA')
 
 
+def Guild():
+	# lonca: dugmeler (gd_btn*: up / over = lacivert, down = altin), sekmeler (gd_tabN_on altin + koyu yazi, off lacivert + krem yazi), arti
+	from PIL import ImageDraw, ImageFont
+	import glob
+	for path in glob.glob(os.path.join(OUT, 'gd_btn*_up.png')):
+		name = os.path.basename(path)[:-len('_up.png')]
+		(w, h) = Image.open(path).size
+		normal = NineSlice('button_normal', w, h)
+		normal.save(os.path.join(OUT, name + '_up.png'))
+		normal.save(os.path.join(OUT, name + '_over.png'))
+		NineSlice('button_selected', w, h).save(os.path.join(OUT, name + '_down.png'))
+	font = ImageFont.truetype(os.path.join(HERE, '..', '..', 'data', 'fonts', 'marcellus.ttf'), 20 * 4)
+	labels = (u'BİLGİ', u'TAHTA', u'ÜYELER', u'ARAZİ', u'BECERİLER', u'RÜTBELER')
+	for (i, label) in enumerate(labels):
+		for on in (True, False):
+			bg = NineSlice('button_selected' if on else 'button_normal', 140, 40)
+			big = Image.new('RGBA', (140 * 4, 40 * 4), (0, 0, 0, 0))
+			ImageDraw.Draw(big).text((70 * 4, 20 * 4), label, font = font, fill = (40, 24, 8, 255) if on else (232, 221, 197, 255), anchor = 'mm')
+			bg.alpha_composite(big.resize((140, 40), Image.LANCZOS))
+			bg.save(os.path.join(OUT, 'gd_tab%d_%s.png' % (i, 'on' if on else 'off')))
+	for (state, src) in (('up', 'plus_normal'), ('over', 'plus_normal'), ('down', None)):
+		im = Gold('plus_normal') if src is None else Load(src)
+		im.resize((30, 30), Image.LANCZOS).save(os.path.join(OUT, 'gd_plus_%s.png' % state))
+
+
 def Build():
 	for (w, h) in BUTTON_SIZES:
 		for state in ('normal', 'selected', 'pressed'):
@@ -147,6 +172,7 @@ def Build():
 	NineSlice('input_normal', 168, 46).save(os.path.join(OUT, 'pz_field_168.png'))
 	NineSlice('input_normal', 360, 52).save(os.path.join(OUT, 'pz_field_wide.png'))
 	NineSlice('input_normal', 348, 104).save(os.path.join(OUT, 'pz_field_card.png'))	# teklif karti
+	Guild()
 	print('tema: tamam')
 
 

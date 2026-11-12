@@ -39,8 +39,8 @@ FONT_TITLE = "Marcellus:22"
 FONT_HEAD = "Marcellus:18"
 FONT_ROW = "Lato:20"
 FONT_TAB = "Marcellus:18"
-FONT_SIDE = "Marcellus:17"
-FONT_RACE = "Marcellus:16"
+FONT_SIDE = "Marcellus:18"
+FONT_RACE = "Marcellus:18"
 
 GOLD = uiMobileStyle.Color(236, 206, 140)
 SILVER = uiMobileStyle.Color(214, 220, 232)
@@ -209,6 +209,8 @@ class RankingWindow(ui.Window):
 		self.panel.SetSize(PANEL_WIDTH, height)
 		self.panel.Show()
 		uiAkravon.SkinFrame(self.panel, "panel_thin")
+		self.AddFlag("movable")
+		self.panel.AddFlag("attach")	# zemine dokunup surukle = pencere tasinir
 		self.title = uiMobileStyle.CreateText(self.panel, "Sıralama", PANEL_WIDTH // 2, TITLE_Y, uiAkravon.HEADER_COLOR, FONT_TITLE, "center")
 		import uiAkravonInventory
 		self.closeButton = uiAkravonInventory.CloseButton(self.panel, PANEL_WIDTH - 12 - 34, 12, ui.__mem_func__(self.Close))	# ortak carpi, basinca altin
@@ -216,7 +218,7 @@ class RankingWindow(ui.Window):
 		# ust sekmeler: Genel / Zindanlar / Patronlar (solda, kategori listesinin ustunde)
 		tabWidth = (SIDE_WIDTH - 8) // 3
 		for index in range(3):
-			tab = Dugme(tabWidth, TAB_HEIGHT, TYPE_NAMES[index], "Marcellus:16")
+			tab = Dugme(tabWidth, TAB_HEIGHT, TYPE_NAMES[index], FONT_TAB)
 			tab.SetParent(self.panel)
 			tab.SetPosition(SIDE_X + index * (tabWidth + 4), CONTENT_TOP)
 			tab.SetEvent(ui.__mem_func__(self.SelectType), index)
@@ -426,6 +428,13 @@ class RankingWindow(ui.Window):
 		self.Hide()
 		import uiAkravonPencere
 		uiAkravonPencere.Kapandi("siralama")
+
+	def OnMoveWindow(self, x, y):
+		# suruklenince ekran disina tasmaz
+		nx = max(0, min(wndMgr.GetScreenWidth() - self.GetWidth(), x))
+		ny = max(0, min(wndMgr.GetScreenHeight() - self.GetHeight(), y))
+		if (nx, ny) != (x, y):
+			self.SetPosition(nx, ny)
 
 	def OnPressEscapeKey(self):
 		self.Close()

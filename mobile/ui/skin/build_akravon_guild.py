@@ -234,8 +234,8 @@ def GradeNameDialog():
 
 
 def BoardPage():
-	c = [Img('CommentSlot', 0, 386, 'gd_slot_300x44', ('{ "name":"CommentValue", "type":"editline", "x":12, "y":12, "width":276, "height":20, "input_limit":49, "text":"" },',))]
-	c.append(Btn('RefreshButton', 412, 386, 'refresh'))
+	c = [Img('CommentSlot', 0, 0, 'gd_slot_300x44', ('{ "name":"CommentValue", "type":"editline", "x":12, "y":12, "width":276, "height":20, "input_limit":49, "text":"" },',))]
+	c.append(Btn('RefreshButton', 412, 0, 'refresh'))
 	return c
 
 
@@ -250,21 +250,21 @@ def MemberPage():
 def GradePage():
 	c = []
 	for (name, x, text) in (('GradeNumber', 12, 'NO'), ('GradeName', 62, u'R\u00dcTBE ADI'), ('InviteAuthority', 266, 'DAVET'), ('DriveOutAuthority', 332, 'ATMA'), ('NoticeAuthority', 392, 'DUYURU'), ('SkillAuthority', 456, u'BECER\u0130')):
-		c.append(T(name, x, 5, L1(text), GOLD, 'Marcellus:13'))
+		c.append(T(name, x, 5, L1(text), GOLD, 'Marcellus:15'))
 	return c
 
 
 def SkillPage():
 	c = []
-	c.append(Img('Skill_Head_Active', 0, 0, 'gd_head_512', (T('Active_Skill_Title', 12, 5, L1(u'AKT\u0130F BECER\u0130LER'), GOLD, 'Marcellus:17'), T('Skill_Plus_Label', 372, 6, L1('Puan'), DIM, 'Lato:16'), T('Skill_Plus_Value', 436, 6, '0', GOLD, 'LatoBd:17'))))
-	c.append('{ "name":"Active_Skill_Slot_Table", "type":"grid_table", "x":16, "y":44, "start_index":210, "x_count":6, "y_count":1, "x_step":80, "y_step":72, "image":"%sgd_clear.png" },' % IMG)
-	c.append(Img('Skill_Head_Affect', 0, 150, 'gd_head_512', (T('Affect_Title', 12, 5, L1(u'DURUM'), GOLD, 'Marcellus:17'),)))
-	c.append('{ "name":"Affect_Slot_Table", "type":"grid_table", "x":16, "y":192, "start_index":0, "x_count":9, "y_count":2, "x_step":54, "y_step":54, "image":"%sinv_cell.png" },' % IMG)
-	c.append(Img('Skill_Head_Power', 0, 318, 'gd_head_512', (T('Dragon_God_Power_Title', 12, 5, L1(u'EJDER TANRI G\u00dcC\u00dc'), GOLD, 'Marcellus:17'),)))
-	c.append('{ "name":"Dragon_God_Power_Gauge_Slot", "type":"image", "x":8, "y":372, "image":"d:/ymir work/ui/game/guild/gauge.sub" },')
-	c.append('{ "name":"Dragon_God_Power_Gauge", "type":"ani_image", "x":12, "y":372, "delay":6, "images":("D:/Ymir Work/UI/Pattern/SPGauge/01.tga","D:/Ymir Work/UI/Pattern/SPGauge/02.tga","D:/Ymir Work/UI/Pattern/SPGauge/03.tga","D:/Ymir Work/UI/Pattern/SPGauge/04.tga","D:/Ymir Work/UI/Pattern/SPGauge/05.tga","D:/Ymir Work/UI/Pattern/SPGauge/06.tga","D:/Ymir Work/UI/Pattern/SPGauge/07.tga") },')
-	c.append(Img('Dragon_God_Power_Slot', 204, 358, 'gd_slot_160x36', (T('Dragon_God_Power_Value', 0, 0, '0 / 0', TXT, 'Lato:16', 'center').replace('"text_horizontal_align":"center" }', '"text_horizontal_align":"center", "all_align":"center" }'),)))
-	c.append(Btn('Heal_GSP_Button', 382, 356, 'btn130', L1('\u0130Y\u0130LE\u015eT\u0130R')))
+	c.append(Img('Skill_Head_Active', 0, 104, 'gd_head_512', (T('Active_Skill_Title', 12, 5, L1(u'AKT\u0130F BECER\u0130LER'), GOLD, 'Marcellus:17'), T('Skill_Plus_Label', 372, 6, L1('Puan'), DIM, 'Lato:16'), T('Skill_Plus_Value', 436, 6, '0', GOLD, 'LatoBd:17'))))
+	c.append('{ "name":"Active_Skill_Slot_Table", "type":"grid_table", "x":16, "y":148, "start_index":210, "x_count":6, "y_count":1, "x_step":80, "y_step":72, "image":"%sgd_clear.png" },' % IMG)
+	c.append(Img('Skill_Head_Affect', 0, 254, 'gd_head_512', (T('Affect_Title', 12, 5, L1(u'DURUM'), GOLD, 'Marcellus:17'),)))
+	c.append('{ "name":"Affect_Slot_Table", "type":"grid_table", "x":16, "y":296, "start_index":0, "x_count":9, "y_count":2, "x_step":54, "y_step":54, "image":"%sinv_cell.png" },' % IMG)
+	c.append(Img('Skill_Head_Power', 0, 0, 'gd_head_512', (T('Dragon_God_Power_Title', 12, 5, L1(u'EJDER TANRI G\u00dcC\u00dc'), GOLD, 'Marcellus:17'),)))
+	c.append('{ "name":"Dragon_God_Power_Gauge_Slot", "type":"image", "x":8, "y":54, "image":"d:/ymir work/ui/game/guild/gauge.sub" },')
+	c.append('{ "name":"Dragon_God_Power_Gauge", "type":"ani_image", "x":12, "y":54, "delay":6, "images":("D:/Ymir Work/UI/Pattern/SPGauge/01.tga","D:/Ymir Work/UI/Pattern/SPGauge/02.tga","D:/Ymir Work/UI/Pattern/SPGauge/03.tga","D:/Ymir Work/UI/Pattern/SPGauge/04.tga","D:/Ymir Work/UI/Pattern/SPGauge/05.tga","D:/Ymir Work/UI/Pattern/SPGauge/06.tga","D:/Ymir Work/UI/Pattern/SPGauge/07.tga") },')
+	c.append(Img('Dragon_God_Power_Slot', 204, 40, 'gd_slot_160x36', (T('Dragon_God_Power_Value', 0, 0, '0 / 0', TXT, 'Lato:16', 'center').replace('"text_horizontal_align":"center" }', '"text_horizontal_align":"center", "all_align":"center" }'),)))
+	c.append(Btn('Heal_GSP_Button', 382, 38, 'btn130', L1('\u0130Y\u0130LE\u015eT\u0130R')))
 	# kullanilmayan (devre disi) pasif beceri izgarasi: ekran disi, kodun bagi kopmasin
 	c.append('{ "name":"Passive_Skill_Slot_Table", "type":"grid_table", "x":-3000, "y":0, "start_index":200, "x_count":9, "y_count":1, "x_step":32, "y_step":32, "image":"d:/ymir work/ui/public/Slot_Base.sub" },')
 	return c

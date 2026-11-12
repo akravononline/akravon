@@ -440,6 +440,11 @@ def ClearHudLayout():
 def GetTouchLayout(screenWidth, screenHeight, useOverrides = True):
 	UpdateSafeArea(screenWidth, screenHeight)
 	factor = GetScreenFactor(screenHeight)
+	try:	# TANI: isinlanma sonrasi HUD buyume hatasi icin yerlesim degerleri
+		import dbg
+		dbg.TraceError("HUDLAYOUT w=%s h=%s uiScale=%s factor=%s atkSetting=%s joySetting=%s safeR=%s" % (screenWidth, screenHeight, GetUIScale(), factor, GetSettingSize("GetAttackButtonSize"), GetSettingSize("GetJoystickSize"), SAFE_RIGHT))
+	except Exception:
+		pass
 
 	def Override(name):
 		return GetHudOverride(name) if useOverrides else None
@@ -831,6 +836,8 @@ class SkillSlot(ui.Window):
 		if not until:
 			return
 		now = app.GetTime()
+		if now < getattr(self, "flashStart", 0.0) or until - now > PRESS_EFFECT_SECONDS * 2:	# oyun saati geri gitti (isinlanma): efekt bitmis say
+			until = now
 		if now >= until:
 			self.flashUntil = 0.0
 			self.__ApplyPress(1.0)

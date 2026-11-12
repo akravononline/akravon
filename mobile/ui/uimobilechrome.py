@@ -122,7 +122,7 @@ class PressRipple(object):
 		if self.start is None:
 			return
 		progress = (app.GetTime() - self.start) / PRESS_SECONDS
-		if progress >= 1.0 or not owner.IsShow():
+		if progress < 0.0 or progress >= 1.0 or not owner.IsShow():	# progress < 0: isinlanmada oyun saati sifirlandi
 			self.start = None
 			self.Hide()
 			return
@@ -177,6 +177,12 @@ class HudButton(ui.Window):
 		else:
 			(self.suffix, assetSize) = ("", HUD_BUTTON_ASSET)
 		self.assetScale = float(size) / assetSize
+		self.akrName = name
+		try:	# TANI: isinlanmada dugme sayisi / boyutu
+			import dbg
+			dbg.TraceError("HUDBTN olustu %s size=%s suffix=%s scale=%.3f t=%.1f" % (name, size, self.suffix, self.assetScale, app.GetTime()))
+		except Exception:
+			pass
 		self.alertScale = float(size) / HUD_BUTTON_ASSET
 		self.state = None
 
@@ -349,12 +355,34 @@ class HudButton(ui.Window):
 			bubble.Show()
 
 	def OnUpdate(self):
+		# isinlanma / harita yuklemesi ikonu yeniden yukleyip olcegi 1.0'a sifirlayabilir (dugme dev gibi buyur): 0.5 sn'de bir olcek dogrulanir
+		now = app.GetTime()
+		if self.image and not getattr(self, "ripple", None) and not self.flashed and now - self.flashStart > PRESS_SINK_SECONDS and now - getattr(self, "scaleCheckAt", 0.0) > 0.5:
+			self.scaleCheckAt = now
+			if getattr(self, "akrName", "") == "inventory" and now - getattr(self, "akrLogAt", 0.0) > 2.0:
+				self.akrLogAt = now
+				try:
+					import dbg
+					(gx, gy) = self.GetGlobalPosition()
+					dbg.TraceError("HUDINV t=%.1f pencere=%sx%s ikon=%sx%s scale=%.3f gorunur=%s konum=%s,%s durum=%s" % (now, self.GetWidth(), self.GetHeight(), self.image.GetWidth(), self.image.GetHeight(), self.assetScale, self.IsShow(), gx, gy, self.state))
+				except Exception:
+					pass
+			try:
+				if self.GetWidth() > 90 or self.image.GetWidth() > 90:
+					import dbg
+					dbg.TraceError("HUDBTN BUYUK %s pencere=%s ikon=%s scale=%.3f" % (getattr(self, "akrName", "?"), self.GetWidth(), self.image.GetWidth(), self.assetScale))
+			except Exception:
+				pass
+			self.image.SetScale(self.assetScale, self.assetScale)
 		ripple = getattr(self, "ripple", None)
 		if ripple:
 			ripple.Update(self)
 		elif self.image:
 			# basma: dugme ice dogru cokup (kararip) yumusakca geri gelir
 			p = (app.GetTime() - self.flashStart) / PRESS_SINK_SECONDS
+			if p < 0.0:	# isinlanmada oyun saati sifirlanir: eski basis zamani gelecekte kalir, olcek 95 kat buyurdu
+				self.flashStart = -10.0
+				p = 99.0
 			if p < 1.0:
 				if p < 0.35:
 					depth = p / 0.35

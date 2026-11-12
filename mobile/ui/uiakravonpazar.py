@@ -20,7 +20,7 @@ W = 372
 
 class PazarButton(uiMobileStyle.Pressable):
 	# dokunmaya uygun buyuk dugme: gorsel (normal/secili/basili) + ortada yazi
-	def __init__(self, parent, x, y, width, height, prefix, text, event = None, font = "Marcellus:22", *args):
+	def __init__(self, parent, x, y, width, height, prefix, text, event = None, font = "Marcellus:20", *args):
 		uiMobileStyle.Pressable.__init__(self, width, height)
 		self.SetParent(parent)
 		self.SetPosition(x, y)
@@ -91,7 +91,7 @@ class PazarTab(uiMobileStyle.Pressable):
 		self.on.AddFlag("not_pick")
 		self.on.LoadImage(IMG + "pz_tabs_on.png")
 		self.on.Hide()
-		self.label = uiMobileStyle.CreateText(self, text, width // 2, 10, SOFT, "Marcellus:22", "center")
+		self.label = uiMobileStyle.CreateText(self, text, width // 2, 11, SOFT, "Marcellus:20", "center")
 		self.SetEvent(event, *args)
 		self.Show()
 
@@ -253,7 +253,7 @@ def BuildSafebox(board):
 
 	board.moneyBox = Field(board, 12, 490, 168, 46)
 	board.moneyText = uiMobileStyle.CreateText(board.moneyBox, "0", 12, 11, YELLOW, "Lato:19", "left")
-	board.moneyClaimButton = PazarButton(board, 190, 490, 74, 46, "pz_btn74_%d.png", "AL", board._OnClickClaimMoneyButton, "Marcellus:22")
+	board.moneyClaimButton = PazarButton(board, 190, 490, 74, 46, "pz_btn74_%d.png", "AL", board._OnClickClaimMoneyButton, "Marcellus:20")
 	board.itemsClaimButton = PazarButton(board, 272, 490, 88, 46, "pz_btn88_%d.png", "TÜMÜ", board._OnClickClaimAllItemsButton, "Marcellus:20")
 	board._OnSelectPage(0)
 
@@ -269,8 +269,8 @@ def BuildGuest(board):
 	board.slotWindow.SetOverInItemEvent(board._ShowToolTipOnItemSlot)
 	board.slotWindow.SetOverOutItemEvent(board._HideToolTipOnItemSlot)
 	board.akrHint = uiMobileStyle.CreateText(board, "Ürüne dokun", W // 2, 506, SOFT, "Lato:17", "center")
-	board.akrBuy = PazarButton(board, 12, 490, 168, 52, "pz_btn168_%d.png", "SATIN AL", board._AkrBuy, "Marcellus:21")
-	board.akrOffer = PazarButton(board, 192, 490, 168, 52, "pz_btn168_%d.png", "TEKLİF VER", board._AkrOffer, "Marcellus:21")
+	board.akrBuy = PazarButton(board, 12, 490, 168, 52, "pz_btn168_%d.png", "SATIN AL", board._AkrBuy, "Marcellus:20")
+	board.akrOffer = PazarButton(board, 192, 490, 168, 52, "pz_btn168_%d.png", "TEKLİF VER", board._AkrOffer, "Marcellus:20")
 	board.akrBuy.Hide()
 	board.akrOffer.Hide()
 	board.akrSelected = None
@@ -464,8 +464,8 @@ class TooltipTicker(ui.Window):
 def BuildMarketSelect(board):
 	board.akrSelected = None
 	board.akrEdit = PazarButton(board, 12, 490, 112, 52, "pz_btn112_%d.png", "FİYAT", lambda b = board: _MarketEdit(b), "Marcellus:20")
-	board.akrRemove = PazarButton(board, 130, 490, 112, 52, "pz_btn112_%d.png", "GERİ AL", lambda b = board: _MarketRemove(b), "Marcellus:19")
-	board.akrBack = PazarButton(board, 248, 490, 112, 52, "pz_btn112_%d.png", "VAZGEÇ", lambda b = board: MarketSelect(b, None), "Marcellus:19")
+	board.akrRemove = PazarButton(board, 130, 490, 112, 52, "pz_btn112_%d.png", "GERİ AL", lambda b = board: _MarketRemove(b), "Marcellus:20")
+	board.akrBack = PazarButton(board, 248, 490, 112, 52, "pz_btn112_%d.png", "VAZGEÇ", lambda b = board: MarketSelect(b, None), "Marcellus:20")
 	for button in (board.akrEdit, board.akrRemove, board.akrBack):
 		button.Hide()
 	board.akrTicker = TooltipTicker(board)
@@ -655,10 +655,10 @@ class PriceDialog(ui.ScriptWindow):
 		self.avgText = self.__Text("-", 520, 156, YELLOW, "Lato:17", "right")
 		self.minText = self.__Text("-", 520, 183, YELLOW, "Lato:17", "right")
 		self.maxText = self.__Text("-", 520, 210, YELLOW, "Lato:17", "right")
-		self.avgButton = PazarButton(self, 176, 254, 360, 44, "pz_btn360_%d.png", "ORTALAMA FİYATI KULLAN", self.__UseAverage, "Marcellus:17")
+		self.avgButton = PazarButton(self, 176, 254, 360, 44, "pz_btn360_%d.png", "ORTALAMA FİYATI KULLAN", self.__UseAverage, "Marcellus:18")
 		self.avgButton.Hide()
-		self.acceptButton = PazarButton(self, 24, 262, 248, 52, "pz_btn248_%d.png", "ONAYLA", None, "Marcellus:22")
-		self.cancelButton = PazarButton(self, 288, 262, 248, 52, "pz_btn248_%d.png", "VAZGEÇ", None, "Marcellus:22")
+		self.acceptButton = PazarButton(self, 24, 262, 248, 52, "pz_btn248_%d.png", "ONAYLA", None, "Marcellus:20")
+		self.cancelButton = PazarButton(self, 288, 262, 248, 52, "pz_btn248_%d.png", "VAZGEÇ", None, "Marcellus:20")
 
 	def __OnUpdate(self):
 		ui.EditLine.OnIMEUpdate(self.inputValue)

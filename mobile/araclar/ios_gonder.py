@@ -25,7 +25,7 @@ BID = 'com.akravon.online.5UDV2DSXPV'
 DEVICE_MOBILE = '/Documents/mobile'
 ESCAPE_NAMES = set(('uiakravonbulksell.py', 'uirank.py'))		# cp949 okuyan betikler: yuksek baytlar \xNN kacisi
 # orijinalden_degisen icinde cihazda alt klasore giden dosyalar
-SUBFOLDER = {'exchangedialog.py': 'uiscript', 'characterwindow.py': 'uiscript', 'inventorywindowex.py': 'uiscript', 'costumewindow.py': 'uiscript'}
+SUBFOLDER = {'exchangedialog.py': 'uiscript', 'characterwindow.py': 'uiscript', 'inventorywindowex.py': 'uiscript', 'costumewindow.py': 'uiscript', 'shopdialog.py': 'uiscript'}
 
 
 def Convert(name):
@@ -101,8 +101,10 @@ async def Main(arguments):
 				await device.Put(DEVICE_MOBILE + '/' + name, Convert(name))
 		elif flag == '--orijinal':
 			for name in sorted(os.listdir(ORIJINAL)):
-				sub = SUBFOLDER.get(name) or ('uiscript' if name.startswith(('guildwindow', 'declareguildwardialog', 'changegradenamedialog')) else None)
-				await device.Put(DEVICE_MOBILE + ('/' + sub if sub else '') + '/' + name, open(os.path.join(ORIJINAL, name), 'rb').read())
+				icerik = open(os.path.join(ORIJINAL, name), 'rb').read()
+				# KURAL: pencere tanimi (window = {...}) olan her betik cihazda uiscript/ altina gider; elle liste tutulmaz
+				sub = SUBFOLDER.get(name) or ('uiscript' if (name.endswith('.py') and re.search(rb'^window\s*=\s*\{', icerik, re.M)) else None)
+				await device.Put(DEVICE_MOBILE + ('/' + sub if sub else '') + '/' + name, icerik)
 		elif flag == '--gorsel':
 			await PushTree(device, GORSEL, DEVICE_MOBILE)
 			# lonca imza / simge dosyalari: oyun bunlari uygulama ana klasorunden (Documents/upload) okur

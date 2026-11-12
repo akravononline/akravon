@@ -355,6 +355,14 @@ class Skin(object):
 			import constInfo
 			import player
 			now = app.GetTime(); equip = self.window.GetChild("EquipmentSlot")
+			tip = getattr(self.window, "tooltipItem", None)
+			tipShown = bool(tip and tip.IsShow())
+			equipUntil = getattr(self.window, "akrEquipTipUntil", 0.0)
+			if equipUntil and (now >= equipUntil or equipUntil - now > 10.0):	# ekipman esya ipucu 3 sn sonra kapanir (oyun saati sifirlanirsa da)
+				self.window.akrEquipTipUntil = 0.0
+				if tip:
+					tip.HideToolTip()
+				tipShown = False
 			slots = (player.EQUIPMENT_SLOT_START + 7, player.EQUIPMENT_SLOT_START + 8)
 			wanted = None
 			if getattr(constInfo, "AKRAVON_RUZGAR_ACTIVE", 0) and self.equipBoard.IsShow():
@@ -363,7 +371,7 @@ class Skin(object):
 						wanted = slot
 						break
 			if wanted is not None:
-				if self.ruzgarSlot != wanted or now - getattr(self, "ruzgarTime", 0.0) > 0.3:
+				if self.ruzgarSlot != wanted or (now - getattr(self, "ruzgarTime", 0.0) > 0.3 and not tipShown):	# ipucu aciksa yuva yenilenmez (yanip sonuyordu)
 					equip.SetItemSlot(wanted, 72701, 0)
 					equip.RefreshSlot()
 					self.ruzgarSlot = wanted

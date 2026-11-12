@@ -406,7 +406,12 @@ class QuestHud(object):
 		weakSelf = proxy(self)
 
 		def Arrange():
-			original()
+			original()	# orijinal yerlestirme mektuplari yeniden GOSTERIR (grup paneli acilip kapaninca da): hemen gizle
+			try:
+				for button in list(getattr(interface, "questButtonList", []) or []):
+					button.Hide()
+			except Exception:
+				pass
 			try:
 				weakSelf.Refresh()
 			except ReferenceError:
@@ -423,13 +428,24 @@ class QuestHud(object):
 		recv = getattr(interface, "BINARY_RecvQuest", None)
 		if recv:
 			def Recv(*args):
-				recv(*args)
+				# mektup hic gosterilmez: olusturulurken Show() etkisiz alt sinif kullanilir (ekranda bir an bile gorunmez)
+				import uiWhisper
+				originalButton = uiWhisper.WhisperButton
+				class HiddenLetter(originalButton):
+					def Show(self):
+						pass
+				uiWhisper.WhisperButton = HiddenLetter
+				try:
+					recv(*args)
+				finally:
+					uiWhisper.WhisperButton = originalButton
 				NoShow()
 				try:
 					weakSelf.Refresh()
 				except ReferenceError:
 					pass
 			interface.BINARY_RecvQuest = Recv
+		NoShow()	# hook kurulmadan once gelen mektuplar (ilk giris, isinlanma) da hemen gizlensin
 
 	def __Unhook(self):
 		try:

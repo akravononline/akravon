@@ -1423,23 +1423,36 @@ void CSlotWindow::OnRender()
 						CPythonGraphic::Instance().RenderBar2d(cx - hw, cy + yy, cx + hw, cy + yy + 2.0f);
 					}
 				}
-				else if (rSlot.Color.b < 0.5f && rSlot.Color.r > 0.9f)
+				else if (rSlot.Color.r > 0.9f && rSlot.Color.g < 0.4f && rSlot.Color.b < 0.4f)
 				{
-					// AKRAVON: yeni alinan esya - sari dalga + kenarda gezen yildizlar
+					// AKRAVON: toplu satis secimi - ince kirmizi dalga + ince cerceve
 					for (float yy = 0.0f; yy < fh; yy += 2.0f)
 					{
 						const float wave = 0.5f + 0.5f * sinf(tm * 4.0f - yy * 0.22f);
 						const float inset = CynexRoundInset(5.0f, int(yy < fh - yy ? yy : fh - yy));
-						CPythonGraphic::Instance().SetDiffuseColor(1.0f, 0.82f, 0.25f, 0.10f + 0.20f * wave);
+						CPythonGraphic::Instance().SetDiffuseColor(1.0f, 0.18f, 0.18f, 0.06f + 0.10f * wave);
 						CPythonGraphic::Instance().RenderBar2d(x0 + inset, y0 + yy, x0 + fw - inset, y0 + yy + 2.0f);
 					}
-					CPythonGraphic::Instance().SetDiffuseColor(1.0f, 0.85f, 0.3f, 0.55f);
+					CPythonGraphic::Instance().SetDiffuseColor(1.0f, 0.25f, 0.25f, 0.55f);
+					CynexFrameRound(x0, y0, x0 + fw, y0 + fh, 6.0f, 1.0f);
+				}
+				else if (rSlot.Color.b < 0.5f && rSlot.Color.r > 0.9f)
+				{
+					// AKRAVON: yeni alinan esya - sari dalga + kenarda gezen yildizlar (hafifletildi)
+					for (float yy = 0.0f; yy < fh; yy += 2.0f)
+					{
+						const float wave = 0.5f + 0.5f * sinf(tm * 4.0f - yy * 0.22f);
+						const float inset = CynexRoundInset(5.0f, int(yy < fh - yy ? yy : fh - yy));
+						CPythonGraphic::Instance().SetDiffuseColor(1.0f, 0.82f, 0.25f, 0.04f + 0.09f * wave);
+						CPythonGraphic::Instance().RenderBar2d(x0 + inset, y0 + yy, x0 + fw - inset, y0 + yy + 2.0f);
+					}
+					CPythonGraphic::Instance().SetDiffuseColor(1.0f, 0.85f, 0.3f, 0.30f);
 					CynexFrameRound(x0, y0, x0 + fw, y0 + fh, 6.0f, 1.0f);
 					const float per = 2.0f * (fw + fh);
 					for (int k = 0; k < 4; ++k)
 					{
 						// 4 isik birbirini kovalar; her birinin arkasinda soluk iz
-						for (int t = 0; t < 7; ++t)
+						for (int t = 0; t < 5; ++t)
 						{
 							float d = fmodf(tm * 0.45f + float(k) * 0.25f - float(t) * 0.012f + 4.0f, 1.0f) * per;
 							float px, py;
@@ -1447,8 +1460,8 @@ void CSlotWindow::OnRender()
 							else if (d < fw + fh) { px = x0 + fw; py = y0 + (d - fw); }
 							else if (d < 2.0f * fw + fh) { px = x0 + fw - (d - fw - fh); py = y0 + fh; }
 							else { px = x0; py = y0 + fh - (d - 2.0f * fw - fh); }
-							const float a2 = (1.0f - float(t) / 7.0f);
-							const float sz = 3.0f - float(t) * 0.3f;
+							const float a2 = (1.0f - float(t) / 5.0f) * 0.8f;
+							const float sz = 2.0f - float(t) * 0.3f;
 							CPythonGraphic::Instance().SetDiffuseColor(1.0f, 0.88f, 0.4f, a2 * a2);
 							CPythonGraphic::Instance().RenderBar2d(px - sz, py - sz, px + sz, py + sz);
 							if (t == 0)

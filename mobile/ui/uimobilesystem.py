@@ -28,7 +28,7 @@ KIT_ICON = "mobile_ui/akravon/hud/btn_%s_normal_xs.png"
 KIT_ICON_SIZE = 34.0
 FONT_ROW = "Lato:22"
 FONT_VALUE = "LatoBd:19"
-FONT_TITLE = "Marcellus:28"
+FONT_TITLE = "Marcellus:22"	# tum pencerelerle ayni baslik
 CURRENT_COLOR = uiAkravon.STATE_OPEN_COLOR
 
 # (anahtar, ikon, metin)
@@ -160,9 +160,10 @@ class SystemMenu(uiMobileStyle.Pressable):
 			row.SetEvent(ui.__mem_func__(self.__OnChannel), index + 1)
 			self.channelRows.append(row)
 
-		self.closeButton = uiMobileCreate.PlateButton("create_button", "KAPAT")
+		import uiAkravonDugme	# paket dugmesi: lacivert, basinca altin (diger pencerelerle ayni)
+		self.closeButton = uiAkravonDugme.YaziDugme(142, 44, "KAPAT")
 		self.closeButton.SetParent(self.panel)
-		self.closeButton.SetEvent(ui.__mem_func__(self.__OnClose))
+		self.closeButton.OlayAyarla(ui.__mem_func__(self.__OnClose))
 		self.closeButton.Show()
 
 		self.SetEvent(ui.__mem_func__(self.Close))
@@ -175,7 +176,7 @@ class SystemMenu(uiMobileStyle.Pressable):
 			row.Destroy()
 		self.menuRows = []
 		self.channelRows = []
-		self.closeButton.Destroy()
+		self.closeButton.Yok()
 		self.closeButton = None
 		uiMobileStyle.Pressable.Destroy(self)
 		self.interface = None
@@ -220,7 +221,7 @@ class SystemMenu(uiMobileStyle.Pressable):
 					row.SetValue("Kanal %d" % current if current else "")
 			for row in self.channelRows:
 				row.Hide()
-			self.closeButton.text.SetText("KAPAT")
+			self.closeButton.YaziAyarla("KAPAT")
 		else:
 			self.title.SetText("Kanal Seçimi")
 			rows = self.channelRows
@@ -230,7 +231,7 @@ class SystemMenu(uiMobileStyle.Pressable):
 				isCurrent = index + 1 == current
 				row.SetValue("Şu an" if isCurrent else "", CURRENT_COLOR if isCurrent else None)
 				row.SetSelected(isCurrent)
-			self.closeButton.text.SetText("GERİ")
+			self.closeButton.YaziAyarla("GERİ")
 		self.__Layout(rows)
 
 	def __Layout(self, rows):

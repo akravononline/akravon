@@ -416,6 +416,9 @@ void CPythonPlayer::__OnPressItem(CInstanceBase& rkInstMain, DWORD dwPickedItemI
 
 void CPythonPlayer::__OnClickGround(CInstanceBase& rkInstMain, const TPixelPosition& c_rkPPosPickedGround)
 {
+#ifdef CYNEX_MOBILE
+	return;	// AKRAVON: yere dokununca karakter yurumez (yalniz joystick)
+#endif
 	if (!__IsMovableGroundDistance(rkInstMain, c_rkPPosPickedGround))
 		return;
 
@@ -447,6 +450,10 @@ void CPythonPlayer::__OnPressGround(CInstanceBase& rkInstMain, const TPixelPosit
 	if (NEW_CancelFishing())
 		return;
 
+#ifdef CYNEX_MOBILE
+	return;	// AKRAVON: yere dokununca karakter yurumez (yalniz joystick)
+#endif
+
 	if (!__IsMovableGroundDistance(rkInstMain, c_rkPPosPickedGround))
 		return;
 
@@ -462,6 +469,9 @@ void CPythonPlayer::__OnPressScreen(CInstanceBase& rkInstMain)
 {
 	__ClearReservedAction();
 
+#ifdef CYNEX_MOBILE
+	return;	// AKRAVON: ekrana basinca karakter yurumez (yalniz joystick)
+#endif
 	NEW_MoveToMouseScreenDirection();
 }
 

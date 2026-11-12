@@ -64,7 +64,7 @@ class Skin(object):
 		self.frame.Show()
 		self.title = uiMobileStyle.CreateText(board, "Yükseltme", W // 2, 13, GOLD, "Marcellus:24", "center")
 		self.divider = uiMobileStyle.CreateBar(board, LINE_COLOR, 18, TITLE_H, W - 36, 1)
-		self.close = uiAkravonInventory.CloseButton(board, W - 14 - 34, 11, ui.__mem_func__(dialog.CancelRefine))
+		self.close = uiAkravonInventory.CloseButton(board, W - 12 - 34, 12, ui.__mem_func__(dialog.CancelRefine))
 		# 1) silah slotu
 		self.slot = uiAkravon.Box()
 		self.slot.SetParent(board)
@@ -85,7 +85,7 @@ class Skin(object):
 		self.box.SetFillColor(uiMobileStyle.Color(8, 12, 26, 220))
 		self.box.SetLineColor(LINE_COLOR)
 		self.box.Show()
-		self.hint = uiMobileStyle.CreateText(board, "Yükseltme sonucu", BOX_X + 14, 78, MUTED, "Lato:13")
+		self.hint = uiMobileStyle.CreateText(board, "Yükseltme sonucu", BOX_X + 14, 78, MUTED, "Lato:15")
 		self.name = uiMobileStyle.CreateText(board, "", BOX_X + 14, 94, GOLD, "Marcellus:22")
 		self.level = uiMobileStyle.CreateText(board, "", BOX_X + 14, 126, uiMobileStyle.CREAM_COLOR, "Lato:16")
 		self.boxLine = uiMobileStyle.CreateBar(board, LINE_COLOR, BOX_X + 10, 152, BOX_W - 20, 1)
@@ -113,7 +113,7 @@ class Skin(object):
 			icon.Hide()
 			self.stoneIcon.append(icon)
 			self.stoneName.append(uiMobileStyle.CreateText(board, "", 0, 0, uiMobileStyle.CREAM_COLOR, "Lato:15"))
-			self.stoneAffect.append(uiMobileStyle.CreateText(board, "", 0, 0, GREEN, "Lato:14"))
+			self.stoneAffect.append(uiMobileStyle.CreateText(board, "", 0, 0, GREEN, "Lato:15"))
 		# 3) sag panel
 		self.vline = uiMobileStyle.CreateBar(board, LINE_COLOR, SPLIT, 72, 1, 100)
 		self.matHeader = uiMobileStyle.CreateText(board, "Gerekli malzeme", RIGHT_X, 72, GOLD, "Marcellus:18")

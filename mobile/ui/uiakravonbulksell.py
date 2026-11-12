@@ -19,7 +19,7 @@ lastToggle = {}	# ayni dokunus iki olay uretir: ikincisi yutulur
 shopWindow = None
 summaryText = None
 originalTake = None
-GREEN = (0.40, 0.31, 0.07, 1.0)	# aktif = mavi (tasarim dili)
+GREEN = (1.0, 0.18, 0.18, 1.0)	# AKRAVON: toplu satis secimi = kirmizi (motor kirmizi dali)
 
 
 def _Chase(inventory, locals):
@@ -298,4 +298,4 @@ def Attach(window):
 		inventory.RefreshBagSlotWindow = RefreshBagSlotWindow
 
 
-SUMMARY_Y = 468
+SUMMARY_Y = 58 + 7 * 58 + 6	# 58 = tek hucre kurali (uiakravonkit.SLOT_CELL)

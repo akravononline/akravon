@@ -42,28 +42,19 @@ class FlatButton(uiMobileStyle.Pressable):
 			self.fill.SetColor(uiMobileStyle.Color(40, 64, 120) if self.pressed else self.fillColor)
 
 
-class SkinButton(uiMobileStyle.Pressable):
-	# ONAYLA / VAZGEC: her yerde kullandigimiz standart dugme (lacivert, altin pahli cerceve), yazi krem Marcellus.
-	# 190 genislikte hazir gorsel (sb_btn190_*: sb_btn230'dan uretildi; kenarlar sikismaz)
-	IMG = "d:/ymir work/ui/akravon_legacy/"
+import uiAkravonDugme
 
+
+class SkinButton(uiAkravonDugme.YaziDugme):
+	# ONAYLA / VAZGEC / EVET / HAYIR: paket dugmesi 190x44 (lacivert, basinca altin) - eski arayuz (SetEvent/Destroy) korunur
 	def __init__(self, text, width = 190):
-		uiMobileStyle.Pressable.__init__(self, 190, 44)
-		self.skin = ui.ExpandedImageBox()
-		self.skin.SetParent(self)
-		self.skin.AddFlag("not_pick")
-		self.skin.LoadImage(self.IMG + "sb_btn190_1.png")
-		self.skin.Show()
-		self.label = uiMobileStyle.CreateText(self, uiMobileStyle.TrUpper(text), 95, 44 // 2 - 11, CREAM, "Marcellus:19", "center")
+		uiAkravonDugme.YaziDugme.__init__(self, 190, 44, uiMobileStyle.TrUpper(text), "Marcellus:20")
+
+	def SetEvent(self, event, *args):
+		self.OlayAyarla(event, *args)
 
 	def Destroy(self):
-		uiMobileStyle.Pressable.Destroy(self)
-		self.skin = None
-		self.label = None
-
-	def RefreshVisual(self):
-		if getattr(self, "skin", None):
-			self.skin.LoadImage(self.IMG + ("sb_btn190_3.png" if self.pressed else "sb_btn190_1.png"))
+		self.Yok()
 
 
 class PickMoneyDialog(ui.ScriptWindow):
@@ -104,8 +95,10 @@ class PickMoneyDialog(ui.ScriptWindow):
 	def Destroy(self):
 		self.eventAccept = None
 		if self.built:
-			for widget in (self.close, self.accept, self.cancel, self.quick1, self.quick2, self.quick3):
+			for widget in (self.close, self.accept, self.cancel, self.fieldTap):
 				widget.Destroy()
+			for widget in (self.quick1, self.quick2, self.quick3):
+				widget.Yok()
 			self.close = None
 			self.accept = None
 			self.cancel = None
@@ -149,16 +142,24 @@ class PickMoneyDialog(ui.ScriptWindow):
 		self.input.SetReturnEvent(ui.__mem_func__(self.OnAccept))
 		self.input.SetEscapeEvent(ui.__mem_func__(self.Close))
 		self.input.Show()
+		# kutuya dokun: klavye acilir (kapanmissa yeniden)
+		self.fieldTap = uiMobileStyle.Pressable(W - PAD * 2, FIELD_H)
+		self.fieldTap.SetParent(self)
+		self.fieldTap.SetPosition(PAD, fieldY)
+		self.fieldTap.SetEvent(ui.__mem_func__(self.Focus))
+		self.fieldTap.Show()
+		self.input.SetTop()
 
 		quickY = fieldY + FIELD_H + 10
-		width = (W - PAD * 2 - 16) // 3
-		self.quick1 = FlatButton(width, 40, "+100", False, "Marcellus:18")
-		self.quick2 = FlatButton(width, 40, "+1000", False, "Marcellus:18")
-		self.quick3 = FlatButton(width, 40, "Tümü", False, "Marcellus:18")
+		import uiAkravonDugme
+		self.quick1 = uiAkravonDugme.YaziDugme(126, 44, "+100")
+		self.quick2 = uiAkravonDugme.YaziDugme(126, 44, "+1000")
+		self.quick3 = uiAkravonDugme.YaziDugme(126, 44, "Tümü")
+		gap = (W - PAD * 2 - 126 * 3) // 2
 		for (index, (button, event)) in enumerate(((self.quick1, self.__Add100), (self.quick2, self.__Add1000), (self.quick3, self.__All))):
 			button.SetParent(self)
-			button.SetPosition(PAD + index * (width + 8), quickY)
-			button.SetEvent(ui.__mem_func__(event))
+			button.SetPosition(PAD + index * (126 + gap), quickY)
+			button.OlayAyarla(ui.__mem_func__(event))
 			button.Show()
 
 		buttonY = H - PAD - 44
@@ -188,11 +189,22 @@ class PickMoneyDialog(ui.ScriptWindow):
 		self.SetPosition((wndMgr.GetScreenWidth() - W) // 2, top)
 		self.Show()
 		self.SetTop()
+		self.Focus()
+
+	def Focus(self):
+		# odak bir kez birakilip yeniden alinir: klavye her dokunusta guvenle acilir
+		if not self.built:
+			return
+		self.input.KillFocus()
 		self.input.SetFocus()
+		if hasattr(app, "ShowKeyboard"):
+			app.ShowKeyboard(1)
 
 	def Close(self):
 		if self.built:
 			self.input.KillFocus()
+			if hasattr(app, "ShowKeyboard"):
+				app.ShowKeyboard(0)	# pencere kapaninca klavye de kapanir
 		self.Hide()
 
 	def OnPressEscapeKey(self):
@@ -206,8 +218,7 @@ class PickMoneyDialog(ui.ScriptWindow):
 
 	def __Set(self, value):
 		value = max(0, min(self.maxValue, long(value)))
-		self.input.SetText(str(value))
-		self.input.SetFocus()
+		self.input.SetText(str(value))	# hizli deger: klavye durumu degismez
 
 	def __Add100(self):
 		self.__Set(self.__Value() + 100)

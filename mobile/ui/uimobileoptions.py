@@ -733,10 +733,11 @@ class OptionsWindow(uiMobileStyle.Pressable):
 			self.pages.append(rows)
 
 		y = CONTENT_TOP + maxRows * (ROW_HEIGHT + ROW_GAP) - ROW_GAP + CLOSE_GAP
-		self.closeButton = uiMobileCreate.PlateButton("create_button", "KAPAT")
+		import uiAkravonDugme	# paket dugmesi (Ayarlar ile ayni)
+		self.closeButton = uiAkravonDugme.YaziDugme(142, 44, "KAPAT")
 		self.closeButton.SetParent(self.panel)
 		self.closeButton.SetPosition((PANEL_WIDTH - self.closeButton.GetWidth()) // 2, y)
-		self.closeButton.SetEvent(ui.__mem_func__(self.Close))
+		self.closeButton.OlayAyarla(ui.__mem_func__(self.Close))
 		self.closeButton.Show()
 		height = y + self.closeButton.GetHeight() + BOTTOM
 		self.sideLine.SetSize(1, max(10, y - CONTENT_TOP - CLOSE_GAP))
@@ -755,7 +756,7 @@ class OptionsWindow(uiMobileStyle.Pressable):
 			tab.Destroy()
 		self.pages = []
 		self.tabs = []
-		self.closeButton.Destroy()
+		self.closeButton.Yok()
 		self.closeButton = None
 		uiMobileStyle.Pressable.Destroy(self)
 		self.dim = None

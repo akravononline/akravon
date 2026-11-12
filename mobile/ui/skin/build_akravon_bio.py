@@ -16,7 +16,8 @@ SS = 4
 
 
 def F(size, bold = False):
-	return ImageFont.truetype(os.path.join(FONTS, 'LiberationSans-Bold.ttf' if bold else 'LiberationSans-Regular.ttf'), size)
+	# oyundaki govde yazisiyla ayni aile (Lato)
+	return ImageFont.truetype(os.path.join(FONTS, '..', 'fonts_kullanilmayan', 'latobd.ttf' if bold else 'lato.ttf'), size)
 
 
 def M(size):

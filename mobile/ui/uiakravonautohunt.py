@@ -445,7 +445,7 @@ class AutoHuntPanel(ui.Window):
 			row = self.__Row(page, y, label + " kullan", "Değer düşünce içer", self.__TogglePotion)
 			row.SetEvent(self.__TogglePotion, attribute)
 			box = Image(page, "oa_row_tall", 0, y + 58)
-			Text(box, "%s yüzdesi" % label.split()[0], 14, 8, TEXT, "Lato:17")
+			Text(box, "%s yüzdesi" % label.split()[0], 14, 8, TEXT, "Lato:18")
 			value = Text(box, "", RW - 14, 8, GOLD, "LatoBd:17", "right")
 			slider = Slider(page, 14, y + 58 + 28, lambda v, a = attribute: self.__SetPercent(a, v))
 			self.potionRows.append((attribute, row, value, slider))
@@ -462,7 +462,7 @@ class AutoHuntPanel(ui.Window):
 			card.AddFlag("not_pick")
 			icon = Image(card, "icon/item/%d.tga" % vnum, 12, 15)
 			check = Image(card, "oa_check", 36, 9)
-			title = Text(card, name + " Şebnem", 62, 8, TEXT, "Lato:19")
+			title = Text(card, name + " Şebnem", 62, 8, TEXT, "Lato:18")
 			state = Text(card, "", 62, 34, GREEN, "LatoBd:16")
 			chipText = None
 			self.dewCards.append((vnum, card, icon, check, title, state, chipText))
@@ -503,7 +503,7 @@ class AutoHuntPanel(ui.Window):
 			card.AddFlag("not_pick")
 			icon = Image(card, "icon/item/%d.tga" % vnum, 12, 15)
 			check = Image(card, "oa_check", 36, 9)
-			title = Text(card, name, 62, 8, TEXT, "Lato:19")
+			title = Text(card, name, 62, 8, TEXT, "Lato:18")
 			state = Text(card, "", 62, 34, GREEN, "LatoBd:16")
 			Text(card, desc, RW - 16, 20, DIM, "Lato:16", "right")
 			self.waterCards.append((vnum, card, icon, check, title, state))
@@ -600,6 +600,7 @@ class AutoHuntPanel(ui.Window):
 
 	def Open(self):
 		self.Refresh()
+		self.SetPosition((wndMgr.GetScreenWidth() - W) // 2, (wndMgr.GetScreenHeight() - H) // 2)	# her acilista ortada
 		self.Show()
 		self.SetTop()
 		import uiAkravonPencere
@@ -609,6 +610,13 @@ class AutoHuntPanel(ui.Window):
 		self.Hide()
 		import uiAkravonPencere
 		uiAkravonPencere.Kapandi("oto_av")
+
+	def OnMoveWindow(self, x, y):
+		# suruklenince ekran disina tasmaz
+		nx = max(0, min(wndMgr.GetScreenWidth() - W, x))
+		ny = max(0, min(wndMgr.GetScreenHeight() - H, y))
+		if (nx, ny) != (x, y):
+			self.SetPosition(nx, ny)
 
 	def OnPressEscapeKey(self):
 		self.Close()
