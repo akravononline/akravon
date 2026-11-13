@@ -1271,26 +1271,6 @@ void CSlotWindow::OnRender()
 			rSlot.pInstance->Render();
 		}
 
-		if (rSlot.pInstance && rSlot.isItem && IS_SET(rSlot.dwState, SLOT_STATE_BOUND))
-		{
-			// AKRAVON: bagli esya rozeti - slotun sol ust kosesinde, hucre olcusune gore olceklenen B ikonu (ymir work/ui/akravon/bagli_rozet.png, 64x64)
-			static CGraphicImageInstance * s_pBoundBadge = NULL;
-			if (!s_pBoundBadge)
-			{
-				CGraphicImage * pBadgeImage = (CGraphicImage *)CResourceManager::Instance().GetResourcePointer("ymir work/ui/akravon/bagli_rozet.png");
-				s_pBoundBadge = CGraphicImageInstance::New();
-				s_pBoundBadge->SetImagePointer(pBadgeImage);
-			}
-			float fw = float(rSlot.ixCellSize), fh = float(rSlot.iyCellSize);
-			CynexSlot_CellSize(this, rSlot.dwSlotNumber, 1, 1, &fw, &fh);
-			const float cell = (fw < fh) ? fw : fh;
-			float s = cell * 0.26f;
-			if (s < 10.0f) s = 10.0f;
-			s_pBoundBadge->SetScale(s / 64.0f, s / 64.0f);
-			s_pBoundBadge->SetPosition(float(m_rect.left + rSlot.ixPosition) + 5.0f, float(m_rect.top + rSlot.iyPosition) + 5.0f);
-			s_pBoundBadge->Render();
-		}
-
 		if (!rSlot.isItem)
 		{
 			if (IS_SET(rSlot.dwState, SLOT_STATE_ALWAYS_RENDER_COVER))
@@ -1548,6 +1528,32 @@ void CSlotWindow::OnRender()
 				m_pSlotActiveEffectSlot3->Render();
 			}
 #endif
+		}
+	}
+
+	// AKRAVON: bagli esya rozetleri - tum slotlar ve efektler cizildikten sonra ayri turda, hep en ustte
+	for (itor = m_SlotList.begin(); itor != m_SlotList.end(); ++itor)
+	{
+		TSlot & rSlot = *itor;
+		if (!(rSlot.pInstance && rSlot.isItem && IS_SET(rSlot.dwState, SLOT_STATE_BOUND)))
+			continue;
+		{
+			// AKRAVON: bagli esya rozeti - slotun sol ust kosesinde, hucre olcusune gore olceklenen B ikonu (ymir work/ui/akravon/bagli_rozet.png, 64x64)
+			static CGraphicImageInstance * s_pBoundBadge = NULL;
+			if (!s_pBoundBadge)
+			{
+				CGraphicImage * pBadgeImage = (CGraphicImage *)CResourceManager::Instance().GetResourcePointer("ymir work/ui/akravon/bagli_rozet.png");
+				s_pBoundBadge = CGraphicImageInstance::New();
+				s_pBoundBadge->SetImagePointer(pBadgeImage);
+			}
+			float fw = float(rSlot.ixCellSize), fh = float(rSlot.iyCellSize);
+			CynexSlot_CellSize(this, rSlot.dwSlotNumber, 1, 1, &fw, &fh);
+			const float cell = (fw < fh) ? fw : fh;
+			float s = cell * 0.26f;
+			if (s < 10.0f) s = 10.0f;
+			s_pBoundBadge->SetScale(s / 64.0f, s / 64.0f);
+			s_pBoundBadge->SetPosition(float(m_rect.left + rSlot.ixPosition) + 5.0f, float(m_rect.top + rSlot.iyPosition) + 5.0f);
+			s_pBoundBadge->Render();
 		}
 	}
 
