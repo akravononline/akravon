@@ -1287,7 +1287,7 @@ void CSlotWindow::OnRender()
 			float s = cell * 0.26f;
 			if (s < 10.0f) s = 10.0f;
 			s_pBoundBadge->SetScale(s / 64.0f, s / 64.0f);
-			s_pBoundBadge->SetPosition(float(m_rect.left + rSlot.ixPosition) + 2.0f, float(m_rect.top + rSlot.iyPosition) + 2.0f);
+			s_pBoundBadge->SetPosition(float(m_rect.left + rSlot.ixPosition) + 5.0f, float(m_rect.top + rSlot.iyPosition) + 5.0f);
 			s_pBoundBadge->Render();
 		}
 
