@@ -904,6 +904,18 @@ void CSlotWindow::HideAllSlotButton()
 	}
 }
 
+void CSlotWindow::SetSlotBound(DWORD dwSlotNumber, BOOL bBound)
+{
+	TSlot * pSlot;
+	if (!GetSlotPointer(dwSlotNumber, &pSlot))
+		return;
+
+	if (bBound)
+		pSlot->dwState |= SLOT_STATE_BOUND;
+	else
+		pSlot->dwState &= ~SLOT_STATE_BOUND;
+}
+
 void CSlotWindow::ShowRequirementSign(DWORD dwSlotNumber)
 {
 	TSlot * pSlot;
@@ -1257,6 +1269,29 @@ void CSlotWindow::OnRender()
 			CynexSlot_BeforeIcon(this, rSlot.dwSlotNumber, rSlot.pInstance, float(m_rect.left + rSlot.ixPosition), float(m_rect.top + rSlot.iyPosition));
 #endif
 			rSlot.pInstance->Render();
+		}
+
+		if (rSlot.pInstance && rSlot.isItem && IS_SET(rSlot.dwState, SLOT_STATE_BOUND))
+		{
+			// AKRAVON: bagli esya rozeti - slotun sol ust kosesinde, hucre olcusune gore olceklenen kucuk kirmizi kutuda beyaz "B"
+			float fw = float(rSlot.ixCellSize), fh = float(rSlot.iyCellSize);
+			CynexSlot_CellSize(this, rSlot.dwSlotNumber, 1, 1, &fw, &fh);
+			const float cell = (fw < fh) ? fw : fh;
+			float s = cell * 0.36f;
+			if (s < 14.0f) s = 14.0f;
+			const float bx = float(m_rect.left + rSlot.ixPosition) + 3.0f, by = float(m_rect.top + rSlot.iyPosition) + 3.0f;
+			CPythonGraphic::Instance().SetDiffuseColor(0.45f, 0.03f, 0.03f, 1.0f);
+			CynexFillRound(bx, by, bx + s, by + s, 3.0f);
+			CPythonGraphic::Instance().SetDiffuseColor(0.78f, 0.10f, 0.10f, 1.0f);
+			CynexFillRound(bx + 1.0f, by + 1.0f, bx + s - 1.0f, by + s - 1.0f, 2.5f);
+			static const char * const c_apszB[7] = { "1111.", "1...1", "1...1", "1111.", "1...1", "1...1", "1111." };
+			const float p = s / 9.0f;
+			const float lx = bx + (s - 5.0f * p) * 0.5f, ly = by + p;
+			CPythonGraphic::Instance().SetDiffuseColor(1.0f, 1.0f, 1.0f, 1.0f);
+			for (int row = 0; row < 7; ++row)
+				for (int col = 0; col < 5; ++col)
+					if ('1' == c_apszB[row][col])
+						CPythonGraphic::Instance().RenderBar2d(lx + col * p, ly + row * p, lx + (col + 1) * p, ly + (row + 1) * p);
 		}
 
 		if (!rSlot.isItem)

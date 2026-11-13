@@ -1006,6 +1006,26 @@ PyObject * wndMgrHideAllSlotButton(PyObject * poSelf, PyObject * poArgs)
 	return Py_BuildNone();
 }
 
+PyObject * wndMgrSetSlotBound(PyObject * poSelf, PyObject * poArgs)
+{
+	UI::CWindow * pWindow;
+	if (!PyTuple_GetWindow(poArgs, 0, &pWindow))
+		return Py_BuildException();
+
+	int iSlotNumber;
+	if (!PyTuple_GetInteger(poArgs, 1, &iSlotNumber))
+		return Py_BuildException();
+
+	int iBound;
+	if (!PyTuple_GetInteger(poArgs, 2, &iBound))
+		return Py_BuildException();
+
+	UI::CSlotWindow * pSlotWin = (UI::CSlotWindow *)pWindow;
+	pSlotWin->SetSlotBound(iSlotNumber, iBound ? TRUE : FALSE);
+
+	return Py_BuildNone();
+}
+
 PyObject * wndMgrShowRequirementSign(PyObject * poSelf, PyObject * poArgs)
 {
 	UI::CWindow * pWindow;
@@ -2901,6 +2921,7 @@ void initwndMgr()
 		{ "ShowSlotButton",				wndMgrShowSlotButton,				METH_VARARGS },
 		{ "HideAllSlotButton",			wndMgrHideAllSlotButton,			METH_VARARGS },
 		{ "ShowRequirementSign",		wndMgrShowRequirementSign,			METH_VARARGS },
+		{ "SetSlotBound",				wndMgrSetSlotBound,					METH_VARARGS },
 		{ "HideRequirementSign",		wndMgrHideRequirementSign,			METH_VARARGS },
 		{ "RefreshSlot",				wndMgrRefreshSlot,					METH_VARARGS },
 		{ "SetUseMode",					wndMgrSetUseMode,					METH_VARARGS },

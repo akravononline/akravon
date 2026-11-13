@@ -34,6 +34,7 @@ namespace UI
 		SLOT_STATE_CANT_MOUSE_EVENT		= (1 << 6),
 		SLOT_STATE_UNUSABLE				= (1 << 7),
 		#endif
+		SLOT_STATE_BOUND				= (1 << 8),	// AKRAVON: bagli esya - kosede B rozeti
 	};
 
 	class CSlotWindow : public CWindow
@@ -168,6 +169,7 @@ namespace UI
 
 			// Requirement Sign
 			void ShowRequirementSign(DWORD dwSlotNumber);
+			void SetSlotBound(DWORD dwSlotNumber, BOOL bBound);
 			void HideRequirementSign(DWORD dwSlotNumber);
 
 			// ToolTip

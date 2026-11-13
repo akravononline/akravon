@@ -1,35 +1,35 @@
-# AKRAVON bagli esyalar: yeni<TAB>kaynak<TAB>ek antiflag<TAB>ad(* = kaynak ad + " (B)")<TAB>(ops.) sure dakika(-=yok)<TAB>(ops.) aciklama. yeni=kaynak ise esya yerinde duzeltilir.
-76101	39028	90496	Efsun Nesnesi (B)
-76102	71034	90496	Saldýrý Ýksiri +15 (B)
-76103	71095	90496	Geçit Bileti (B)
-76104	70058	90496	Iþýnlanma Yüzüðü (B)
-76105	71028	90496	Ejderha Tanrý Saldýrýsý (B)
-76106	71027	90496	Ejderha Tanrý Yaþamý (B)
-76107	76052	90496	Rüzgarýn Ayakkabýlarý (3 Gün) (B)	4320
-27201	27201	90496	*
-27204	27204	90496	*
-27207	27207	90496	*
-27210	27210	90496	*
-71155	71155	90496	*
-76021	76021	90496	*
-76004	76004	90496	*
-76005	76005	90496	*
-76022	76022	90496	*
-76012	76012	90496	*
-76018	76018	90496	*
-76008	76008	90496	*
-76007	76007	90496	*
-56001	56001	90496	*
-76006	76006	90496	*
-76011	76011	90496	*
-76026	76026	90496	*
-76003	76003	90496	*
-76000	76000	90496	*
-76013	76013	90496	*
-76034	76034	90496	*
-76001	76001	90496	*
-76020	76020	90496	*
-76015	76015	90496	*
+# AKRAVON esya listesi: yeni<TAB>kaynak<TAB>ek antiflag<TAB>ad<TAB>(ops.) sure dakika(-=yok)<TAB>(ops.) aciklama. yeni=kaynak ise esya yerinde duzeltilir.
+76101	39028	90496	Efsun Nesnesi	-	Bonuslarýný deðiþtirmek istediðin eþyanýn üzerine uygulanýr.
+76102	71034	90496	Saldýrý Ýksiri +15	-	30 dakika boyunca saldýrý hýzýný %15 artýrýr.
+76103	71095	90496	Geçit Bileti	-	Örümcek Zindaný 2. katýna geçmek için bekçiye verilir.
+76104	70058	90496	Iþýnlanma Yüzüðü	-	Köylere ve belirli bölgelere ýþýnlanmaný saðlar. Toplam 50 kullaným hakký vardýr.
+76105	71028	90496	Ejderha Tanrý Saldýrýsý
+76106	71027	90496	Ejderha Tanrý Yaþamý
+76107	76052	90496	Rüzgarýn Ayakkabýlarý (3 Gün)	4320	Giyildiðinde hareket hýzýný artýrýr. Kullaným süresi 3 gündür.
+27201	27201	90496	Kýrmýzý Ýksir (K)	-	HP'ni 300 puan yeniler.
+27204	27204	90496	Mavi Ýksir (K)	-	SP'ni 100 puan yeniler.
+27207	27207	90496	Yeþil Ýksir (K)	-	10 dakika boyunca saldýrý hýzýný %10 artýrýr.
+27210	27210	90496	Mor Ýksir (K)
+71155	71155	90496	Bilgelik Ýksiri (3 sa.)	-	Bu iksirle üç saatlik oyun süresinde %100 daha fazla deneyim toplarsýn.
+76021	76021	90496	Güneþ Özütü (K)
+76004	76004	90496	Ay Özütü (K)
+76005	76005	90496	Ay Özütü (O)
+76022	76022	90496	Güneþ Özütü (O)
+76012	76012	90496	Hýz Ýksiri	-	30 dakika boyunca hareket hýzýný %60 artýrýr.
+76018	76018	90496	Saldýrý iksiri +20	-	30 dakika boyunca saldýrý hýzýný %20 artýrýr.
+76008	76008	90496	Ejderha Madalyasý
+76007	76007	90496	Cesaret Pelerini
+56001	56001	90496	Köy Seyahati Bileti	-	Bir köye ýþýnlanmak için kullanýlýr.
+76006	76006	90496	Metin Taþý Dedektörü
+76011	76011	90496	Liderin Kitabý
+76026	76026	90496	Þeytan Çýkarma Parþömeni
+76003	76003	90496	Soðutma Ýksiri	-	30 dakika boyunca büyü hýzýný %20 artýrýr.
+76000	76000	90496	Þeftali Çiçeði Þarabý	-	HP'ni anýnda 500 puan yeniler.
+76013	76013	90496	Arttýrma Kaðýdý (m)	-	Bonusu olan bir eþyaya yeni bir bonus ekler.
+76034	76034	90496	Münzevi Tavsiyesi
+76001	76001	90496	Statü Sýfýrlama Kaðýdý
+76020	76020	90496	Araþtýrmacýnýn Özütü
+76015	76015	90496	Kutsama Küresi
 50187	50187	90496	Çýrak Sandýðý (Seviye 1)	-	Sandýðý açarak baþlangýç eþyalarýný alýrsýn.
 50188	50188	90496	Çýrak Sandýðý (Seviye 10)	-	Sandýk ancak 10. seviyeye ulaþtýðýnda açýlabilir.
 50189	50189	90496	Çýrak Sandýðý (Seviye 20)	-	Sandýk ancak 20. seviyeye ulaþtýðýnda açýlabilir.
