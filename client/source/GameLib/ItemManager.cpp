@@ -247,6 +247,54 @@ bool CItemManager::LoadItemDesc(const char* c_szFileName)
 	return true;
 }
 
+// AKRAVON: bagli kopya esyalar. Satir: yeni_vnum<TAB>kaynak_vnum<TAB>ek_antiflag<TAB>ad
+// Kaynak esya tablo ve aciklamalar yuklendikten sonra cagrilir; kaynak yoksa satir atlanir.
+bool CItemManager::LoadItemClones(const char* c_szFileName)
+{
+	CMappedFile kFile;
+	LPCVOID pvData;
+	if (!CEterPackManager::Instance().Get(kFile, c_szFileName, &pvData))
+		return false;
+
+	CMemoryTextFileLoader kTextFileLoader;
+	kTextFileLoader.Bind(kFile.Size(), pvData);
+
+	CTokenVector kTokenVector;
+	for (DWORD i = 0; i < kTextFileLoader.GetLineCount(); ++i)
+	{
+		if (!kTextFileLoader.SplitLineByTab(i, &kTokenVector))
+			continue;
+		if (kTokenVector.size() < 4 || kTokenVector[0].empty() || kTokenVector[0][0] == '#')
+			continue;
+
+		const DWORD dwVnum = strtoul(kTokenVector[0].c_str(), NULL, 10);
+		const DWORD dwBaseVnum = strtoul(kTokenVector[1].c_str(), NULL, 10);
+		const DWORD dwAddAntiFlags = strtoul(kTokenVector[2].c_str(), NULL, 10);
+		if (!dwVnum || !dwBaseVnum)
+			continue;
+
+		const LONG lValue0 = (kTokenVector.size() > 4 && !kTokenVector[4].empty() && '-' != kTokenVector[4][0]) ? atol(kTokenVector[4].c_str()) : -1;
+		const char * c_szDesc = (kTokenVector.size() > 5) ? kTokenVector[5].c_str() : NULL;
+
+		TItemMap::iterator itBase = m_ItemMap.find(dwBaseVnum);
+		if (m_ItemMap.end() == itBase)
+		{
+			TraceError("CItemManager::LoadItemClones(%s) - kaynak esya yok: %u (satir %u)", c_szFileName, dwBaseVnum, i);
+			continue;
+		}
+
+		if (dwVnum == dwBaseVnum)
+		{
+			itBase->second->AkravonPatch(kTokenVector[3].c_str(), dwAddAntiFlags, lValue0, c_szDesc);
+			continue;
+		}
+
+		CItemData * pItemData = MakeItemData(dwVnum);
+		pItemData->AkravonCloneFrom(*itBase->second, dwVnum, kTokenVector[3].c_str(), dwAddAntiFlags, lValue0, c_szDesc);
+	}
+	return true;
+}
+
 DWORD GetHashCode( const char* pString )
 {
 	   DWORD i,len;

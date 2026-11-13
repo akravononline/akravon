@@ -1107,6 +1107,9 @@ bool LoadLocaleData(const char* localePath)
 		Tracenf("LoadLocaleData - LoadItemDesc(%s) Error", szItemDesc);
 	}
 
+	// AKRAVON: bagli kopya esyalar (sandik odulleri); aciklamalar kaynaktan kopyalanir, bu yuzden LoadItemDesc'ten sonra
+	rkItemMgr.LoadItemClones("locale/common/akravon_item_clone.txt");
+
 	if (!rkNPCMgr.LoadNonPlayerData(szMobProto))
 	{
 		TraceError("LoadLocaleData - LoadMobProto(%s) Error", szMobProto);

@@ -1,0 +1,42 @@
+# AKRAVON bagli esyalar: yeni<TAB>kaynak<TAB>ek antiflag<TAB>ad(* = kaynak ad + " (B)")<TAB>(ops.) sure dakika(-=yok)<TAB>(ops.) aciklama. yeni=kaynak ise esya yerinde duzeltilir.
+76101	39028	90496	Efsun Nesnesi (B)
+76102	71034	90496	Saldýrý Ýksiri +15 (B)
+76103	71095	90496	Geçit Bileti (B)
+76104	70058	90496	Iþýnlanma Yüzüðü (B)
+76105	71028	90496	Ejderha Tanrý Saldýrýsý (B)
+76106	71027	90496	Ejderha Tanrý Yaþamý (B)
+76107	76052	90496	Rüzgarýn Ayakkabýlarý (3 Gün) (B)	4320
+27201	27201	90496	*
+27204	27204	90496	*
+27207	27207	90496	*
+27210	27210	90496	*
+71155	71155	90496	*
+76021	76021	90496	*
+76004	76004	90496	*
+76005	76005	90496	*
+76022	76022	90496	*
+76012	76012	90496	*
+76018	76018	90496	*
+76008	76008	90496	*
+76007	76007	90496	*
+56001	56001	90496	*
+76006	76006	90496	*
+76011	76011	90496	*
+76026	76026	90496	*
+76003	76003	90496	*
+76000	76000	90496	*
+76013	76013	90496	*
+76034	76034	90496	*
+76001	76001	90496	*
+76020	76020	90496	*
+76015	76015	90496	*
+50187	50187	90496	Çýrak Sandýðý (Seviye 1)	-	Sandýðý açarak baþlangýç eþyalarýný alýrsýn.
+50188	50188	90496	Çýrak Sandýðý (Seviye 10)	-	Sandýk ancak 10. seviyeye ulaþtýðýnda açýlabilir.
+50189	50189	90496	Çýrak Sandýðý (Seviye 20)	-	Sandýk ancak 20. seviyeye ulaþtýðýnda açýlabilir.
+50190	50190	90496	Çýrak Sandýðý (Seviye 30)	-	Sandýk ancak 30. seviyeye ulaþtýðýnda açýlabilir.
+50191	50191	90496	Çýrak Sandýðý (Seviye 40)	-	Sandýk ancak 40. seviyeye ulaþtýðýnda açýlabilir.
+50192	50192	90496	Çýrak Sandýðý (Seviye 50)	-	Sandýk ancak 50. seviyeye ulaþtýðýnda açýlabilir.
+50193	50193	90496	Çýrak Sandýðý (Seviye 60)	-	Sandýk ancak 60. seviyeye ulaþtýðýnda açýlabilir.
+50194	50194	90496	Çýrak Sandýðý (Seviye 70)	-	Sandýk ancak 70. seviyeye ulaþtýðýnda açýlabilir.
+50195	50195	90496	Çýrak Sandýðý (Seviye 80)	-	Sandýk ancak 80. seviyeye ulaþtýðýnda açýlabilir.
+50196	50196	90496	Çýrak Sandýðý (Seviye 90)	-	Sandýk ancak 90. seviyeye ulaþtýðýnda açýlabilir.

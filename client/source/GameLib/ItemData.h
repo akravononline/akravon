@@ -806,6 +806,9 @@ class CItemData
 		//BOOL LoadItemData(const char * c_szFileName);
 		void SetDefaultItemData(const char * c_szIconFileName, const char * c_szModelFileName  = NULL);
 		void SetItemTableData(TItemTable * pItemTable);
+		// AKRAVON: bagli kopya esya - kaynak esyanin gorunumu, tablosu ve aciklamasi; yeni numara, ad ve ek antiflag
+		void AkravonCloneFrom(const CItemData & rBase, DWORD dwVnum, const char * c_szName, DWORD dwAddAntiFlags, LONG lValue0 = -1, const char * c_szDesc = NULL);
+		void AkravonPatch(const char * c_szName, DWORD dwAddAntiFlags, LONG lValue0, const char * c_szDesc);
 
 	protected:
 		void __LoadFiles();

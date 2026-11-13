@@ -169,6 +169,54 @@ void CItemData::SetItemTableData(TItemTable * pItemTable)
 	memcpy(&m_ItemTable, pItemTable, sizeof(TItemTable));
 }
 
+void CItemData::AkravonCloneFrom(const CItemData & rBase, DWORD dwVnum, const char * c_szName, DWORD dwAddAntiFlags, LONG lValue0, const char * c_szDesc)
+{
+	SetDefaultItemData(rBase.m_strIconFileName.c_str(), rBase.m_strModelFileName.empty() ? NULL : rBase.m_strModelFileName.c_str());
+	TItemTable kTable;
+	memcpy(&kTable, &rBase.m_ItemTable, sizeof(TItemTable));
+	kTable.dwVnum = dwVnum;
+	kTable.dwVnumRange = 0;
+	if (c_szName && '*' == c_szName[0])
+	{
+		// '*' = kaynak adi + " (B)"
+		_snprintf(kTable.szLocaleName, sizeof(kTable.szLocaleName) - 1, "%s (B)", rBase.m_ItemTable.szLocaleName);
+		kTable.szLocaleName[sizeof(kTable.szLocaleName) - 1] = '\0';
+	}
+	else if (c_szName && *c_szName)
+	{
+		strncpy(kTable.szLocaleName, c_szName, sizeof(kTable.szLocaleName) - 1);
+		kTable.szLocaleName[sizeof(kTable.szLocaleName) - 1] = '\0';
+	}
+	kTable.dwAntiFlags |= dwAddAntiFlags;
+	if (lValue0 >= 0)
+		kTable.alValues[0] = lValue0;
+	SetItemTableData(&kTable);
+	m_strDescription = (c_szDesc && *c_szDesc) ? c_szDesc : rBase.m_strDescription;
+	m_strSummary = rBase.m_strSummary;
+}
+
+// AKRAVON: ayni numarali esyayi yerinde duzeltir (ad etiketi, ek antiflag, sure, aciklama)
+void CItemData::AkravonPatch(const char * c_szName, DWORD dwAddAntiFlags, LONG lValue0, const char * c_szDesc)
+{
+	if (c_szName && '*' == c_szName[0])
+	{
+		char szTmp[sizeof(m_ItemTable.szLocaleName)];
+		_snprintf(szTmp, sizeof(szTmp) - 1, "%s (B)", m_ItemTable.szLocaleName);
+		szTmp[sizeof(szTmp) - 1] = '\0';
+		strcpy(m_ItemTable.szLocaleName, szTmp);
+	}
+	else if (c_szName && *c_szName)
+	{
+		strncpy(m_ItemTable.szLocaleName, c_szName, sizeof(m_ItemTable.szLocaleName) - 1);
+		m_ItemTable.szLocaleName[sizeof(m_ItemTable.szLocaleName) - 1] = '\0';
+	}
+	m_ItemTable.dwAntiFlags |= dwAddAntiFlags;
+	if (lValue0 >= 0)
+		m_ItemTable.alValues[0] = lValue0;
+	if (c_szDesc && *c_szDesc)
+		m_strDescription = c_szDesc;
+}
+
 const CItemData::TItemTable* CItemData::GetTable() const
 {
 	return &m_ItemTable;

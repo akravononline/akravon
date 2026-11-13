@@ -47,6 +47,7 @@ class CItemManager : public CSingleton<CItemManager>
 		bool			LoadItemDesc(const char* c_szFileName);
 		bool			LoadItemList(const char* c_szFileName);
 		bool			LoadItemTable(const char* c_szFileName);
+		bool			LoadItemClones(const char* c_szFileName);	// AKRAVON: bagli kopya esyalar (yeni<TAB>kaynak<TAB>ek antiflag<TAB>ad)
 		#ifdef ENABLE_ACCE_COSTUME_SYSTEM
 		bool			LoadItemScale(const char* szItemScale);
 		#endif
