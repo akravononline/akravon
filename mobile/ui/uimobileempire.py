@@ -52,8 +52,14 @@ class ImageButton(uiMobileStyle.Pressable):
 
 
 class EmpireCard(uiMobileStyle.Pressable):
-	def __init__(self, owner, empireId):
-		uiMobileStyle.Pressable.__init__(self, CARD_W, CARD_H)
+	def __init__(self, owner, empireId, scale = 1.0):
+		# AKRAVON: kart olcegi ekrana gore (genislik ve yukseklik) hesaplanir; tum olculer ayni oranla kucultulur
+		self.scale = scale
+		self.cw = int(CARD_W * scale)
+		self.ch = int(CARD_H * scale)
+		cw = self.cw
+		ch = self.ch
+		uiMobileStyle.Pressable.__init__(self, cw, ch)
 		self.owner = proxy(owner)
 		self.empireId = empireId
 		(key, name, accent, description, villages) = EMPIRES.get(empireId, EMPIRES[net.EMPIRE_A])
@@ -64,30 +70,34 @@ class EmpireCard(uiMobileStyle.Pressable):
 		self.glow.SetParent(self)
 		self.glow.AddFlag("not_pick")
 		self.glow.LoadImage(IMG + "emp_glow.png")
-		self.glow.SetPosition(-20, -20)
+		self.glow.SetScale(scale, scale)
+		self.glow.SetPosition(int(-20 * scale), int(-20 * scale))
 		self.glow.Hide()
 		self.bg = ui.ExpandedImageBox()
 		self.bg.SetParent(self)
 		self.bg.AddFlag("not_pick")
 		self.bg.LoadImage(IMG + "emp_card_off.png")
+		self.bg.SetScale(scale, scale)
 		self.bg.Show()
 
 		emblem = ui.ExpandedImageBox()
 		emblem.SetParent(self)
 		emblem.AddFlag("not_pick")
 		emblem.LoadImage(IMG + "emp_emblem_%s.png" % key)
-		emblem.SetPosition((CARD_W - 120) // 2, 30)
+		emblem.SetScale(scale, scale)
+		emblem.SetPosition((cw - int(120 * scale)) // 2, int(30 * scale))
 		emblem.Show()
 		self.keep.append(emblem)
-		y = 30 + 150 + 22
-		self.keep.append(uiMobileStyle.CreateText(self, name, CARD_W // 2, y, accent, "Marcellus:32", "center"))
-		y += 54
-		self.keep.append(uiMobileStyle.CreateBar(self, uiMobileStyle.Color(96, 74, 42), 40, y, CARD_W - 80, 1))
-		y += 18
-		for line in uiMobileStyle.WrapLines(description, CARD_W - 64, BODY_FONT):
-			self.keep.append(uiMobileStyle.CreateText(self, line, CARD_W // 2, y, TEXT, BODY_FONT, "center"))
-			y += 26
-		self.keep.append(uiMobileStyle.CreateText(self, villages, CARD_W // 2, CARD_H - 46, SOFT, "Marcellus:19", "center"))
+		bodyFont = "Lato:%d" % max(13, int(17 * scale))
+		y = int((30 + 150 + 22) * scale)
+		self.keep.append(uiMobileStyle.CreateText(self, name, cw // 2, y, accent, "Marcellus:%d" % max(20, int(32 * scale)), "center"))
+		y += int(54 * scale)
+		self.keep.append(uiMobileStyle.CreateBar(self, uiMobileStyle.Color(96, 74, 42), int(40 * scale), y, cw - int(80 * scale), 1))
+		y += int(18 * scale)
+		for line in uiMobileStyle.WrapLines(description, cw - int(64 * scale), bodyFont):
+			self.keep.append(uiMobileStyle.CreateText(self, line, cw // 2, y, TEXT, bodyFont, "center"))
+			y += max(18, int(26 * scale))
+		self.keep.append(uiMobileStyle.CreateText(self, villages, cw // 2, ch - int(46 * scale), SOFT, "Marcellus:%d" % max(14, int(19 * scale)), "center"))
 		self.SetEvent(ui.__mem_func__(self.__Notify))
 
 	def Destroy(self):
@@ -106,6 +116,7 @@ class EmpireCard(uiMobileStyle.Pressable):
 			return
 		self.selected = selected
 		self.bg.LoadImage(IMG + ("emp_card_on.png" if selected else "emp_card_off.png"))
+		self.bg.SetScale(self.scale, self.scale)	# LoadImage olcegi sifirlar: tekrar uygula
 		if selected:
 			self.glow.Show()
 		else:
@@ -183,19 +194,29 @@ class MobileEmpireLayout(object):
 		self.mobileBackButton.Show()
 
 		empireIds = [net.EMPIRE_A, net.EMPIRE_B, net.EMPIRE_C]
-		rowWidth = len(empireIds) * CARD_W + (len(empireIds) - 1) * CARD_GAP
+		# AKRAVON: ekran hangi boyutta olursa olsun kartlar ve alttaki dugme sigsin (genislik ve yukseklige gore olcek)
+		count = len(empireIds)
+		scaleW = float(screenWidth - 48 - (count - 1) * CARD_GAP) / (count * CARD_W)
+		scaleH = float(screenHeight - 146 - 120) / CARD_H
+		scale = max(0.5, min(1.0, scaleW, scaleH))
+		gap = int(CARD_GAP * min(1.0, scale + 0.2))
+		cardW = int(CARD_W * scale)
+		cardH = int(CARD_H * scale)
+		rowWidth = count * cardW + (count - 1) * gap
 		startX = (screenWidth - rowWidth) // 2
-		top = max(160, (screenHeight - CARD_H - 120) // 2 + 40)
+		top = max(146, (screenHeight - cardH - 120) // 2 + 30)
+		top = min(top, screenHeight - cardH - 34 - 56 - 12)
+		top = max(110, top)
 		for (index, empireId) in enumerate(empireIds):
-			card = EmpireCard(self, empireId)
+			card = EmpireCard(self, empireId, scale)
 			card.SetParent(self)
-			card.SetPosition(startX + index * (CARD_W + CARD_GAP), top)
+			card.SetPosition(startX + index * (cardW + gap), top)
 			card.Show()
 			self.mobileCards.append(card)
 
 		self.mobileSelectButton = ImageButton(300, 56, "emp_btn300_%d.png", "BÖLGEYİ SEÇ", "Marcellus:23")
 		self.mobileSelectButton.SetParent(self)
-		self.mobileSelectButton.SetPosition((screenWidth - 300) // 2, top + CARD_H + 34)
+		self.mobileSelectButton.SetPosition((screenWidth - 300) // 2, top + cardH + 24)
 		self.mobileSelectButton.SetEvent(ui.__mem_func__(self.__OnClickSelect))
 		self.mobileSelectButton.Show()
 		self.__RefreshCards()

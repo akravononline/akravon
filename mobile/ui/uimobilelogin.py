@@ -96,6 +96,11 @@ def AkrCardRect():
 	# AKRAVON: 720 yuksekliginde tasarlandi; telefonda mantiksal yukseklik ~600 -> paneller alt kenara tasmasin
 	(x, y, w, h) = AKR_CARD_RECT
 	y = max(8, min(y, wndMgr.GetScreenHeight() - h - 12))
+	# AKRAVON: x 1280 genislik icin sabitti; ekran darsa sag kenardan tasiyordu -> sag kenara gore hesaplanir
+	screenWidth = wndMgr.GetScreenWidth()
+	x = screenWidth - w - 82	# sag kenar boslugu (karakter ekranlariyla ayni)
+	x = max(x, AKR_ACCOUNT_X + ACCOUNT_PANEL_WIDTH + 12)	# hesaplar paneliyle cakismasin
+	x = min(x, screenWidth - w - 12)	# yine de ekran icinde kalsin (cok dar ekranda panelin ustune biner)
 	return (x, y, w, h)
 
 

@@ -42,9 +42,25 @@ def _Kapat(ad, pencere):
 	acik.pop(ad, None)
 
 
+def EkranaSigdir(pencere, pay = 8):
+	# AKRAVON: tek yerden - acilan her pencere ekranin icinde kalir (sag / alt kenardan tasarsa iceri cekilir)
+	try:
+		import wndMgr
+		(sw, sh) = (wndMgr.GetScreenWidth(), wndMgr.GetScreenHeight())
+		(w, h) = (pencere.GetWidth(), pencere.GetHeight())
+		(x, y) = pencere.GetGlobalPosition()
+		nx = max(pay, min(x, sw - w - pay)) if w + pay * 2 <= sw else max(0, (sw - w) // 2)
+		ny = max(pay, min(y, sh - h - pay)) if h + pay * 2 <= sh else max(0, (sh - h) // 2)
+		if (nx, ny) != (x, y) and not pencere.GetParentProxy():
+			pencere.SetPosition(nx, ny)
+	except Exception:
+		pass
+
+
 def Acildi(ad, pencere):
 	# yeni pencere: bagli olmayan acik pencereler kapanir
 	global sonKonum
+	EkranaSigdir(pencere)
 	for (digerAd, digerPencere) in list(acik.items()):
 		if digerAd != ad and not _Bagli(ad, digerAd):
 			_Kapat(digerAd, digerPencere)

@@ -519,26 +519,30 @@ class Gauge(object):
 		self.kind = kind
 		self.frame = 0
 		# AKRAVON: eski lacivert "bos kisim" resmi kaldirildi; yuva panel gorselinin icinde
-		# orijinal Metin2 taskbar.py: iksir dolumu = gauge'in ARKASINDA yari saydam cubuk (orijinal HP 0x55ff0000, SP 0x550000ff; yari saydam kalir, koyu panelde gorunsun diye ton acildi),
-		# genislik = (mevcut + dolacak) / azami; dolum 0 olunca gizlenir. Efekt / nabiz yok.
-		self.recoverBar = None
-		self.recoverWidth = width
+		# orijinal Metin2 gibi cubuk yuvasi SIYAH (panelin lacivert zemini cubugun arkasinda gorunmez)
+		self.slotBack = uiMobileStyle.CreateBar(parent, 0xff000000, x, y, width, height)
+		# orijinal gorunum (kullanici ekran goruntusu): dolacak kisim = parlak cubugun KARARTILMIS kopyasi (tup parlamasi gorunur), siyah yuva ustunde, parlak cubugun arkasinda
+		self.recoverFill = None
+		self.recoverRatio = 0.0
 		if kind in ("hp", "sp"):
-			self.recoverBar = uiMobileStyle.CreateBar(parent, 0x70ff7070 if kind == "hp" else 0x707090ff, x, y, 1, height)
-			self.recoverBar.Hide()
+			self.recoverFill = HudImage(parent, "status_%s" % kind, x, y)
+			wndMgr.SetDiffuseColor(self.recoverFill.hWnd, 0.55, 0.55, 0.55, 1.0)
+			self.recoverFill.Hide()
 		self.fill = HudImage(parent, "status_%s" % kind, x, y)
 		if showText:
 			self.text = uiMobileStyle.CreateText(parent, "", x + width // 2, y + height // 2 - 6, BAR_TEXT_COLOR, BAR_FONTS[kind], "center", True)
 
 	def SetRecover(self, current, recovery, maximum):
-		if not self.enabled or not self.recoverBar:
+		if not self.enabled or not self.recoverFill:
 			return
 		if recovery == 0 or maximum <= 0:
-			self.recoverBar.Hide()
+			self.recoverFill.Hide()
+			self.recoverRatio = 0.0
 			return
 		dest = min(maximum, min(current, maximum) + recovery)
-		self.recoverBar.SetSize(max(1, int(self.recoverWidth * (float(dest) / float(maximum)))), self.recoverBar.GetHeight())
-		self.recoverBar.Show()
+		self.recoverRatio = max(0.0, min(1.0, float(dest) / maximum))
+		self.recoverFill.SetRenderingRect(0.0, 0.0, self.recoverRatio - 1.0, 0.0)	# soldan kesilmez (motor konumu kaydirir): bastan hedefe
+		self.recoverFill.Show()
 
 	def Animate(self, now):
 		# orijinal Metin2 cubugu: kareler sirayla doner (isiltili akis); doluluk korunur
@@ -552,6 +556,11 @@ class Gauge(object):
 		self.fill.LoadImage(HUD_PATH % ("status_%s_%d" % (self.kind, frame)))
 		self.fill.SetScale(0.5, 0.5)
 		self.fill.SetRenderingRect(0.0, 0.0, self.ratio - 1.0, 0.0)
+		if self.recoverFill and self.recoverRatio > 0.0:
+			self.recoverFill.LoadImage(HUD_PATH % ("status_%s_%d" % (self.kind, frame)))
+			self.recoverFill.SetScale(0.5, 0.5)
+			wndMgr.SetDiffuseColor(self.recoverFill.hWnd, 0.55, 0.55, 0.55, 1.0)
+			self.recoverFill.SetRenderingRect(0.0, 0.0, self.recoverRatio - 1.0, 0.0)
 
 	def SetValue(self, current, maximum):
 		ratio = 0.0
@@ -744,17 +753,6 @@ class StatusBar(ui.Window):
 
 		healthRatio = self.hpGauge.SetValue(currentHP, maximumHP)
 		self.spGauge.SetValue(player.GetStatus(player.SP), player.GetStatus(player.MAX_SP))
-		# GECICI TANI (HUDDBG): iksir dolumu ve stamina degerleri sunucudan geliyor mu
-		try:
-			akrNow = app.GetTime()
-			akrState = (player.GetStatus(player.HP_RECOVERY), player.GetStatus(player.SP_RECOVERY), player.GetStatus(player.STAMINA))
-			if akrState != getattr(self, "akrDbgState", None) and akrNow - getattr(self, "akrDbgAt", -9.0) > 0.5:
-				self.akrDbgState = akrState
-				self.akrDbgAt = akrNow
-				import dbg
-				dbg.TraceError("HUDDBG t=%.1f hp=%d/%d hpRec=%d sp=%d spRec=%d st=%d/%d" % (akrNow, currentHP, maximumHP, akrState[0], player.GetStatus(player.SP), akrState[1], akrState[2], player.GetStatus(player.MAX_STAMINA)))
-		except Exception:
-			pass
 		self.hpGauge.SetRecover(currentHP, player.GetStatus(player.HP_RECOVERY), maximumHP)
 		self.spGauge.SetRecover(player.GetStatus(player.SP), player.GetStatus(player.SP_RECOVERY), player.GetStatus(player.MAX_SP))
 		self.stGauge.SetValue(player.GetStatus(player.STAMINA), player.GetStatus(player.MAX_STAMINA))

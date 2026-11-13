@@ -774,32 +774,21 @@ bool CPythonSystem::LoadConfig()
 		// Cynex: oyun her zaman yatay; acilista yuzey kisa sure dikey (portre) olcululursa uzun kenar genislik sayilir
 		const int rawW = GetSystemMetrics(SM_CXFULLSCREEN), rawH = GetSystemMetrics(SM_CYFULLSCREEN);
 		const int sw = rawW > rawH ? rawW : rawH, sh = rawW > rawH ? rawH : rawW;
-		if (sw >= 800 && sh >= 600)
+		// AKRAVON: COZUNURLUKTEN BAGIMSIZ ARAYUZ (tek yer). Tum arayuz 1280x720 referansina gore tasarlanir.
+		// Mantiksal ekran her cihazda en az 1280x720 olur, fazlasi ekran oranina gore genisler (scale with screen size, expand):
+		// referansa gore yapilmis hicbir ekran tasmaz; ogeler kenarlara capalanir; cizim yerel cozunurlukte keskin kalir.
+		if (sw > 0 && sh > 0)
 		{
-			// AKRAVON: arayuz mantiksal 900 piksel yukseklikte tasarlandi; daha yuksek ekranlarda ayni fiziksel boyut icin
-			// mantiksal cozunurluk 900'e sabitlenir, cizim yerel cozunurlukte (keskin) kalir. Daha dusuk ekran oldugu gibi.
-			// Telefonda fiziksel ekran kucuk: ekran yuksekligi dp cinsinden 600dp'de 900, daha kucukte orantili azalir (alt sinir 600)
-			// -> arayuz ayni dokunma boyutunda kalir (emulator 900dp=600dp: degismez, telefon ~411dp: 616).
-			int kDesignHeight = 900;
+			const int kRefW = 1280, kRefH = 720;
+			if ((long long)sw * kRefH >= (long long)sh * kRefW)
 			{
-				const int dpi = CynexPlatform_GetDensityDpi();
-				if (dpi > 0)
-				{
-					const int dpH = sh * 160 / dpi;
-					kDesignHeight = dpH * 3 / 2;
-					if (kDesignHeight < 600) kDesignHeight = 600;
-					if (kDesignHeight > 900) kDesignHeight = 900;
-				}
-			}
-			if (sh > kDesignHeight)
-			{
-				m_Config.height = kDesignHeight;
-				m_Config.width = ((sw * kDesignHeight / sh) + 1) / 2 * 2;
+				m_Config.height = kRefH;
+				m_Config.width = ((sw * kRefH / sh) + 1) / 2 * 2;
 			}
 			else
 			{
-				m_Config.width = sw;
-				m_Config.height = sh;
+				m_Config.width = kRefW;
+				m_Config.height = ((sh * kRefW / sw) + 1) / 2 * 2;
 			}
 		}
 	}

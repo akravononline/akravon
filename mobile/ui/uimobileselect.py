@@ -390,14 +390,27 @@ class MobileSelectCharacterWindow(introSelect.SelectCharacterWindow):
 
 		self.decor.extend(uiMobileCreate.BuildServerBadge(board, screenWidth - SIDE_MARGIN, 46))
 
+		# AKRAVON: yukseklik ekrana gore - kartlar ve bilgi paneli alt dugme seridine binmesin
+		slots = self.SLOT_COUNT
+		step = CARD_STEP
+		cardTop = CARD_TOP
+		limit = footerY - 8
+		need = (slots - 1) * step + cardH
+		if cardTop + need > limit:
+			cardTop = max(104, limit - need)
+		if cardTop + need > limit and slots > 1:
+			step = max(cardH + 2, (limit - cardTop - cardH) // (slots - 1))
+		panelTop = PANEL_TOP
+		if panelTop + panelH > limit:
+			panelTop = max(92, limit - panelH)
 		for index in range(self.SLOT_COUNT):
 			card = CharacterCard(self, index)
 			card.SetParent(board)
-			card.SetPosition(CARD_X, CARD_TOP + index * CARD_STEP)
+			card.SetPosition(CARD_X, cardTop + index * step)
 			card.Show()
 			self.cards.append(card)
 
-		self.infoPanel = InfoPanel(board, panelX, PANEL_TOP, ui.__mem_func__(self.__OnClickDelete))
+		self.infoPanel = InfoPanel(board, panelX, panelTop, ui.__mem_func__(self.__OnClickDelete))
 		self.__BuildFooter(board, screenWidth, footerY)
 
 	def __BuildFooter(self, board, screenWidth, footerY):
