@@ -1284,8 +1284,8 @@ void CSlotWindow::OnRender()
 			float fw = float(rSlot.ixCellSize), fh = float(rSlot.iyCellSize);
 			CynexSlot_CellSize(this, rSlot.dwSlotNumber, 1, 1, &fw, &fh);
 			const float cell = (fw < fh) ? fw : fh;
-			float s = cell * 0.40f;
-			if (s < 16.0f) s = 16.0f;
+			float s = cell * 0.26f;
+			if (s < 10.0f) s = 10.0f;
 			s_pBoundBadge->SetScale(s / 64.0f, s / 64.0f);
 			s_pBoundBadge->SetPosition(float(m_rect.left + rSlot.ixPosition) + 2.0f, float(m_rect.top + rSlot.iyPosition) + 2.0f);
 			s_pBoundBadge->Render();
