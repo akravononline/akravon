@@ -454,10 +454,12 @@ def GetTouchLayout(screenWidth, screenHeight, useOverrides = True):
 	skillScale = 1.0
 	attackScale = attackOverride[2] / 100.0 if attackOverride else 1.0
 
-	joystickSize = GetSettingSize("GetJoystickSize") or int(round(JOYSTICK_DEFAULT_SIZE * factor))
+	# AKRAVON: ayarlardaki joystick / saldiri boyutu 900 yukseklikli ekranda ayarlandi; referans ekrana orantilanir
+	settingScale = screenHeight / 900.0
+	joystickSize = int(round(GetSettingSize("GetJoystickSize") * settingScale)) or int(round(JOYSTICK_DEFAULT_SIZE * factor))
 	if joystickOverride:
 		joystickSize = int(round(joystickSize * joystickOverride[2] / 100.0))
-	attackBase = GetSettingSize("GetAttackButtonSize") or ATTACK_DEFAULT_SIZE * max(1.0, factor) * 1.07
+	attackBase = GetSettingSize("GetAttackButtonSize") * settingScale or ATTACK_DEFAULT_SIZE * max(1.0, factor) * 1.07
 	ringAttackSize = int(attackBase * ATTACK_GROWTH + 1e-6)	# beceri halkasi bu olcuye gore dizilir (saldiri dugmesi ayri olceklenir)
 	attackSize = int(ringAttackSize * attackScale + 1e-6)
 
@@ -544,6 +546,23 @@ def GetTouchLayout(screenWidth, screenHeight, useOverrides = True):
 	if editOverride:
 		editPosition = (int(round(editOverride[0] * screenWidth / 1000.0 - editSize / 2.0)), int(round(editOverride[1] * screenHeight / 1000.0 - editSize / 2.0)))
 		editPosition = (max(SCREEN_EDGE, min(screenWidth - rightEdge - editSize, editPosition[0])), max(SCREEN_EDGE, min(screenHeight - SCREEN_EDGE - editSize, editPosition[1])))
+
+	# AKRAVON: her ekran boyutunda saldiri + beceri halkasi ekrandan tasmaz ve sag sutun dugmelerine (dondur / ayar) binmez
+	if not attackOverride:
+		clusterRight = max([attackX + attackSize] + [sx + slotSize for (sx, sy) in slotPositions])
+		clusterBottom = max([attackY + attackSize] + [sy + slotSize for (sx, sy) in slotPositions])
+		clusterTop = min([attackY] + [sy for (sx, sy) in slotPositions])
+		shiftY = min(0, (screenHeight - bottomEdge) - clusterBottom)
+		shiftX = min(0, (screenWidth - rightEdge) - clusterRight)
+		for (position, size) in ((pagePosition, pageSize), (editPosition, editSize)):
+			if position[1] < clusterBottom + shiftY and position[1] + size > clusterTop + shiftY:
+				shiftX = min(shiftX, (position[0] - 8) - clusterRight)
+		if shiftX or shiftY:
+			attackX += int(shiftX)
+			attackY += int(shiftY)
+			ringCenterX += shiftX
+			ringCenterY += shiftY
+			slotPositions = [(int(sx + shiftX), int(sy + shiftY)) for (sx, sy) in slotPositions]
 
 	affectY = TOP_MARGIN + STATUS_BAR_HEIGHT + AFFECT_GAP
 	notificationY = affectY + AFFECT_ROW_HEIGHT + NOTIFICATION_GAP

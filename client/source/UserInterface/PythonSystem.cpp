@@ -793,6 +793,7 @@ bool CPythonSystem::LoadConfig()
 		}
 	}
 #endif
+#ifndef CYNEX_MOBILE	// AKRAVON: masaustu pencere kirpmasi; mobilde mantiksal ekran fiziksel ekrandan buyuk olabilir (1280x720 referans)
 	if (m_Config.bWindowed)
 	{
 		unsigned screen_width = GetSystemMetrics(SM_CXFULLSCREEN);
@@ -807,6 +808,7 @@ bool CPythonSystem::LoadConfig()
 			m_Config.height = screen_height;
 		}
 	}
+#endif
 
 	if (m_Config.width < 800) // 800x600 Fix
 		m_Config.width = 800;
